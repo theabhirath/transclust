@@ -5,3 +5,6 @@ transmission clusters in healthcare settings using genomic data.
 
 > [!WARNING] 
 > This project is still in the early stages of development. For more information on planned features, see the design documentation in the `design_docs` directory.
+
+> [!NOTE]
+> This package was developed as part of the BIOINF 576 – Tool Development for Bioinformatics course at the University of Michigan.
