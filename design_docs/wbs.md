@@ -1,0 +1,47 @@
+# Word Breakdown Structure
+
+- Activity 1: Set up GitHub repository
+    - Task 1.1: Set up GitHub repository
+    - Task 1.2: Detail design documents
+    - Task 1.3: Add data to repository
+    - Task 1.4: Implement basic project structure with modules
+- Activity 2: Build core functionality
+    - Activity 2.1 : Implement data processing functions
+        - Task 2.1.1: Implement function to read in alignment file
+        - Task 2.1.2: Use alignment file to generate phylogenetic tree
+    - Activity 2.2: Transform data into transmission clusters
+        - Task 2.2.1: Implement function to detect clusters
+        - Task 2.2.2: Implement function to visualize clusters
+- Activity 3: Add analysis and visualization functions building on core functionality  <!-- Added in Problem 2B -->
+    - Activity 3.1: Implement statistical analysis functions
+        - Task 3.1.1: Implement permutation test
+        - Task 3.1.2: Implement function to analyze intra-patient genetic variation
+    - Activity 3.2: Implement visualization functions
+        - Task 3.2.1: Implement function to generate summary plots
+        - Task 3.2.2: Implement function to visualize phylogenetic tree
+- Activity 4: Test prototype
+    - Task 3.1: Test data processing functions
+    - Task 3.2: Test cluster detection functions
+    - Task 3.3: Test statistical analysis functions
+    - Task 3.4: Test visualization functions
+- Activity 5: Extend prototype <!-- Added in Problem 2B -->
+    - Task 4.1: Add additional cluster detection methods
+    - Task 4.2: Test new cluster detection methods in existing framework
+- Activity 6: Release version 1.0 <!-- Added in Problem 2B -->
+    - Activity 6.1: Finalize documentation
+        - Task 5.1.1: Write user manual
+        - Task 5.1.2: Write developer documentation
+        - Task 5.1.3: Write tutorials and quick start guides
+        - Task 5.1.4: Ensure documentation website builds correctly
+    - Activity 6.2: Prepare for release
+        - Task 5.2.1: Update version number
+        - Task 5.2.2: Update changelog
+        - Task 5.2.3: Update README
+        - Task 5.2.4: Update installation instructions
+        - Task 5.2.5: Update dependencies
+    - Activity 6.3: Release software
+        - Task 5.3.1: Create release branch
+        - Task 5.3.2: Tag release
+        - Task 5.3.3: Push release to GitHub
+        - Task 5.3.4: Update website with release information
+        - Task 5.3.5: Announce release on social media
