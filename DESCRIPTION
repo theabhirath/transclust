@@ -11,7 +11,7 @@ Authors@R:
     )
 Description: An R package for transmission cluster analysis for pathogens.
 URL: https://github.com/theabhirath/transclust
-BugReports: http://github.com/theabhirath/transclust/issues/
+BugReports: https://github.com/theabhirath/transclust/issues
 License: file LICENSE
 Depends:
     R (>= 4.1)

@@ -1,5 +1,10 @@
 # transclust
 
+<!-- badges: start -->
+[![Codecov test coverage](https://codecov.io/gh/theabhirath/transclust/graph/badge.svg)](https://app.codecov.io/gh/theabhirath/transclust)
+[![R-CMD-check](https://github.com/theabhirath/transclust/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/theabhirath/transclust/actions/workflows/R-CMD-check.yaml)
+<!-- badges: end -->
+
 The project will involve the implementation and evaluation of algorithms for detecting
 transmission clusters in healthcare settings using genomic data.
 
