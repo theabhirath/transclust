@@ -13,9 +13,22 @@ Description: An R package for transmission cluster analysis for pathogens.
 URL: https://github.com/theabhirath/transclust
 BugReports: http://github.com/theabhirath/transclust/issues/
 License: file LICENSE
-Depends: R (>= 3.1)
-Imports: ape
+Depends:
+    R (>= 4.1)
+Imports:
+    ape,
+    ggplot2,
+    heatmap3,
+    igraph,
+    phangorn,
+    phytools,
+    RColorBrewer,
+    xlsx
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.2
 Roxygen: list(markdown = TRUE)
+Suggests:
+    fastcluster,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3

@@ -1,6 +1,3 @@
-# Import necessary libraries
-library(ape)
-
 #' Read in Sequence Alignment
 #'
 #' This function reads in a sequence alignment file and processes the sequence names.
@@ -21,37 +18,35 @@ library(ape)
 #' aln_file <- "path/to/alignment.fasta"
 #' dna <- read_in_seq_aln(aln_file)
 #' }
-#' @importFrom ape read.dna
 #' @export
+#'
 read_in_seq_aln <- function(aln_file) {
-    dna <- read.dna(aln_file, format = "fasta")
+    dna <- ape::read.dna(aln_file, format = "fasta")
 
+    # Clean up sequence names
     dna_labels <- labels(dna)
     dna_labels <- gsub("Rush_KPC_|Sample_|001_final_|_R1_|_R_|__|_$", "", dna_labels)
     dna_labels <- gsub("_S.*$", "", dna_labels)
     dna_labels[grepl("KPNIH1", dna_labels)] <- "KPNIH1"
 
+    # CHECK: Do we really need to replace these labels?
     replacements <- c("43714" = "1", "43715" = "2", "43716" = "3", "43717" = "4",
                       "43718" = "8", "43719" = "14", "43720" = "18", "43721" = "19",
                       "43722" = "29", "43723" = "30")
-    dna_labels <- sapply(dna_labels, function(label) {
+    dna_labels <- vapply(dna_labels, function(label) {
         if (label %in% names(replacements)) {
             return(replacements[[label]])
         }
-        return(label)
-    })
+        label
+    }, character(1))
 
-    print(dna_labels)
-
-    if (is.null(dim(dna))) {
-        names(dna) <- dna_labels
-    } else {
-        row.names(dna) <- dna_labels
-    }
-
-    return(dna)
+    # print(dna_labels)
+    # CHECK: Why the dimension check?
+    # if (is.null(dim(dna))) {
+    #     names(dna) <- dna_labels
+    # } else {
+    #     row.names(dna) <- dna_labels
+    # }
+    row.names(dna) <- dna_labels
+    dna
 }
-
-# Example usage:
-aln_file <- "inst/extdata/KPNIH1_genome_aln_w_alt_allele_unmapped.filtered_polymorphic_sites.fasta"
-dna <- read_in_seq_aln(aln_file)
