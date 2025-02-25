@@ -1,8 +1,8 @@
-load("../../data/init.RData")
+load(test_path("testdata", "init.RData"))
 
 # Read in sequence file
-aln_file <- "../../inst/extdata/KPNIH1_genome_aln_w_alt_allele_unmapped.filtered_polymorphic_sites.fasta"
-dna <- read_in_seq_aln(aln_file)
+aln_file <- "KPNIH1_genome_aln_w_alt_allele_unmapped.filtered_polymorphic_sites.fasta"
+dna <- read_in_seq_aln(test_path("testdata", aln_file))
 
 # Get variable positions in the alignment
 dna_var_pos <- apply(dna, 2, \(x) sum(x == x[1]) < nrow(dna))

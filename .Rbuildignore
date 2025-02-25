@@ -1,2 +1,4 @@
 figures/
 design_docs/
+^\.github$
+^codecov\.yml$
