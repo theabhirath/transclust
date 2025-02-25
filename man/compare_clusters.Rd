@@ -21,7 +21,8 @@ A comparison of the content of clusters.
 Compares the content of clusters created with two different methods.
 }
 \examples{
-# Example usage:
+\dontrun{
 compare_clusters(clusters1, clusters2, "prefix")
+}
 
 }

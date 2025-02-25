@@ -11,8 +11,9 @@
 #' @export
 #'
 #' @examples
-#' # Example usage:
+#' \dontrun{
 #' compare_clusters(clusters1, clusters2, "prefix")
+#' }
 #'
 compare_clusters <- function(clusters1, clusters2, prefix) {
     # Unique cluster labels
@@ -57,8 +58,9 @@ compare_clusters <- function(clusters1, clusters2, prefix) {
 #' @export
 #'
 #' @examples
-#' # Example usage:
+#' \dontrun{
 #' # distances <- cluster_genetic_context(clusters, seq2pt, ip_seqs, snp_dist, "my_analysis")
+#' }
 #'
 cluster_genetic_context <- function(clusters, seq2pt, ip_seqs, snp_dist, prefix) {
     # Subset of isolates assigned to clusters

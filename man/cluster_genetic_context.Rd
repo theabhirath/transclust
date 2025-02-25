@@ -24,7 +24,8 @@ A matrix containing intra-cluster and inter-cluster genetic distances.
 Produces summary plots regarding genetic distances within and between transmission clusters.
 }
 \examples{
-# Example usage:
+\dontrun{
 # distances <- cluster_genetic_context(clusters, seq2pt, ip_seqs, snp_dist, "my_analysis")
+}
 
 }
