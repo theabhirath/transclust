@@ -1,4 +1,4 @@
-load(test_path("testdata", "init.RData"))
+load(test_path("testdata", "init.Rdata"))
 
 # Read in sequence file
 aln_file <- "KPNIH1_genome_aln_w_alt_allele_unmapped.filtered_polymorphic_sites.fasta"
