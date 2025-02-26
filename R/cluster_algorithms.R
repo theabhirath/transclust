@@ -21,18 +21,20 @@ get_tn_clusters_snp_thresh <- function(dna_aln, snp_dist, snp_thresh) {
     upgma_sub_trees <- ape::subtrees(upgma_tree)
 
     # Pre-compute the size and labels of each subtree to avoid recomputing
-    sub_tree_data <- lapply(upgma_sub_trees, \(st) list(size = length(st$tip.label), labels = st$tip.label))
+    sub_tree_data <- lapply(upgma_sub_trees, function(st) list(size = length(st$tip.label), labels = st$tip.label))
 
     # Sequentially assign each cluster to the best matching subtree
     st_clusters <- vapply(unique(clusters), FUN = function(c) {
         # Count how many sequences in the cluster are in each subtree
-        sub_tree_match <- vapply(sub_tree_data, \(st) sum(names(clusters)[clusters == c] %in% st$labels), numeric(1))
+        sub_tree_match <- vapply(sub_tree_data, function(st) {
+            sum(names(clusters)[clusters == c] %in% st$labels)
+        }, numeric(1))
         # Get index of best-matching subtree
         sub_tree_match_i <- which(sub_tree_match == max(sub_tree_match))
         # If the cluster has more than one sequence, assign it to the smallest matching subtree
         # else assign it to the default subtree
         if (sum(clusters == c) > 1) {
-            smallest_subtree <- which.min(vapply(sub_tree_data[sub_tree_match_i], \(st) st$size, numeric(1)))
+            smallest_subtree <- which.min(vapply(sub_tree_data[sub_tree_match_i], function(st) st$size, numeric(1)))
             sub_tree_match_i[smallest_subtree]
         } else {
             1
