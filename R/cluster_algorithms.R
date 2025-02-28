@@ -92,54 +92,17 @@ get_tn_clusters_MSV_SVst_index_first <- function(dna_aln, snp_dist, ip_seqs, ip_
     #####################################################################################
     # 2. Compute the shared variant matrix #####
     # For each pair of isolates, we compute the number of positions where:
-    #   1. the isolate's base differs from the out-group,
-    #   2. the two isolates share the same base,
-    #   3. the base is not a gap ('-') or ambiguous ('n'),
+    #   a. the isolate's base differs from the out-group,
+    #   b. the two isolates share the same base,
+    #   c. the base is not a gap ('-') or ambiguous ('n'),
     # and then we convert this similarity count to a distance-like measure.
-    #####################################################################################
-    n_isolates <- nrow(dna_aln)
+    ####################################################################################
+    # Call the Rcpp function to compute the shared variant matrix
+    dna_shared_mat <- computeSharedMatrix(dna_aln, out_group)
+
     isolate_names <- rownames(dna_aln)
-
-    # Initialize an empty matrix to store the computed values
-    dna_shared_mat <- matrix(0, nrow = n_isolates, ncol = n_isolates, dimnames = list(isolate_names, isolate_names))
-
-    # Get all unique pairs of isolates
-    pair_indices <- combn(n_isolates, 2)
-    # Preallocate vector to hold shared variant counts
-    shared_counts <- numeric(ncol(pair_indices))
-
-    # Pre-calculate valid positions for the out-group to avoid repeated work
-    # The out-group's base must be neither '-' nor 'n' i.e. not ambiguous
-    out_valid <- (dna_aln[out_group, ] != "-" & dna_aln[out_group, ] != "n")
-
-    # Loop over each pair to compute the count of shared variants
-    for (k in seq_len(ncol(pair_indices))) {
-        i <- pair_indices[1, k]
-        j <- pair_indices[2, k]
-        # Conditions:
-        #   1. The base of isolate i must differ from the out-group
-        #   2. Isolates i and j must have the same base
-        #   3. The base of isolate i must be neither '-' nor 'n' i.e. not ambiguous
-        #   4. The out-group's base must be valid
-        cond <- (dna_aln[i, ] != dna_aln[out_group, ]) &
-            (dna_aln[i, ] == dna_aln[j, ]) &
-            (dna_aln[i, ] != "-" & dna_aln[i, ] != "n") &
-            out_valid
-        shared_counts[k] <- sum(cond)
-    }
-
-    # Transform counts into a distance-like metric
-    # We subtract each count from the maximum observed count
-    max_shared <- max(shared_counts)
-    for (k in seq_len(ncol(pair_indices))) {
-        i <- pair_indices[1, k]
-        j <- pair_indices[2, k]
-        value <- max_shared - shared_counts[k]
-        dna_shared_mat[i, j] <- value
-        dna_shared_mat[j, i] <- value
-    }
-    # Diagonals are set to infinity
-    diag(dna_shared_mat) <- Inf
+    rownames(dna_shared_mat) <- isolate_names
+    colnames(dna_shared_mat) <- isolate_names
 
     # log completion of phase to standard output
     message("Phase 2 complete: Shared variant matrix computation")
@@ -152,22 +115,8 @@ get_tn_clusters_MSV_SVst_index_first <- function(dna_aln, snp_dist, ip_seqs, ip_
     #   - No outside isolate has the same base as the subtree.
     # The total count of such sites is stored for each subtree.
     ##############################################################################
-    sub_trees_sv <- vapply(sub_trees, function(st) {
-        # For each column in the alignment, test if it is a "defining variant" for the subtree.
-        sv_pos <- apply(dna_aln, 2, function(column) {
-            # Check if all tips in the subtree share the same base and that base is not 'n'.
-            same_in_subtree <- (length(unique(column[st$tip.label])) == 1) &&
-                (column[st$tip.label[1]] != "n")
-            # Get bases for isolates not in the subtree.
-            outside <- setdiff(isolate_names, st$tip.label)
-            # Outside should have at least one base (ignoring 'n') that is different.
-            outside_diff <- length(unique(setdiff(as.character(column[outside]), "n"))) > 0
-            # Ensure that none of the outside isolates match the subtree’s base.
-            none_match <- sum(as.character(column[outside]) == as.character(column[st$tip.label[1]])) == 0
-            same_in_subtree && outside_diff && none_match
-        })
-        sum(sv_pos > 0)
-    }, numeric(1))
+    # Call the Rcpp function to compute defining variants
+    sub_trees_sv <- computeDefiningVariants(dna_aln, isolate_names, sub_trees)
 
     # log completion of phase to standard output
     message("Phase 3 complete: Defining variant identification")
@@ -198,12 +147,12 @@ get_tn_clusters_MSV_SVst_index_first <- function(dna_aln, snp_dist, ip_seqs, ip_
             seqs <- intersect(names(seq2pt)[seq2pt == pt], st$tip.label)
             other <- setdiff(st$tip.label, seqs)
             # If there are no other sequences, return the first one
-            if (length(other) == 0) {
-                seqs[1]
-            } else {
-                # Otherwise, find the sequence with the minimum shared variant distance to all other sequences
+            # Otherwise, find the sequence with the minimum shared variant distance to all other sequences
+            if (length(other) > 0) {
                 min_vals <- sapply(seqs, function(seq) min(dna_shared_mat[other, seq]))
                 seqs[which.min(min_vals)]
+            } else {
+                seqs[1]
             }
         }, character(1))
         # Get the distance from the representative to all other isolates in the subtree

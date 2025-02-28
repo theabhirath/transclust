@@ -2,5 +2,8 @@
 
 export(cluster_genetic_context)
 export(compare_clusters)
+export(get_tn_clusters_MSV_SVst_index_first)
 export(get_tn_clusters_snp_thresh)
 export(read_in_seq_aln)
+importFrom(Rcpp,sourceCpp)
+useDynLib(transclust, .registration = TRUE)
