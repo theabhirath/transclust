@@ -23,6 +23,7 @@ Imports:
     phangorn,
     phytools,
     RColorBrewer,
+    Rcpp,
     xlsx
 Suggests:
     fastcluster,
@@ -32,3 +33,5 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.2
 Roxygen: list(markdown = TRUE)
+LinkingTo: 
+    Rcpp
