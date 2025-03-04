@@ -133,19 +133,22 @@ get_tn_clusters_MSV_SVst_index_first <- function(dna_aln, snp_dist, ip_seqs, ip_
     # This gives us subtrees that are valid clusters. Valid clusters are those which have
     # no more than one index that occurs before converts.
     #####################################################################################
+    patient_seq_map <- split(names(seq2pt), seq2pt)
     subtree_metrics <- lapply(seq_along(sub_trees), function(st_i) {
         st <- sub_trees[[st_i]]
+        tip_labels <- st$tip.label
         # Identify intake-positive sequences in the subtree
-        ip_in_sub <- intersect(ip_seqs, st$tip.label)
+        ip_in_sub <- intersect(ip_seqs, tip_labels)
         # Determine the earliest date among convert sequences (non-intake-positives)
-        convert_dates <- dates[setdiff(st$tip.label, ip_pt_seqs)]
+        convert_dates <- dates[setdiff(tip_labels, ip_pt_seqs)]
         min_convert_date <- if (length(convert_dates) > 0) min(convert_dates) else Inf
         # Filter intake-positives to those that occur on/before the cutoff
         valid_ip <- ip_in_sub[dates[ip_in_sub] <= min_convert_date]
         # Select one representative sequence per unique patient among valid intake-positives
-        ip_rep <- vapply(unique(seq2pt[valid_ip]), function(pt) {
-            seqs <- intersect(names(seq2pt)[seq2pt == pt], st$tip.label)
-            other <- setdiff(st$tip.label, seqs)
+        ip_patients <- unique(seq2pt[valid_ip])
+        ip_rep <- vapply(ip_patients, function(pt) {
+            seqs <- intersect(patient_seq_map[[pt]], tip_labels)
+            other <- setdiff(tip_labels, seqs)
             # If there are no other sequences, return the first one
             # Otherwise, find the sequence with the minimum shared variant distance to all other sequences
             if (length(other) > 0) {
@@ -157,25 +160,25 @@ get_tn_clusters_MSV_SVst_index_first <- function(dna_aln, snp_dist, ip_seqs, ip_
         }, character(1))
         # Get the distance from the representative to all other isolates in the subtree
         shared_counts_rep <- vapply(ip_rep, function(ip) {
-            min(dna_shared_mat[setdiff(st$tip.label, ip), ip])
+            min(dna_shared_mat[setdiff(tip_labels, ip), ip])
         }, numeric(1))
         # Compute cluster score if there are defining variants and index isolates are not overly
         # distant from the representative sequence (i.e. their shared variant counts are nearly identical)
         score <- if (sub_trees_sv[st_i] > 0 && length(unique(shared_counts_rep)) <= 1) {
             # Reward intake-positives that could have started a cluster
             ip_convert_seq_count <- length(setdiff(
-                st$tip.label,
+                tip_labels,
                 ip_pt_seqs[seq2pt[ip_pt_seqs] %in% setdiff(unique(seq2pt), seq2pt[unlist(ip_rep)])]
             ))
             # Penalize intake-positives that could not have started a cluster
-            ip_pt_count <- sum(st$tip.label %in% ip_pt_seqs) / 10^6
+            ip_pt_count <- sum(tip_labels %in% ip_pt_seqs) / 1e6
             ip_convert_seq_count - ip_pt_count
         } else {
             0
         }
         # Compute index count: subtrees that have an index before all converts
-        num_converts <- length(setdiff(st$tip.label, ip_pt_seqs))
-        num_ip_pts <- length(unique(seq2pt[intersect(st$tip.label, ip_seqs)]))
+        num_converts <- length(setdiff(tip_labels, ip_pt_seqs))
+        num_ip_pts <- length(unique(seq2pt[intersect(tip_labels, ip_seqs)]))
         index_count <- if (length(valid_ip) > 0 && num_converts > 0) num_ip_pts else 0
         # Return both metrics
         list(score = score, index_count = index_count)
@@ -200,14 +203,13 @@ get_tn_clusters_MSV_SVst_index_first <- function(dna_aln, snp_dist, ip_seqs, ip_
     #  - Return a vector of clusters for each isolate.
     #####################################################################################
     clusters <- vapply(isolate_names, function(x) {
-        st_scores <- vapply(which(sub_trees_valid > 0), function(st_i) {
+        valid_indices <- which(sub_trees_valid > 0)
+        st_scores <- vapply(valid_indices, function(st_i) {
             st <- sub_trees[[st_i]]
-            # Skip if the isolate is not in the subtree
-            if (!(x %in% st$tip.label)) {
-                return(0)
-            }
+            # Skip and early return if the isolate is not in the subtree
+            if (!(x %in% st$tip.label)) return(0)
             # Check for nested clusters:
-            nested <- vapply(setdiff(which(sub_trees_valid > 0), st_i), function(sub_i) {
+            nested <- vapply(setdiff(valid_indices, st_i), function(sub_i) {
                 as.integer(all(sub_trees[[sub_i]]$tip.label %in% st$tip.label) &&
                                sub_trees_index_first[sub_i] < sub_trees_index_first[st_i] &&
                                sub_trees_index_first[sub_i] > 0)
@@ -216,7 +218,7 @@ get_tn_clusters_MSV_SVst_index_first <- function(dna_aln, snp_dist, ip_seqs, ip_
         }, numeric(1))
         # If no valid subtrees are found, default to cluster 1
         # Otherwise, assign the cluster based on the subtree with the highest score
-        if (length(st_scores) == 0 || max(st_scores) <= 0) 1 else which(sub_trees_valid > 0)[which.max(st_scores)]
+        if (length(st_scores) == 0 || max(st_scores) <= 0) 1 else valid_indices[which.max(st_scores)]
     }, numeric(1))
 
     # log completion of phase to standard output
