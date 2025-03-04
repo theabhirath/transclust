@@ -1,8 +1,9 @@
 #include <unordered_map>
 #include <Rcpp.h>
-
-typedef unsigned __int128 uint128_t;
 using namespace Rcpp;
+
+// unsigned 128-bit integer
+typedef unsigned __int128 uint128_t;
 
 // [[Rcpp::export]]
 NumericMatrix computeSharedMatrix(CharacterMatrix dna_aln, int out_group) {
@@ -93,6 +94,17 @@ IntegerVector computeDefiningVariants(CharacterMatrix dna_aln, CharacterVector i
         isolate_index_map[Rcpp::as<std::string>(isolate_names[i])] = i;
     }
 
+    // Define a getter function for indices from the map
+    auto get_index = [&](const std::string &tip) -> int {
+        auto it = isolate_index_map.find(tip);
+        try {
+            if (it == isolate_index_map.end()) throw std::out_of_range("Index not found");
+            return it->second;
+        } catch (const std::out_of_range &e) {
+            Rcpp::stop("Tip label '" + tip + "' not found in isolate_names.");
+        }
+    };
+
     // Vector to store the number of defining variants for each subtree
     IntegerVector defining_variants(n_subtrees);
 
@@ -104,21 +116,21 @@ IntegerVector computeDefiningVariants(CharacterMatrix dna_aln, CharacterVector i
         CharacterVector subtree_tip_labels = subtree["tip.label"];
         int n_subtree_tips = subtree_tip_labels.size();
 
-        // Compute subtree indices and mark them in a mask for faster access
-        // Bit masks and bitwise operations are used for efficiency
+        // Compute subtree indices
         std::vector<int> subtree_indices;
-        uint128_t in_subtree_mask = 0;
+        std::vector<bool> in_subtree(n_isolates, false);
+        subtree_indices.reserve(n_subtree_tips);
         for (int t = 0; t < n_subtree_tips; t++) {
             std::string tip_label = Rcpp::as<std::string>(subtree_tip_labels[t]);
-            int index = isolate_index_map[tip_label]; // 0-based index
+            int index = get_index(tip_label);
             subtree_indices.push_back(index);
-            in_subtree_mask |= ((uint128_t)1 << index);
+            in_subtree[index] = true;
         }
-
         // Get the indices of isolates not in the subtree
         std::vector<int> outside_indices;
+        outside_indices.reserve(n_isolates - subtree_indices.size());
         for (int i = 0; i < n_isolates; i++) {
-            if (!(in_subtree_mask & ((uint128_t)1 << i))) outside_indices.push_back(i);
+            if (!in_subtree[i]) outside_indices.push_back(i);
         }
 
         // Initialize the defining variant count for this subtree
@@ -126,11 +138,11 @@ IntegerVector computeDefiningVariants(CharacterMatrix dna_aln, CharacterVector i
         // Iterate over each column in the alignment
         for (int j = 0; j < n_cols; j++) {
             // Check that all subtree isolates have the same base at this column
-            char first_base = aln[subtree_indices[0]][j];
+            char first_base = aln[subtree_indices[0]][j]; 
             if (first_base == 'n') continue; // early continue if ambiguous base
             bool same_in_subtree = true;
-            for (int k : subtree_indices) {
-                if (aln[k][j] != first_base) {
+            for (int idx : subtree_indices) {
+                if (aln[idx][j] != first_base) {
                     same_in_subtree = false;
                     break;
                 }
@@ -140,21 +152,21 @@ IntegerVector computeDefiningVariants(CharacterMatrix dna_aln, CharacterVector i
             // This is an alternative to avoid having to use a boolean set – bitwise operations are faster
             // We use a 128-bit mask to track which bases are seen and assume the bases are standard ASCII characters
             uint128_t seen = 0;
-            for (int k : outside_indices) {
-                char base = aln[k][j];
+            for (int idx: outside_indices) {
+                char base = aln[idx][j];
                 if (base == 'n') continue; // ignore 'n'
                 int ascii_code = static_cast<int>(base);
                 seen |= ((uint128_t)1 << ascii_code); // mark the base as seen
             }
-
             // Count unique bases by splitting the 128-bit integer into two 64-bit halves
+            // and tallying total bits set
             uint64_t low = (uint64_t) seen;
             uint64_t high = (uint64_t) (seen >> 64);
             int unique_count = __builtin_popcountll(low) + __builtin_popcountll(high);
 
-            // Condition: outside must have more than one unique base (ignoring 'n')
+            // Condition: outside must have at least one unique base (ignoring 'n')
             // and the bit corresponding to the first base must not be set
-            if (unique_count > 1 && (seen & ((uint128_t)1 << static_cast<int>(first_base))) == 0) {
+            if (unique_count >= 1 && !((seen >> static_cast<int>(first_base)) & 1)) {
                 dvcount++;
             }
         }
