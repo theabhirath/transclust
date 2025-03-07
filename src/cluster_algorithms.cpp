@@ -138,10 +138,10 @@ IntegerVector computeDefiningVariants(CharacterMatrix dna_aln, CharacterVector i
         // Iterate over each column in the alignment
         for (int j = 0; j < n_cols; j++) {
             // Check that all subtree isolates have the same base at this column
-            char first_base = aln[subtree_indices[0]][j]; 
+            char first_base = aln[subtree_indices[0]][j];
             if (first_base == 'n') continue; // early continue if ambiguous base
             bool same_in_subtree = true;
-            for (int idx : subtree_indices) {
+            for (int idx: subtree_indices) {
                 if (aln[idx][j] != first_base) {
                     same_in_subtree = false;
                     break;

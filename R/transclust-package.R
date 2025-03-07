@@ -1,3 +1,8 @@
+#' @keywords internal
+"_PACKAGE"
+
+## usethis namespace: start
 #' @useDynLib transclust, .registration = TRUE
 #' @importFrom Rcpp sourceCpp
-"_PACKAGE"
+## usethis namespace: end
+NULL

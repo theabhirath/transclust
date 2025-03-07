@@ -20,9 +20,3 @@ A comparison of the content of clusters.
 \description{
 Compares the content of clusters created with two different methods.
 }
-\examples{
-\dontrun{
-compare_clusters(clusters1, clusters2, "prefix")
-}
-
-}

@@ -8,17 +8,19 @@
 #'
 #' @return A vector indicating the cluster that each isolate belongs to.
 #'
-#' @export
+#' @importFrom ape as.phylo subtrees
+#' @importFrom stats as.dist hclust cutree setNames
 #'
+#' @export
 get_tn_clusters_snp_thresh <- function(dna_aln, snp_dist, snp_thresh) {
     # Perform hierarchical clustering based on SNP distance matrix
     snp_clust <- hclust(as.dist(snp_dist))
     clusters <- cutree(snp_clust, h = snp_thresh)
 
     # Convert hierarchical clustering into a phylogenetic tree
-    upgma_tree <- ape::as.phylo(snp_clust)
+    upgma_tree <- as.phylo(snp_clust)
     # Extract all subtrees from the phylogenetic tree
-    upgma_sub_trees <- ape::subtrees(upgma_tree)
+    upgma_sub_trees <- subtrees(upgma_tree)
 
     # Pre-compute the size and labels of each subtree to avoid recomputing
     sub_tree_data <- lapply(upgma_sub_trees, function(st) list(size = length(st$tip.label), labels = st$tip.label))
@@ -67,6 +69,10 @@ get_tn_clusters_snp_thresh <- function(dna_aln, snp_dist, snp_thresh) {
 #' members or intake-positive patients occur after converts. This clustering also requires that clusters be
 #' defined by at least one shared variant that other isolates don't have.
 #'
+#' @importFrom ape nj subtrees
+#' @importFrom phytools reroot
+#' @importFrom phangorn optim.parsimony as.phyDat
+#'
 #' @export
 get_tn_clusters_MSV_SVst_index_first <- function(dna_aln, snp_dist, ip_seqs, ip_pt_seqs,
                                                  seq2pt, dates, pars = FALSE, tree = NULL) {
@@ -80,13 +86,14 @@ get_tn_clusters_MSV_SVst_index_first <- function(dna_aln, snp_dist, ip_seqs, ip_
     # Determine out-group: the isolate with the maximum average SNP distance
     out_group <- which.max(rowMeans(snp_dist))
     if (is.null(tree)) {
-        nj_tree <- ape::nj(snp_dist)
-        nj_tree <- phytools::reroot(nj_tree, which(nj_tree$tip.label == row.names(snp_dist)[out_group]))
+        nj_tree <- nj(snp_dist)
+        nj_tree <- reroot(nj_tree, which(nj_tree$tip.label == row.names(snp_dist)[out_group]))
         # If pars is TRUE, create a parsimony tree
-        tree <- if (pars) phangorn::optim.parsimony(nj_tree, phangorn::as.phyDat(dna_aln), all = TRUE) else nj_tree
+        tree <- if (pars) optim.parsimony(nj_tree, as.phyDat(dna_aln), all = TRUE) else nj_tree
     }
-    sub_trees <- ape::subtrees(tree)
-    # log completion of phase to standard output
+    sub_trees <- subtrees(tree)
+
+    # Log completion of phase to standard output
     message("Phase 1 complete: Tree construction and subtree extraction")
 
     #####################################################################################
@@ -104,7 +111,7 @@ get_tn_clusters_MSV_SVst_index_first <- function(dna_aln, snp_dist, ip_seqs, ip_
     rownames(dna_shared_mat) <- isolate_names
     colnames(dna_shared_mat) <- isolate_names
 
-    # log completion of phase to standard output
+    # Log completion of phase to standard output
     message("Phase 2 complete: Shared variant matrix computation")
 
     ##############################################################################
@@ -118,7 +125,7 @@ get_tn_clusters_MSV_SVst_index_first <- function(dna_aln, snp_dist, ip_seqs, ip_
     # Call the Rcpp function to compute defining variants
     sub_trees_sv <- computeDefiningVariants(dna_aln, isolate_names, sub_trees)
 
-    # log completion of phase to standard output
+    # Log completion of phase to standard output
     message("Phase 3 complete: Defining variant identification")
 
     #####################################################################################
@@ -189,7 +196,7 @@ get_tn_clusters_MSV_SVst_index_first <- function(dna_aln, snp_dist, ip_seqs, ip_
     sub_trees_valid <- unlist(metrics_mat[, "score"])
     sub_trees_index_first <- unlist(metrics_mat[, "index_count"])
 
-    # log completion of phase to standard output
+    # Log completion of phase to standard output
     message("Phase 4 complete: Cluster validation and scoring")
 
     #####################################################################################
@@ -208,12 +215,13 @@ get_tn_clusters_MSV_SVst_index_first <- function(dna_aln, snp_dist, ip_seqs, ip_
             st <- sub_trees[[st_i]]
             # Skip and early return if the isolate is not in the subtree
             if (!(x %in% st$tip.label)) return(0)
-            # Check for nested clusters:
+            # Check for nested clusters
             nested <- vapply(setdiff(valid_indices, st_i), function(sub_i) {
                 as.integer(all(sub_trees[[sub_i]]$tip.label %in% st$tip.label) &&
                                sub_trees_index_first[sub_i] < sub_trees_index_first[st_i] &&
                                sub_trees_index_first[sub_i] > 0)
             }, integer(1))
+            # If not nested, return score
             if (sum(nested) == 0) sub_trees_valid[[st_i]] else 0
         }, numeric(1))
         # If no valid subtrees are found, default to cluster 1
@@ -221,7 +229,7 @@ get_tn_clusters_MSV_SVst_index_first <- function(dna_aln, snp_dist, ip_seqs, ip_
         if (length(st_scores) == 0 || max(st_scores) <= 0) 1 else valid_indices[which.max(st_scores)]
     }, numeric(1))
 
-    # log completion of phase to standard output
+    # Log completion of phase to standard output
     message("Phase 5 complete: Cluster assignment")
 
     # Return the clusters
