@@ -15,6 +15,23 @@ ref <- which.max(rowMeans(as.matrix(snp_dist)))
 # test get_tn_clusters_snp_thresh
 test_that("get_tn_clusters_snp_thresh works", {
     clusters <- get_tn_clusters_snp_thresh(dna_var, snp_dist, 10)
-    # clusters should be a vector.
+    # clusters should be a vector
     expect_true(is.vector(clusters))
+    # clusters should be numeric
+    expect_true(is.numeric(clusters))
+    # clusters should have the same length as the number of sequences
+    expect_equal(length(clusters), nrow(dna_var))
+})
+
+# test get_tn_clusters_MSV_SVst_index_first
+test_that("get_tn_clusters_MSV_SVst_index_first works", {
+    clusters <- get_tn_clusters_MSV_SVst_index_first(
+        dna_var, snp_dist, ip_seqs_3days, ip_seqs, dna_pt_labels, dates, pars = TRUE
+    )
+    # clusters should be a vector
+    expect_true(is.vector(clusters))
+    # clusters should be numeric
+    expect_true(is.numeric(clusters))
+    # clusters should have the same length as the number of sequences
+    expect_equal(length(clusters), nrow(dna_var))
 })
