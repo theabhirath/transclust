@@ -1,4 +1,6 @@
 #include <unordered_map>
+#include <string>
+#include <vector>
 #include <Rcpp.h>
 using namespace Rcpp;
 
@@ -23,50 +25,71 @@ NumericMatrix computeSharedMatrix(CharacterMatrix dna_aln, int out_group) {
         aln[i] = row_str;
     }
 
-    // Precompute validity of each column for the out_group row
-    std::vector<bool> out_valid(n_cols);
+    // Precompute valid columns for the outgroup
+    std::vector<int> out_valid;
+    out_valid.reserve(n_cols);
     for (int k = 0; k < n_cols; k++) {
         char base_out = aln[out_group][k];
-        out_valid[k] = (base_out != '-' && base_out != 'n');
+        bool is_valid = (base_out != '-' && base_out != 'n');
+        if (is_valid) out_valid.push_back(k);
     }
 
-    // Matrix to store intermediate shared counts
-    NumericMatrix temp(n_isolates, n_isolates);
+    // Matrix to store intermediate shared counts. Use double pointers and
+    // only allocate upper triangle to save space
+    std::vector<int*> temp(n_isolates);
+    for (int i = 0; i < n_isolates; i++) {
+        if (i < n_isolates - 1) {
+            temp[i] = new int[n_isolates - i - 1];
+        } else {
+            // The last row has no i<j pairs
+            temp[i] = nullptr;
+        }
+    }
+    // Initialize the max shared count
     int max_shared = 0;
 
     // Compute shared counts for each pair of isolates (only once per pair)
     for (int i = 0; i < n_isolates; i++) {
         for (int j = i + 1; j < n_isolates; j++) {
             int count = 0;
-            for (int k = 0; k < n_cols; k++) {
-                char base_i = aln[i][k];
-                char base_out = aln[out_group][k];
-                char base_j = aln[j][k];
-                // Check all conditions at once.
-                if (base_i != base_out && base_i == base_j &&
-                    base_i != '-' && base_i != 'n' && out_valid[k]) {
-                    count++;
+            // Check each valid column for shared variants
+            for (int idx: out_valid) {
+                char base_i = aln[i][idx];
+                if (base_i == '-' || base_i == 'n') continue; // skip invalid bases
+                char base_out = aln[out_group][idx];
+                if (base_i == base_out) continue; // skip if same as outgroup
+                char base_j = aln[j][idx];
+                if (base_i == base_j) { // isolates i and j share the same base
+                    count++; // valid shared variant found
                 }
             }
-            temp(i, j) = count;
-            temp(j, i) = count;
+            // Store the count in the upper triangle of the matrix
+            temp[i][j - i - 1] = count;
             if (count > max_shared) max_shared = count;
         }
     }
 
-    // Create the final shared variant matrix:
+    // Create the final shared variant matrix
     // Each off-diagonal element is max_shared - shared_count, and diagonal is Inf.
     NumericMatrix shared_mat(n_isolates, n_isolates);
     for (int i = 0; i < n_isolates; i++) {
-        for (int j = 0; j < n_isolates; j++) {
+        for (int j = i; j < n_isolates; j++) {
             if (i == j) {
                 shared_mat(i, j) = R_PosInf;
             } else {
-                shared_mat(i, j) = max_shared - temp(i, j);
+                int val = max_shared - temp[i][j - i - 1];
+                // Fill in the matrix symmetrically
+                shared_mat(i, j) = val;
+                shared_mat(j, i) = val;
             }
         }
     }
 
+    // Clean up the temporary array
+    for (int i = 0; i < n_isolates; i++) {
+        delete[] temp[i];
+    }
+    // Return the shared variant matrix
     return shared_mat;
 }
 
