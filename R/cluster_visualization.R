@@ -8,40 +8,37 @@
 #' @param prefix Prefix to use for naming figure output files.
 #'
 #' @return A comparison of the content of clusters.
+#'
+#' @importFrom pheatmap pheatmap
+#'
 #' @export
-#'
-#' @examples
-#' \dontrun{
-#' compare_clusters(clusters1, clusters2, "prefix")
-#' }
-#'
 compare_clusters <- function(clusters1, clusters2, prefix) {
     # Unique cluster labels
-    clusters1_unique <- unique(clusters1)
-    clusters2_unique <- unique(clusters2)
+    clusters1_unique <- sort(unique(clusters1))
+    clusters2_unique <- sort(unique(clusters2))
 
     # Create a matrix to store the overlap between clusters
     cluster_overlap <- matrix(
         ncol = length(clusters2_unique), nrow = length(clusters1_unique),
-        dimnames = list(sort(clusters1_unique), sort(clusters2_unique))
+        dimnames = list(clusters1_unique, clusters2_unique)
     )
 
     # Compute cluster overlap
-    for (c1 in as.character(sort(clusters1_unique))) {
-        for (c2 in as.character(sort(clusters2_unique))) {
-            cluster_overlap[c1, c2] <- length(intersect(
-                names(clusters1)[clusters1 == c1],
-                names(clusters2)[clusters2 == c2]
+    for (cluster1 in as.character(clusters1_unique)) {
+        for (cluster2 in as.character(clusters2_unique)) {
+            cluster_overlap[cluster1, cluster2] <- length(intersect(
+                names(clusters1)[clusters1 == cluster1],
+                names(clusters2)[clusters2 == cluster2]
             )) / length(union(
-                names(clusters1)[clusters1 == c1],
-                names(clusters2)[clusters2 == c2]
+                names(clusters1)[clusters1 == cluster1],
+                names(clusters2)[clusters2 == cluster2]
             ))
         }
     }
 
     # Plot heatmap of cluster overlap
-    file <- paste("figures/", format(Sys.time(), "%Y-%m-%d"), "_", prefix, "_cluster_member_compare.pdf", sep = "")
-    pheatmap::pheatmap(cluster_overlap, filename = file)
+    filename <- paste0("figures/", format(Sys.time(), "%Y-%m-%d"), "_", prefix, "_cluster_member_compare.pdf")
+    pheatmap(cluster_overlap, filename = filename, width = 10, height = 10)
 }
 
 #' Cluster Genetic Context
@@ -56,12 +53,6 @@ compare_clusters <- function(clusters1, clusters2, prefix) {
 #'
 #' @return A matrix containing intra-cluster and inter-cluster genetic distances.
 #' @export
-#'
-#' @examples
-#' \dontrun{
-#' # distances <- cluster_genetic_context(clusters, seq2pt, ip_seqs, snp_dist, "my_analysis")
-#' }
-#'
 cluster_genetic_context <- function(clusters, seq2pt, ip_seqs, snp_dist, prefix) {
     # Subset of isolates assigned to clusters
     clusters_subset <- clusters[clusters != 1]

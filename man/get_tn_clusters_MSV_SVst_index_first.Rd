@@ -11,7 +11,7 @@ get_tn_clusters_MSV_SVst_index_first(
   ip_pt_seqs,
   seq2pt,
   dates,
-  pars = FALSE,
+  method = "pars",
   tree = NULL
 )
 }
@@ -29,7 +29,10 @@ presumed to be imported.}
 
 \item{dates}{A vector of isolate dates named by sequence IDs.}
 
-\item{pars}{Logical, if TRUE then use parsimony tree instead of the default neighbor joining tree.}
+\item{tree}{A tree to use if provided instead of the default neighbor joining tree.}
+
+\item{method}{A string indicating the method to use for tree construction. Options are
+"nj" (neighbor-joining) or "pars" (maximum parsimony). Default is "pars".}
 
 \item{tree}{A tree to use if provided instead of the default neighbor joining tree.}
 }

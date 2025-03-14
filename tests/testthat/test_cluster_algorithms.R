@@ -26,7 +26,7 @@ test_that("get_tn_clusters_snp_thresh works", {
 # test get_tn_clusters_MSV_SVst_index_first
 test_that("get_tn_clusters_MSV_SVst_index_first works", {
     clusters <- get_tn_clusters_MSV_SVst_index_first(
-        dna_var, snp_dist, ip_seqs_3days, ip_seqs, dna_pt_labels, dates, pars = TRUE
+        dna_var, snp_dist, ip_seqs_3days, ip_seqs, dna_pt_labels, dates
     )
     # clusters should be a vector
     expect_true(is.vector(clusters))

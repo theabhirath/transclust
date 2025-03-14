@@ -17,7 +17,7 @@ get_tn_clusters_snp_thresh <- function(dna_aln, snp_dist, snp_thresh) {
     snp_clust <- hclust(as.dist(snp_dist))
     clusters <- cutree(snp_clust, h = snp_thresh)
 
-    # Convert hierarchical clustering into a phylogenetic tree
+    # Convert hierarchical clustering into a phylogenetic tree using the UPGMA method
     upgma_tree <- as.phylo(snp_clust)
     # Extract all subtrees from the phylogenetic tree
     upgma_sub_trees <- subtrees(upgma_tree)
@@ -58,7 +58,8 @@ get_tn_clusters_snp_thresh <- function(dna_aln, snp_dist, snp_thresh) {
 #' @param ip_pt_seqs A vector of sequence IDs which correspond to intake-positive patients.
 #' @param seq2pt A named vector linking sequence IDs to patient IDs.
 #' @param dates A vector of isolate dates named by sequence IDs.
-#' @param pars Logical, if TRUE then use parsimony tree instead of the default neighbor joining tree.
+#' @param method A string indicating the method to use for tree construction. Options are
+#'               "nj" (neighbor-joining) or "pars" (maximum parsimony). Default is "pars".
 #' @param tree A tree to use if provided instead of the default neighbor joining tree.
 #'
 #' @return A vector indicating the cluster that each isolate belongs to.
@@ -69,30 +70,17 @@ get_tn_clusters_snp_thresh <- function(dna_aln, snp_dist, snp_thresh) {
 #' members or intake-positive patients occur after converts. This clustering also requires that clusters be
 #' defined by at least one shared variant that other isolates don't have.
 #'
-#' @importFrom ape nj subtrees
-#' @importFrom phytools reroot
-#' @importFrom phangorn optim.parsimony as.phyDat
-#'
+#' @importFrom ape subtrees
 #' @export
-get_tn_clusters_MSV_SVst_index_first <- function(dna_aln, snp_dist, ip_seqs, ip_pt_seqs,
-                                                 seq2pt, dates, pars = FALSE, tree = NULL) {
-
+get_tn_clusters_MSV_SVst_index_first <- function(dna_aln, snp_dist, ip_seqs, ip_pt_seqs, seq2pt,
+                                                 dates, method = "pars", tree = NULL) {
     #####################################################################################
-    # 1. Tree construction and subtree extraction #####
-    #   - If a tree is provided, we simply extract its subtrees. This will ignore the pars argument.
-    #   - If not provided, we construct a neighbor-joining tree and reroot it using the out-group.
-    #   - If pars is TRUE, we create a parsimony tree instead of the default neighbor joining tree.
+    # 1. Construct the phylogenetic tree #####
+    # Get subtrees from the phylogenetic tree
     #####################################################################################
-    # Determine out-group: the isolate with the maximum average SNP distance
-    out_group <- which.max(rowMeans(snp_dist))
-    if (is.null(tree)) {
-        nj_tree <- nj(snp_dist)
-        nj_tree <- reroot(nj_tree, which(nj_tree$tip.label == row.names(snp_dist)[out_group]))
-        # If pars is TRUE, create a parsimony tree
-        tree <- if (pars) optim.parsimony(nj_tree, as.phyDat(dna_aln), all = TRUE) else nj_tree
-    }
+    # If a tree is provided, use it. Otherwise, construct a new tree using the DNA alignment.
+    tree <- if (is.null(tree)) get_phylo_tree(dna_aln, snp_dist, method)
     sub_trees <- subtrees(tree)
-
     # Log completion of phase to standard output
     message("Phase 1 complete: Tree construction and subtree extraction")
 
@@ -105,9 +93,10 @@ get_tn_clusters_MSV_SVst_index_first <- function(dna_aln, snp_dist, ip_seqs, ip_
     # and then we convert this similarity count to a distance-like measure.
     ####################################################################################
     # Call the Rcpp function to compute the shared variant matrix
+    out_group <- which.max(rowMeans(snp_dist))
     dna_shared_mat <- computeSharedMatrix(dna_aln, out_group)
 
-    isolate_names <- rownames(dna_aln)
+    isolate_names <- row.names(dna_aln)
     rownames(dna_shared_mat) <- isolate_names
     colnames(dna_shared_mat) <- isolate_names
 
