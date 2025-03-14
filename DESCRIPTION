@@ -12,19 +12,15 @@ Authors@R:
 Description: An R package for transmission cluster analysis for pathogens.
 URL: https://github.com/theabhirath/transclust
 BugReports: https://github.com/theabhirath/transclust/issues
-License: file LICENSE
+License: MIT + file LICENSE
 Depends:
     R (>= 4.1)
 Imports:
     ape,
-    ggplot2,
-    heatmap3,
-    igraph,
+    pheatmap,
     phangorn,
     phytools,
-    RColorBrewer,
-    Rcpp,
-    xlsx
+    Rcpp
 Suggests:
     fastcluster,
     testthat (>= 3.0.0)

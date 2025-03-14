@@ -3,3 +3,4 @@ design_docs/
 ^\.github$
 ^codecov\.yml$
 .vscode/
+^LICENSE\.md$

@@ -1,0 +1,10 @@
+url: https://theabhirath.github.io/transclust
+
+authors:
+  Abhirath Anand:
+    href: theabhirath.github.io
+
+template:
+  bootstrap: 5
+  math-rendering: katex
+  light-switch: true
