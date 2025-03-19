@@ -3,7 +3,7 @@
 #' Performs clustering of isolates using a hard SNP distance cutoff.
 #'
 #' @param dna_aln A DNA object for sequences of interest.
-#' @param snp_dist A matrix of SNP distances between isolates.
+#' @param snp_dist A matrix of SNP distances between isolates constructed using a model of DNA evolution.
 #' @param snp_thresh A threshold for defining clusters.
 #'
 #' @return A vector indicating the cluster that each isolate belongs to.
@@ -17,16 +17,17 @@ get_tn_clusters_snp_thresh <- function(dna_aln, snp_dist, snp_thresh) {
     snp_clust <- hclust(as.dist(snp_dist))
     clusters <- cutree(snp_clust, h = snp_thresh)
 
-    # Convert hierarchical clustering into a phylogenetic tree using the UPGMA method
-    upgma_tree <- as.phylo(snp_clust)
+    # Convert hierarchical clustering into a phylogenetic tree
+    # using the complete linkage method
+    phylo_tree <- as.phylo(snp_clust)
     # Extract all subtrees from the phylogenetic tree
-    upgma_sub_trees <- subtrees(upgma_tree)
+    phylo_sub_trees <- subtrees(phylo_tree)
 
     # Pre-compute the size and labels of each subtree to avoid recomputing
-    sub_tree_data <- lapply(upgma_sub_trees, function(st) list(size = length(st$tip.label), labels = st$tip.label))
+    sub_tree_data <- lapply(phylo_sub_trees, function(st) list(size = length(st$tip.label), labels = st$tip.label))
 
     # Sequentially assign each cluster to the best matching subtree
-    st_clusters <- vapply(unique(clusters), FUN = function(c) {
+    st_clusters <- vapply(unique(clusters), function(c) {
         # Count how many sequences in the cluster are in each subtree
         sub_tree_match <- vapply(sub_tree_data, function(st) {
             sum(names(clusters)[clusters == c] %in% st$labels)
@@ -52,7 +53,7 @@ get_tn_clusters_snp_thresh <- function(dna_aln, snp_dist, snp_thresh) {
 #' This function identifies transmission clusters based on the number of shared variants.
 #'
 #' @param dna_aln A DNA object for sequences of interest.
-#' @param snp_dist A matrix of SNP distances between isolates.
+#' @param snp_dist A matrix of SNP distances between isolates constructed using a model of DNA evolution.
 #' @param ip_seqs A vector of sequence IDs which correspond to intake patient sequences
 #'                presumed to be imported.
 #' @param ip_pt_seqs A vector of sequence IDs which correspond to intake-positive patients.
@@ -73,13 +74,15 @@ get_tn_clusters_snp_thresh <- function(dna_aln, snp_dist, snp_thresh) {
 #' @importFrom ape subtrees
 #' @export
 get_tn_clusters_MSV_SVst_index_first <- function(dna_aln, snp_dist, ip_seqs, ip_pt_seqs, seq2pt,
-                                                 dates, method = "pars", tree = NULL) {
+                                                 dates, method = c("nj", "pars"), tree = NULL) {
     #####################################################################################
     # 1. Construct the phylogenetic tree #####
     # Get subtrees from the phylogenetic tree
     #####################################################################################
+    # Check if the method is valid
+    method <- match.arg(method)
     # If a tree is provided, use it. Otherwise, construct a new tree using the DNA alignment.
-    tree <- if (is.null(tree)) get_phylo_tree(dna_aln, snp_dist, method)
+    tree <- if (is.null(tree)) get_phylo_tree(dna_aln, snp_dist, method) else tree
     sub_trees <- subtrees(tree)
     # Log completion of phase to standard output
     message("Phase 1 complete: Tree construction and subtree extraction")

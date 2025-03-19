@@ -14,6 +14,10 @@ get_phylo_tree(dna_aln, snp_dist, method = c("nj", "pars"))
 \item{method}{A string indicating the method to use for tree construction. Options are
 "nj" (neighbor-joining) or "pars" (maximum parsimony).}
 }
+\value{
+A phylogenetic tree object.
+}
 \description{
-This function constructs a neighbor-joining or maximum parsimony phylogenetic tree from a DNA alignment object.
+This function constructs a neighbor-joining or maximum parsimony phylogenetic
+tree from a DNA alignment object.
 }

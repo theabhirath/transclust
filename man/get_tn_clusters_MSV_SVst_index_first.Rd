@@ -11,14 +11,14 @@ get_tn_clusters_MSV_SVst_index_first(
   ip_pt_seqs,
   seq2pt,
   dates,
-  method = "pars",
+  method = c("nj", "pars"),
   tree = NULL
 )
 }
 \arguments{
 \item{dna_aln}{A DNA object for sequences of interest.}
 
-\item{snp_dist}{A matrix of SNP distances between isolates.}
+\item{snp_dist}{A matrix of SNP distances between isolates constructed using a model of DNA evolution.}
 
 \item{ip_seqs}{A vector of sequence IDs which correspond to intake patient sequences
 presumed to be imported.}
@@ -28,8 +28,6 @@ presumed to be imported.}
 \item{seq2pt}{A named vector linking sequence IDs to patient IDs.}
 
 \item{dates}{A vector of isolate dates named by sequence IDs.}
-
-\item{tree}{A tree to use if provided instead of the default neighbor joining tree.}
 
 \item{method}{A string indicating the method to use for tree construction. Options are
 "nj" (neighbor-joining) or "pars" (maximum parsimony). Default is "pars".}

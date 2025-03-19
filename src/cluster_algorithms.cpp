@@ -7,6 +7,13 @@ using namespace Rcpp;
 // unsigned 128-bit integer
 typedef unsigned __int128 uint128_t;
 
+//' Compute the shared variant matrix
+//'
+//' @param dna_aln A matrix of DNA sequences (character matrix).
+//' @param out_group The index of the outgroup isolate (1-based).
+//'
+//' @return A matrix of shared variants, where each element represents the number
+//'         of shared variants between two isolates, with the diagonal set to Inf.
 // [[Rcpp::export]]
 NumericMatrix computeSharedMatrix(CharacterMatrix dna_aln, int out_group) {
     int n_isolates = dna_aln.nrow();
@@ -19,7 +26,7 @@ NumericMatrix computeSharedMatrix(CharacterMatrix dna_aln, int out_group) {
         std::string row_str = "";
         for (int j = 0; j < n_cols; j++) {
             // Assume each element is a single-character string.
-            std::string cell = Rcpp::as<std::string>(dna_aln(i, j));
+            std::string cell = as<std::string>(dna_aln(i, j));
             row_str.push_back(cell[0]);
         }
         aln[i] = row_str;
@@ -59,9 +66,8 @@ NumericMatrix computeSharedMatrix(CharacterMatrix dna_aln, int out_group) {
                 char base_out = aln[out_group][idx];
                 if (base_i == base_out) continue; // skip if same as outgroup
                 char base_j = aln[j][idx];
-                if (base_i == base_j) { // isolates i and j share the same base
-                    count++; // valid shared variant found
-                }
+                // If isolates i and j share the same base:
+                if (base_i == base_j) count++; // valid shared variant found
             }
             // Store the count in the upper triangle of the matrix
             temp[i][j - i - 1] = count;
@@ -93,6 +99,14 @@ NumericMatrix computeSharedMatrix(CharacterMatrix dna_aln, int out_group) {
     return shared_mat;
 }
 
+//' Compute the defining variants for each subtree
+//'
+//' @param dna_aln A matrix of DNA sequences (character matrix).
+//' @param isolate_names A vector of isolate names (character vector).
+//' @param subtrees A list of subtrees (phylo objects).
+//'
+//' @return A vector of integers representing the number of defining variants
+//'         for each subtree.
 // [[Rcpp::export]]
 IntegerVector computeDefiningVariants(CharacterMatrix dna_aln, CharacterVector isolate_names, List subtrees) {
     int n_isolates = dna_aln.nrow();
@@ -105,7 +119,7 @@ IntegerVector computeDefiningVariants(CharacterMatrix dna_aln, CharacterVector i
         std::string row_str = "";
         for (int j = 0; j < n_cols; j++) {
             // Assume each element is a single-character string
-            std::string cell = Rcpp::as<std::string>(dna_aln(i, j));
+            std::string cell = as<std::string>(dna_aln(i, j));
             row_str.push_back(cell[0]);
         }
         aln[i] = row_str;
@@ -114,7 +128,7 @@ IntegerVector computeDefiningVariants(CharacterMatrix dna_aln, CharacterVector i
     // Precompute mapping from isolate names to indices (0-based)
     std::unordered_map<std::string, int> isolate_index_map;
     for (int i = 0; i < n_isolates; i++) {
-        isolate_index_map[Rcpp::as<std::string>(isolate_names[i])] = i;
+        isolate_index_map[as<std::string>(isolate_names[i])] = i;
     }
 
     // Define a getter function for indices from the map
@@ -144,7 +158,7 @@ IntegerVector computeDefiningVariants(CharacterMatrix dna_aln, CharacterVector i
         std::vector<bool> in_subtree(n_isolates, false);
         subtree_indices.reserve(n_subtree_tips);
         for (int t = 0; t < n_subtree_tips; t++) {
-            std::string tip_label = Rcpp::as<std::string>(subtree_tip_labels[t]);
+            std::string tip_label = as<std::string>(subtree_tip_labels[t]);
             int index = get_index(tip_label);
             subtree_indices.push_back(index);
             in_subtree[index] = true;

@@ -9,7 +9,7 @@ get_tn_clusters_snp_thresh(dna_aln, snp_dist, snp_thresh)
 \arguments{
 \item{dna_aln}{A DNA object for sequences of interest.}
 
-\item{snp_dist}{A matrix of SNP distances between isolates.}
+\item{snp_dist}{A matrix of SNP distances between isolates constructed using a model of DNA evolution.}
 
 \item{snp_thresh}{A threshold for defining clusters.}
 }
