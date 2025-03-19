@@ -51,7 +51,7 @@
 <span>  <span class="va">ip_pt_seqs</span>,</span>
 <span>  <span class="va">seq2pt</span>,</span>
 <span>  <span class="va">dates</span>,</span>
-<span>  method <span class="op">=</span> <span class="st">"pars"</span>,</span>
+<span>  method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"nj"</span>, <span class="st">"pars"</span><span class="op">)</span>,</span>
 <span>  tree <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -65,7 +65,7 @@
 
 
 <dt id="arg-snp-dist">snp_dist<a class="anchor" aria-label="anchor" href="#arg-snp-dist"></a></dt>
-<dd><p>A matrix of SNP distances between isolates.</p></dd>
+<dd><p>A matrix of SNP distances between isolates constructed using a model of DNA evolution.</p></dd>
 
 
 <dt id="arg-ip-seqs">ip_seqs<a class="anchor" aria-label="anchor" href="#arg-ip-seqs"></a></dt>
@@ -83,10 +83,6 @@ presumed to be imported.</p></dd>
 
 <dt id="arg-dates">dates<a class="anchor" aria-label="anchor" href="#arg-dates"></a></dt>
 <dd><p>A vector of isolate dates named by sequence IDs.</p></dd>
-
-
-<dt id="arg-tree">tree<a class="anchor" aria-label="anchor" href="#arg-tree"></a></dt>
-<dd><p>A tree to use if provided instead of the default neighbor joining tree.</p></dd>
 
 
 <dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
@@ -116,7 +112,7 @@ defined by at least one shared variant that other isolates don't have.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by <a href="theabhirath.github.io">Abhirath Anand</a>.</p>
+  <p>Developed by <a href="https://theabhirath.github.io" class="external-link">Abhirath Anand</a>.</p>
 </div>
 
 <div class="pkgdown-footer-right">
