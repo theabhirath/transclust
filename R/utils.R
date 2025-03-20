@@ -1,13 +1,13 @@
-#' Get SNP distance matrix
+#' Get SNP distance matrix from DNA alignment constructed using a model of DNA evolution.
 #'
 #' @description
 #' Get SNP distance matrix from DNA alignment constructed using a model of DNA evolution.
 #'
 #' @param dna_aln A DNA alignment object.
-#' @param core Logical, if TRUE, return the core SNP distance matrix, otherwise
+#' @param core Logical: if `TRUE`, return the core SNP distance matrix, otherwise
 #'             return the full SNP distance matrix.
 #'
-#' @returns A SNP distance matrix.
+#' @returns A numeric matrix representing the SNP distance between sequences.
 #'
 #' @importFrom ape dist.dna
 #' @export
@@ -15,18 +15,18 @@ get_snp_dist_matrix <- function(dna_aln, core = TRUE) {
     dist.dna(dna_aln, model = "N", pairwise.deletion = !core, as.matrix = TRUE)
 }
 
-#' Get phylogenetic tree
+#' Get phylogenetic tree using neighbor-joining or maximum parsimony method.
 #'
 #' @description
 #' This function constructs a neighbor-joining or maximum parsimony phylogenetic
-#' tree from a DNA alignment object.
+#' tree from a DNA alignment object and a SNP distance matrix.
 #'
 #' @param dna_aln A DNA alignment object.
 #' @param snp_dist A SNP distance matrix.
 #' @param method A string indicating the method to use for tree construction. Options are
 #'               "nj" (neighbor-joining) or "pars" (maximum parsimony).
 #'
-#' @returns A phylogenetic tree object.
+#' @returns An object of class `phylo` representing the phylogenetic tree.
 #'
 #' @importFrom phangorn NJ optim.parsimony as.phyDat
 #' @importFrom phytools reroot

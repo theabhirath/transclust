@@ -9,8 +9,7 @@ dna_var_pos <- apply(dna, 2, function(x) sum(x == x[1]) < nrow(dna))
 dna_var <- dna[dna_pt_labels[labels(dna)] %in% colnames(trace_mat), dna_var_pos]
 
 # Get pairwise distances core
-snp_dist <- as.matrix(ape::dist.dna(dna_var, model = "N"))
-ref <- which.max(rowMeans(as.matrix(snp_dist)))
+snp_dist <- get_snp_dist_matrix(dna_var)
 
 # Get the clusters based on a SNP threshold
 clusters <- get_tn_clusters_snp_thresh(dna_var, snp_dist, 10)

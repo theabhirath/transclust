@@ -2,7 +2,7 @@
 % Please edit documentation in R/cluster_algorithms.R
 \name{get_tn_clusters_snp_thresh}
 \alias{get_tn_clusters_snp_thresh}
-\title{get_tn_clusters_snpthresh}
+\title{Perform clustering of isolates using a hard SNP distance cutoff.}
 \usage{
 get_tn_clusters_snp_thresh(dna_aln, snp_dist, snp_thresh)
 }
@@ -14,8 +14,8 @@ get_tn_clusters_snp_thresh(dna_aln, snp_dist, snp_thresh)
 \item{snp_thresh}{A threshold for defining clusters.}
 }
 \value{
-A vector indicating the cluster that each isolate belongs to.
+A numeric vector indicating the cluster that each isolate belongs to.
 }
 \description{
-Performs clustering of isolates using a hard SNP distance cutoff.
+Perform clustering of isolates using a hard SNP distance cutoff.
 }

@@ -9,8 +9,7 @@ dna_var_pos <- apply(dna, 2, function(x) sum(x == x[1]) < nrow(dna))
 dna_var <- dna[dna_pt_labels[labels(dna)] %in% colnames(trace_mat), dna_var_pos]
 
 # Get pairwise distances core
-snp_dist <- as.matrix(ape::dist.dna(dna_var, model = "N"))
-ref <- which.max(rowMeans(as.matrix(snp_dist)))
+snp_dist <- get_snp_dist_matrix(dna_var)
 
 # test get_tn_clusters_snp_thresh
 test_that("get_tn_clusters_snp_thresh works", {
@@ -25,8 +24,9 @@ test_that("get_tn_clusters_snp_thresh works", {
 
 # test get_tn_clusters_MSV_SVst_index_first
 test_that("get_tn_clusters_MSV_SVst_index_first works", {
+    tree <- get_phylo_tree(dna_var, snp_dist, "pars")
     clusters <- get_tn_clusters_MSV_SVst_index_first(
-        dna_var, snp_dist, ip_seqs_3days, ip_seqs, dna_pt_labels, dates
+        dna_var, snp_dist, ip_seqs_3days, ip_seqs, dna_pt_labels, dates, tree
     )
     # clusters should be a vector
     expect_true(is.vector(clusters))

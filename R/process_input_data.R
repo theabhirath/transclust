@@ -13,11 +13,7 @@
 #'   \item Prints the cleaned sequence names.
 #'   \item Assigns the cleaned sequence names to the DNA object.
 #' }
-#' @examples
-#' \dontrun{
-#' aln_file <- "path/to/alignment.fasta"
-#' dna <- read_in_seq_aln(aln_file)
-#' }
+#' @keywords internal
 #' @export
 read_in_seq_aln <- function(aln_file) {
     dna <- ape::read.dna(aln_file, format = "fasta")

@@ -2,18 +2,18 @@
 % Please edit documentation in R/utils.R
 \name{get_snp_dist_matrix}
 \alias{get_snp_dist_matrix}
-\title{Get SNP distance matrix}
+\title{Get SNP distance matrix from DNA alignment constructed using a model of DNA evolution.}
 \usage{
 get_snp_dist_matrix(dna_aln, core = TRUE)
 }
 \arguments{
 \item{dna_aln}{A DNA alignment object.}
 
-\item{core}{Logical, if TRUE, return the core SNP distance matrix, otherwise
+\item{core}{Logical: if \code{TRUE}, return the core SNP distance matrix, otherwise
 return the full SNP distance matrix.}
 }
 \value{
-A SNP distance matrix.
+A numeric matrix representing the SNP distance between sequences.
 }
 \description{
 Get SNP distance matrix from DNA alignment constructed using a model of DNA evolution.

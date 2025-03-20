@@ -1,12 +1,10 @@
-#' get_tn_clusters_snpthresh
-#'
-#' Performs clustering of isolates using a hard SNP distance cutoff.
+#' Perform clustering of isolates using a hard SNP distance cutoff.
 #'
 #' @param dna_aln A DNA object for sequences of interest.
 #' @param snp_dist A matrix of SNP distances between isolates constructed using a model of DNA evolution.
 #' @param snp_thresh A threshold for defining clusters.
 #'
-#' @return A vector indicating the cluster that each isolate belongs to.
+#' @return A numeric vector indicating the cluster that each isolate belongs to.
 #'
 #' @importFrom ape as.phylo subtrees
 #' @importFrom stats as.dist hclust cutree setNames
@@ -48,9 +46,7 @@ get_tn_clusters_snp_thresh <- function(dna_aln, snp_dist, snp_thresh) {
     setNames(st_clusters[match(clusters, unique(clusters))], names(clusters))
 }
 
-#' Get Transmission Clusters
-#'
-#' This function identifies transmission clusters based on the number of shared variants.
+#' Identify transmission clusters based on the number of shared variants.
 #'
 #' @param dna_aln A DNA object for sequences of interest.
 #' @param snp_dist A matrix of SNP distances between isolates constructed using a model of DNA evolution.
@@ -59,11 +55,11 @@ get_tn_clusters_snp_thresh <- function(dna_aln, snp_dist, snp_thresh) {
 #' @param ip_pt_seqs A vector of sequence IDs which correspond to intake-positive patients.
 #' @param seq2pt A named vector linking sequence IDs to patient IDs.
 #' @param dates A vector of isolate dates named by sequence IDs.
-#' @param method A string indicating the method to use for tree construction. Options are
-#'               "nj" (neighbor-joining) or "pars" (maximum parsimony). Default is "pars".
-#' @param tree A tree to use if provided instead of the default neighbor joining tree.
+#' @param tree A phylogenetic tree object of class `phylo` constructed from the DNA alignment. This can be
+#'             constructed using the [get_phylo_tree] or can be any other tree object constructed from the
+#'             same isolates.
 #'
-#' @return A vector indicating the cluster that each isolate belongs to.
+#' @return A numeric vector indicating the cluster that each isolate belongs to.
 #'
 #' @details Clustering is performed to identify the maximal clusters containing a single intake-positive patient
 #' that occurs before all cluster converts. The clustering metric is the number of shared variants, and clusters
@@ -73,30 +69,18 @@ get_tn_clusters_snp_thresh <- function(dna_aln, snp_dist, snp_thresh) {
 #'
 #' @importFrom ape subtrees
 #' @export
-get_tn_clusters_MSV_SVst_index_first <- function(dna_aln, snp_dist, ip_seqs, ip_pt_seqs, seq2pt,
-                                                 dates, method = c("nj", "pars"), tree = NULL) {
+get_tn_clusters_MSV_SVst_index_first <- function(dna_aln, snp_dist, ip_seqs, ip_pt_seqs, seq2pt, dates, tree) {
     #####################################################################################
-    # 1. Construct the phylogenetic tree #####
-    # Get subtrees from the phylogenetic tree
-    #####################################################################################
-    # Check if the method is valid
-    method <- match.arg(method)
-    # If a tree is provided, use it. Otherwise, construct a new tree using the DNA alignment.
-    tree <- if (is.null(tree)) get_phylo_tree(dna_aln, snp_dist, method) else tree
-    sub_trees <- subtrees(tree)
-    # Log completion of phase to standard output
-    message("Phase 1 complete: Tree construction and subtree extraction")
-
-    #####################################################################################
-    # 2. Compute the shared variant matrix #####
+    # 1. Compute the shared variant matrix #####
     # For each pair of isolates, we compute the number of positions where:
     #   a. the isolate's base differs from the out-group,
     #   b. the two isolates share the same base,
     #   c. the base is not a gap ('-') or ambiguous ('n'),
     # and then we convert this similarity count to a distance-like measure.
     ####################################################################################
-    # Call the Rcpp function to compute the shared variant matrix
+    # Compute out-group: the isolate with the maximum average SNP distance
     out_group <- which.max(rowMeans(snp_dist))
+    # Call the Rcpp function to compute the shared variant matrix
     dna_shared_mat <- computeSharedMatrix(dna_aln, out_group)
 
     isolate_names <- row.names(dna_aln)
@@ -104,24 +88,26 @@ get_tn_clusters_MSV_SVst_index_first <- function(dna_aln, snp_dist, ip_seqs, ip_
     colnames(dna_shared_mat) <- isolate_names
 
     # Log completion of phase to standard output
-    message("Phase 2 complete: Shared variant matrix computation")
+    message("Phase 1 complete: Shared variant matrix computation.")
 
     ##############################################################################
-    # 3. Identify defining variants in each subtree #####
+    # 2. Identify defining variants in each subtree #####
     # For every subtree, we loop over each alignment column (site) to check:
     #   - All tips in the subtree have the same base (and that base is not 'n').
     #   - Outside the subtree, there is at least one different base.
     #   - No outside isolate has the same base as the subtree.
     # The total count of such sites is stored for each subtree.
     ##############################################################################
+    # Get subtrees from the provided phylogenetic tree
+    sub_trees <- subtrees(tree)
     # Call the Rcpp function to compute defining variants
-    sub_trees_sv <- computeDefiningVariants(dna_aln, isolate_names, sub_trees)
+    sub_trees_dv <- computeDefiningVariants(dna_aln, isolate_names, sub_trees)
 
     # Log completion of phase to standard output
-    message("Phase 3 complete: Defining variant identification")
+    message("Phase 2 complete: Defining variant identification.")
 
     #####################################################################################
-    # 4. Validate and score subtrees as clusters #####
+    # 3. Validate and score subtrees as clusters #####
     # For each subtree, we:
     #   - Identify intake-positive sequences that occur before any "convert" in the subtree.
     #   - Choose one representative sequence per patient (the one with the minimum shared variant distance).
@@ -163,7 +149,7 @@ get_tn_clusters_MSV_SVst_index_first <- function(dna_aln, snp_dist, ip_seqs, ip_
         }, numeric(1))
         # Compute cluster score if there are defining variants and index isolates are not overly
         # distant from the representative sequence (i.e. their shared variant counts are nearly identical)
-        score <- if (sub_trees_sv[st_i] > 0 && length(unique(shared_counts_rep)) <= 1) {
+        score <- if (sub_trees_dv[st_i] > 0 && length(unique(shared_counts_rep)) <= 1) {
             # Reward intake-positives that could have started a cluster
             ip_convert_seq_count <- length(setdiff(
                 tip_labels,
@@ -189,10 +175,10 @@ get_tn_clusters_MSV_SVst_index_first <- function(dna_aln, snp_dist, ip_seqs, ip_
     sub_trees_index_first <- unlist(metrics_mat[, "index_count"])
 
     # Log completion of phase to standard output
-    message("Phase 4 complete: Cluster validation and scoring")
+    message("Phase 3 complete: Cluster validation and scoring.")
 
     #####################################################################################
-    # 5. Assign clusters to each isolate #####
+    # 4. Assign clusters to each isolate #####
     # For every isolate:
     #  - Check all valid subtrees (i.e. those with positive scores) that contain it.
     #  - Ensure that a candidate subtree is not "nested" within another subtree that
@@ -222,7 +208,7 @@ get_tn_clusters_MSV_SVst_index_first <- function(dna_aln, snp_dist, ip_seqs, ip_
     }, numeric(1))
 
     # Log completion of phase to standard output
-    message("Phase 5 complete: Cluster assignment")
+    message("Phase 4 complete: Cluster assignment.")
 
     # Return the clusters
     clusters

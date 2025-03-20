@@ -2,7 +2,7 @@
 % Please edit documentation in R/cluster_visualization.R
 \name{compare_clusters}
 \alias{compare_clusters}
-\title{Compare Clusters}
+\title{Compares the content of clusters created with two different methods.}
 \usage{
 compare_clusters(clusters1, clusters2, prefix)
 }
@@ -13,9 +13,6 @@ compare_clusters(clusters1, clusters2, prefix)
 defining the cluster.}
 
 \item{prefix}{Prefix to use for naming figure output files.}
-}
-\value{
-A comparison of the content of clusters.
 }
 \description{
 Compares the content of clusters created with two different methods.

@@ -2,7 +2,7 @@
 % Please edit documentation in R/cluster_algorithms.R
 \name{get_tn_clusters_MSV_SVst_index_first}
 \alias{get_tn_clusters_MSV_SVst_index_first}
-\title{Get Transmission Clusters}
+\title{Identify transmission clusters based on the number of shared variants.}
 \usage{
 get_tn_clusters_MSV_SVst_index_first(
   dna_aln,
@@ -11,8 +11,7 @@ get_tn_clusters_MSV_SVst_index_first(
   ip_pt_seqs,
   seq2pt,
   dates,
-  method = c("nj", "pars"),
-  tree = NULL
+  tree
 )
 }
 \arguments{
@@ -29,16 +28,15 @@ presumed to be imported.}
 
 \item{dates}{A vector of isolate dates named by sequence IDs.}
 
-\item{method}{A string indicating the method to use for tree construction. Options are
-"nj" (neighbor-joining) or "pars" (maximum parsimony). Default is "pars".}
-
-\item{tree}{A tree to use if provided instead of the default neighbor joining tree.}
+\item{tree}{A phylogenetic tree object of class \code{phylo} constructed from the DNA alignment. This can be
+constructed using the \link{get_phylo_tree} or can be any other tree object constructed from the
+same isolates.}
 }
 \value{
-A vector indicating the cluster that each isolate belongs to.
+A numeric vector indicating the cluster that each isolate belongs to.
 }
 \description{
-This function identifies transmission clusters based on the number of shared variants.
+Identify transmission clusters based on the number of shared variants.
 }
 \details{
 Clustering is performed to identify the maximal clusters containing a single intake-positive patient

@@ -2,7 +2,7 @@
 % Please edit documentation in R/cluster_visualization.R
 \name{cluster_genetic_context}
 \alias{cluster_genetic_context}
-\title{Cluster Genetic Context}
+\title{Produces summary plots regarding genetic distances within and between transmission clusters.}
 \usage{
 cluster_genetic_context(clusters, seq2pt, ip_seqs, snp_dist, prefix)
 }

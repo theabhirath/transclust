@@ -25,9 +25,4 @@ The function performs the following steps:
 \item Assigns the cleaned sequence names to the DNA object.
 }
 }
-\examples{
-\dontrun{
-aln_file <- "path/to/alignment.fasta"
-dna <- read_in_seq_aln(aln_file)
-}
-}
+\keyword{internal}

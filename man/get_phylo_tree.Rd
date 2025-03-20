@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{get_phylo_tree}
 \alias{get_phylo_tree}
-\title{Get phylogenetic tree}
+\title{Get phylogenetic tree using neighbor-joining or maximum parsimony method.}
 \usage{
 get_phylo_tree(dna_aln, snp_dist, method = c("nj", "pars"))
 }
@@ -15,9 +15,9 @@ get_phylo_tree(dna_aln, snp_dist, method = c("nj", "pars"))
 "nj" (neighbor-joining) or "pars" (maximum parsimony).}
 }
 \value{
-A phylogenetic tree object.
+An object of class \code{phylo} representing the phylogenetic tree.
 }
 \description{
 This function constructs a neighbor-joining or maximum parsimony phylogenetic
-tree from a DNA alignment object.
+tree from a DNA alignment object and a SNP distance matrix.
 }

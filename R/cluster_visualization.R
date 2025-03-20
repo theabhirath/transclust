@@ -1,5 +1,3 @@
-#' Compare Clusters
-#'
 #' Compares the content of clusters created with two different methods.
 #'
 #' @param clusters1 A vector named by sequence IDs with values being subtrees defining the cluster.
@@ -7,10 +5,7 @@
 #' defining the cluster.
 #' @param prefix Prefix to use for naming figure output files.
 #'
-#' @return A comparison of the content of clusters.
-#'
 #' @importFrom pheatmap pheatmap
-#'
 #' @export
 compare_clusters <- function(clusters1, clusters2, prefix) {
     # Unique cluster labels
@@ -41,8 +36,6 @@ compare_clusters <- function(clusters1, clusters2, prefix) {
     pheatmap(cluster_overlap, filename = filename, width = 10, height = 10)
 }
 
-#' Cluster Genetic Context
-#'
 #' Produces summary plots regarding genetic distances within and between transmission clusters.
 #'
 #' @param clusters A vector named by sequence IDs with values indicating the cluster (subtree) each sequence belongs to.
@@ -52,6 +45,7 @@ compare_clusters <- function(clusters1, clusters2, prefix) {
 #' @param prefix A descriptor indicating how the clusters were generated (used to name figure outputs).
 #'
 #' @return A matrix containing intra-cluster and inter-cluster genetic distances.
+#'
 #' @export
 cluster_genetic_context <- function(clusters, seq2pt, ip_seqs, snp_dist, prefix) {
     # Subset of isolates assigned to clusters
