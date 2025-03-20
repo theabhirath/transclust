@@ -19,6 +19,8 @@ Depends:
     R (>= 4.2)
 Imports:
     ape,
+    dplyr,
+    pheatmap,
     phangorn,
     phytools,
     Rcpp,
@@ -26,7 +28,9 @@ Imports:
     dplyr,
     ggalign,
     ggplot2,
-    ggtree
+    ggtree,
+    ComplexHeatmap
+    RColorBrewer
 Suggests:
     tidyr,
     paletteer,

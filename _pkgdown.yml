@@ -30,6 +30,11 @@ reference:
       - plot_clusters_phylo
       - compare_clusters
       - cluster_genetic_context
+      - cluster_summary
+      - cluster_context_2
+      - cluster_intra_versus_inter_context
+      - cluster_property_report
+      - intra_pt_genetic_var_analysis
 
   - title: Statistics
     desc: >
