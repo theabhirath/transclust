@@ -330,8 +330,7 @@ cluster_summary <- function(clusters, sub_trees, dna_aln, pt_trace, seq2pt, ip_p
 
         # Plot patient trace for the cluster
         plot_pt_trace(
-            cluster_members, dates, ip_seqs, pt_trace, seq2pt, snp_dist,
-            paste0(prefix, "_cluster", c)
+            cluster_members, dates, ip_seqs, pt_trace, seq2pt, snp_dist, paste0(prefix, "_cluster", c)
         )
 
         # Plot floor trace if given
@@ -392,73 +391,13 @@ cluster_context_2 <- function(dna_aln, pt_trace, seq2pt, snp_thresh, ip_pt_seqs,
     clusters
 }
 
-#' Plots trace for cluster members and those within the max SNP distance observed within a cluster
-#'
-#' @param clusters A vector named by sequence IDs with values being subtrees defining the cluster
-#' @param pt_trace A trace where the rows are days and the columns are patients
-#' @param seq2pt A vector of patient IDs named by the corresponding sequence ID
-#' @param ip_seqs A vector of sequence IDs which correspond to intake positive patients
-#' @param dates A vector of isolate dates named by sequence IDs
-#' @param prefix A descriptor of how the clusters were generated for the purposes of naming figures
-#' @param snp_dist A matrix of SNP distances between isolates
-#'
-#' @return No return value, invoked for side effects
-#'
-#' @export
-cluster_intra_versus_inter_context <- function(clusters, pt_trace, seq2pt, ip_seqs, dates, prefix, snp_dist) {
-    for (cluster in sort(setdiff(unique(clusters), 1))) {
-        # Only look at clusters with more than one member
-        if (sum(clusters == cluster) == 1) {
-            next()
-        }
-
-        # Get patients corresponding to cluster members
-        cluster_members <- names(clusters)[clusters == cluster]
-
-        # Get patients in other clusters who have isolates closely related to current cluster members
-        max_intra_cluster <- max(snp_dist[cluster_members, cluster_members])
-
-        inter_cluster_members <- names(clusters)[clusters != cluster & clusters != 1]
-
-        snp_dist_inter_cluster <- snp_dist[cluster_members, inter_cluster_members]
-
-        inter_cluster_prox_members <- inter_cluster_members[which(apply(
-            snp_dist_inter_cluster, 2, min
-        ) <= max_intra_cluster)]
-
-        # Get patients who have isolates closely related to current cluster members
-        inter_isolate_members <- names(clusters)[clusters != cluster]
-        snp_dist_inter_isolate <- snp_dist[cluster_members, inter_isolate_members]
-
-        inter_isolate_prox_members <- inter_isolate_members[which(
-            apply(snp_dist_inter_isolate, 2, min) <= max_intra_cluster
-        )]
-
-        print(paste0(
-            "Cluster members, prox clusters, prox isolates", cluster,
-            length(cluster_members), length(inter_cluster_prox_members), length(inter_isolate_prox_members)
-        ))
-
-        # Plot traces
-        plot_pt_trace(
-            cluster_members, dates, ip_seqs, pt_trace, seq2pt, snp_dist,
-            paste(prefix, "cluster", cluster, "clusterOnly", sep = "_")
-        )
-        plot_pt_trace(
-            c(cluster_members, inter_cluster_prox_members), dates, ip_seqs, pt_trace, seq2pt, snp_dist,
-            paste(prefix, "cluster", cluster, "clusterAndProxClusterIsolates", sep = "_")
-        )
-        plot_pt_trace(
-            c(cluster_members, inter_isolate_prox_members), dates, ip_seqs, pt_trace, seq2pt, snp_dist,
-            paste(prefix, "cluster", cluster, "clusterAndProxIsolates", sep = "_")
-        )
-    }
-}
-
 #' @importFrom stats dist hclust as.dendrogram
+#' @importFrom ape keep.tip
+#' @importFrom phytools nodeHeights
 #' @importFrom dplyr mutate mutate_all
-#' @keywords internal
-plot_pt_trace <- function(sequence_ids, dates, ip_seqs, pt_trace, seq2pt, snp_dist, prefix) {
+#' @importFrom ggtree ggtree geom_tiplab gheatmap geom_facet vexpand
+#' @importFrom ggplot2 scale_fill_manual aes theme unit ggsave
+plot_pt_trace <- function(sequence_ids, tree, dates, ip_seqs, pt_trace, seq2pt, snp_dist, prefix) {
     # Convert Excel-style numeric dates to R Date objects just once
     date_vec <- as.Date(dates, origin = "1899-12-30")
 
@@ -484,8 +423,8 @@ plot_pt_trace <- function(sequence_ids, dates, ip_seqs, pt_trace, seq2pt, snp_di
     # cbind() pairs the row name (isolate ID) and the date as a character
     trace_sub[cbind(df_sub$id, as.character(df_sub$date))] <- 2.5
 
-    # Create the dendrogram
-    row_dend <- as.dendrogram(hclust(as.dist(snp_dist[sequence_ids, sequence_ids]), method = "average"))
+    # Subset the tree provided to keep only the relevant sequences
+    tree_sub <- keep.tip(tree, df_sub$id)
 
     # Row coloring: white for index patient isolates, lightblue otherwise
     row_colors <- ifelse(df_sub$id %in% ip_seqs, "white", "lightblue")
@@ -499,19 +438,43 @@ plot_pt_trace <- function(sequence_ids, dates, ip_seqs, pt_trace, seq2pt, snp_di
     labels <- paste0(df_sub$id, "(", df_sub$pt, ")")
 
     # Create file name, including approximate dendrogram height
-    dend_height <- round(attr(row_dend, "height")) / 2
+    dend_height <- max(nodeHeights(tree_sub))
     file <- paste0(
         "figures/", format(Sys.time(), "%Y-%m-%d"), "_", prefix,
         "_trace_map_by_sequence_scale_", dend_height, "snps.pdf"
     )
-    pdf(file)
-    heatmap(trace_sub,
-        Colv = NA, Rowv = row_dend, breaks = c(-1, 0, 1, 1.25, 1.5, 2.5),
-        col = c("white", "lightgray", "blue", "red", "yellow"),
-        scale = "none", margins = c(3, 4), cexRow = 1 - (nrow(trace_sub) / ncol(pt_trace)),
-        labCol = col_lab, labRow = labels, RowSideColors = row_colors
+    p <- gheatmap(
+        ggtree(tree_sub),
+        trace_sub |> as.data.frame() |> mutate_all(as.factor),
+        color = NULL,
+        width = 4,
+        offset = 1,
+        font.size = 2,
+        custom_column_labels = col_lab,
+        colnames_angle = 90
+    ) +
+        # adjust for long vertical column labels
+        vexpand(.1, -1) +
+        # color the tiles
+        scale_fill_manual(
+            values = c("white", "lightgray", "blue", "red", "yellow"),
+            name = "Trace"
+        ) +
+        # add colors to the rows
+        geom_facet(
+            data = data.frame(id = df_sub$id, color = row_colors),
+            aes(x = id, y = 0, fill = color),
+            geom = "tile", inherit.aes = FALSE,
+            width = 1, height = 0.5
+        )
+    ggsave(
+        filename = file,
+        plot = p,
+        width = 50,
+        height = 50,
+        dpi = "retina",
+        units = "cm"
     )
-    dev.off()
 }
 
 #' @importFrom RColorBrewer brewer.pal

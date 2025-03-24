@@ -274,7 +274,7 @@ cluster_properties <- function(cluster_seqs, pt_trace, seq2pt, ip_pt_seqs, ip_se
     snp_dist_subset <- snp_dist[cluster_seqs, cluster_seqs, drop = FALSE]
 
     # Get the upper triangle of the SNP distance matrix (excluding the diagonal)
-    seq_vals  <- snp_dist_subset[upper.tri(snp_dist_subset)]
+    seq_vals <- snp_dist_subset[upper.tri(snp_dist_subset)]
 
     cluster_prop["Mean_genetic_distance"] <- mean(seq_vals)
     cluster_prop["Median_genetic_distance"] <- median(seq_vals)
@@ -300,8 +300,9 @@ cluster_properties <- function(cluster_seqs, pt_trace, seq2pt, ip_pt_seqs, ip_se
 
     # Median time to acquisition (the median difference from the cluster's
     # earliest overall positive to each subsequent patient's earliest positive).
-    cluster_prop["Median_time_to_acquisition"] <- median(sapply(earliest_pos_by_pt[2:length(earliest_pos_by_pt)],
-                                                                function(x) x - earliest_pos_by_pt[1]))
+    cluster_prop["Median_time_to_acquisition"] <- median(sapply(
+        earliest_pos_by_pt[2:length(earliest_pos_by_pt)], function(x) x - earliest_pos_by_pt[1]
+    ))
 
     # 5. Detailed convert-patient calculations #####
     convert_pos <- numeric(0)
@@ -431,7 +432,7 @@ cluster_properties <- function(cluster_seqs, pt_trace, seq2pt, ip_pt_seqs, ip_se
     # Count how many converts can be assigned a source patient in the cluster
     # based on shared location prior to convert's first positive.
     if (cluster_prop["Number_of_converts"] > 0 && cluster_prop["Number_of_patients"] > 1 &&
-            !any(is.infinite(earliest_pos_by_pt))) {
+        !any(is.infinite(earliest_pos_by_pt))) {
         # convert_pts was captured above as all convert patient IDs
         # for each convert, see if any other patient in the cluster can be a source
         find_source_for_convert <- function(pt_convert) {
@@ -483,8 +484,8 @@ cluster_properties <- function(cluster_seqs, pt_trace, seq2pt, ip_pt_seqs, ip_se
 
     # If we have any initial converts, do the same overlap checks specifically for those patients
     if (cluster_prop["Number_of_initial_converts"] > 0 &&
-            cluster_prop["Number_of_patients"] > 1 &&
-            !any(is.infinite(earliest_pos_by_pt))) {
+        cluster_prop["Number_of_patients"] > 1 &&
+        !any(is.infinite(earliest_pos_by_pt))) {
         find_source_for_initial <- function(pt_convert) {
             all_others <- setdiff(unique(seq2pt[cluster_seqs]), pt_convert)
             overlap_vector <- sapply(all_others, pt_overlap,
