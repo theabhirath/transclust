@@ -8,12 +8,16 @@ dna <- read_in_seq_aln(test_path("testdata", aln_file))
 dna_var_pos <- apply(dna, 2, function(x) sum(x == x[1]) < nrow(dna))
 dna_var <- dna[dna_pt_labels[labels(dna)] %in% colnames(trace_mat), dna_var_pos]
 
-# Get pairwise distances core
+# Get pairwise distances
 snp_dist <- get_snp_dist_matrix(dna_var)
 
 # test get_tn_clusters_snp_thresh
 test_that("get_tn_clusters_snp_thresh works", {
-    clusters <- get_tn_clusters_snp_thresh(dna_var, snp_dist, 10)
+    # Create a hclust object from the distance matrix
+    snp_hclust <- hclust(as.dist(snp_dist))
+    # Create a phylogenetic tree from the hclust object
+    tree <- ape::as.phylo(snp_hclust)
+    clusters <- get_tn_clusters_snp_thresh(snp_hclust, tree, 10)
     # clusters should be a vector
     expect_true(is.vector(clusters))
     # clusters should be numeric

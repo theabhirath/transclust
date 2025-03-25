@@ -4,12 +4,14 @@
 \alias{get_tn_clusters_snp_thresh}
 \title{Perform clustering of isolates using a hard SNP distance cutoff.}
 \usage{
-get_tn_clusters_snp_thresh(dna_aln, snp_dist, snp_thresh)
+get_tn_clusters_snp_thresh(snp_hclust, tree, snp_thresh)
 }
 \arguments{
-\item{dna_aln}{A DNA object for sequences of interest.}
+\item{snp_hclust}{An object of class \code{hclust} constructed from the SNP distance matrix.
+The SNP distance matrix can be generated using the \code{\link{get_snp_dist_matrix}} function.
+Then this object can be generated as: \code{hclust(as.dist(snp_dist))}.}
 
-\item{snp_dist}{A matrix of SNP distances between isolates constructed using a model of DNA evolution.}
+\item{tree}{A phylogenetic tree object of class \code{phylo} constructed from the DNA alignment.}
 
 \item{snp_thresh}{A threshold for defining clusters.}
 }
@@ -18,4 +20,10 @@ A numeric vector indicating the cluster that each isolate belongs to.
 }
 \description{
 Perform clustering of isolates using a hard SNP distance cutoff.
+}
+\details{
+This function uses a hard SNP distance cutoff to define clusters. It first cuts the tree at the specified
+threshold and then assigns each cluster to the best matching subtree. The best matching subtree is determined by
+counting how many sequences in the cluster are in each subtree. If a cluster has more than one sequence, it is
+assigned to the smallest matching subtree. See \code{vignette("transclust")} for more details.
 }
