@@ -46,18 +46,21 @@ plot_clusters_phylo <- function(clusters, tree) {
 #' @param clusters1 A vector named by sequence IDs with values being subtrees defining the cluster.
 #' @param clusters2 A vector named by the same sequence IDs as clusters1 with values being subtrees
 #' defining the cluster.
-#' @param prefix Prefix to use for naming figure output files.
+#' @param width The width of the heatmap plot.
+#' @param height The height of the heatmap plot.
 #'
-#' @importFrom pheatmap pheatmap
+#' @return A heatmap plot object from `ComplexHeatmap` showing the overlap between clusters.
+#'
+#' @importFrom ComplexHeatmap Heatmap
 #' @export
-compare_clusters <- function(clusters1, clusters2, prefix) {
+compare_clusters <- function(clusters1, clusters2, width = 10, height = 10) {
     # Unique cluster labels
     clusters1_unique <- sort(unique(clusters1))
     clusters2_unique <- sort(unique(clusters2))
 
     # Create a matrix to store the overlap between clusters
     cluster_overlap <- matrix(
-        ncol = length(clusters2_unique), nrow = length(clusters1_unique),
+        nrow = length(clusters1_unique), ncol = length(clusters2_unique),
         dimnames = list(clusters1_unique, clusters2_unique)
     )
 
@@ -75,8 +78,7 @@ compare_clusters <- function(clusters1, clusters2, prefix) {
     }
 
     # Plot heatmap of cluster overlap
-    filename <- paste0("figures/", format(Sys.time(), "%Y-%m-%d"), "_", prefix, "_cluster_member_compare.pdf")
-    pheatmap(cluster_overlap, filename = filename, width = 10, height = 10)
+    Heatmap(cluster_overlap, height = height, width = width)
 }
 
 #' Produces summary plots regarding genetic distances within and between transmission clusters.

@@ -4,7 +4,7 @@
 \alias{compare_clusters}
 \title{Compares the content of clusters created with two different methods.}
 \usage{
-compare_clusters(clusters1, clusters2, prefix)
+compare_clusters(clusters1, clusters2, width = 10, height = 10)
 }
 \arguments{
 \item{clusters1}{A vector named by sequence IDs with values being subtrees defining the cluster.}
@@ -12,7 +12,12 @@ compare_clusters(clusters1, clusters2, prefix)
 \item{clusters2}{A vector named by the same sequence IDs as clusters1 with values being subtrees
 defining the cluster.}
 
-\item{prefix}{Prefix to use for naming figure output files.}
+\item{width}{The width of the heatmap plot.}
+
+\item{height}{The height of the heatmap plot.}
+}
+\value{
+A heatmap plot object from \code{ComplexHeatmap} showing the overlap between clusters.
 }
 \description{
 Compares the content of clusters created with two different methods.
