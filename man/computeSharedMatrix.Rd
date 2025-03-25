@@ -7,13 +7,13 @@
 computeSharedMatrix(dna_aln, out_group)
 }
 \arguments{
-\item{dna_aln}{A matrix of DNA sequences (character matrix).}
+\item{dna_aln}{A matrix of DNA sequences (\code{CharacterMatrix}).}
 
 \item{out_group}{The index of the outgroup isolate (1-based).}
 }
 \value{
-A matrix of shared variants, where each element represents the number
-of shared variants between two isolates, with the diagonal set to Inf.
+A \code{NumericMatrix} of shared variants, where each element represents the
+number of shared variants between two isolates, with the diagonal set to Inf.
 }
 \description{
 Compute the shared variant matrix

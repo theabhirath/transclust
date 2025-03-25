@@ -8,8 +8,16 @@
 The project will involve the implementation and evaluation of algorithms for detecting
 transmission clusters in healthcare settings using genomic data.
 
+## Installation
+
+`transclust` is not available on CRAN yet, but you can install it from GitHub using `devtools`:
+
+```r
+devtools::install_github("theabhirath/transclust")
+```
+
 > [!WARNING] 
-> This project is still in the early stages of development. For more information on planned features, see the design documentation in the `design_docs` directory.
+> This project is still in the early stages of development and the API may change without notice.
 
 > [!NOTE]
 > This package was developed as part of the BIOINF 576 – Tool Development for Bioinformatics course at the University of Michigan.

@@ -7,15 +7,15 @@
 computeDefiningVariants(dna_aln, isolate_names, subtrees)
 }
 \arguments{
-\item{dna_aln}{A matrix of DNA sequences (character matrix).}
+\item{dna_aln}{A matrix of DNA sequences (\code{CharacterMatrix}).}
 
-\item{isolate_names}{A vector of isolate names (character vector).}
+\item{isolate_names}{A vector of isolate names (\code{CharacterVector}).}
 
-\item{subtrees}{A list of subtrees (phylo objects).}
+\item{subtrees}{A list of subtrees (\code{phylo} objects).}
 }
 \value{
-A vector of integers representing the number of defining variants
-for each subtree.
+An \code{IntegerVector} of integers representing the number of defining
+variants for each subtree.
 }
 \description{
 Compute the defining variants for each subtree

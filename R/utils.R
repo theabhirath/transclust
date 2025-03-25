@@ -3,7 +3,7 @@
 #' @description
 #' Get SNP distance matrix from DNA alignment constructed using a model of DNA evolution.
 #'
-#' @param dna_aln A DNA alignment object.
+#' @param dna_aln A DNA alignment object of class `DNAbin`.
 #' @param core Logical: if `TRUE`, return the core SNP distance matrix, otherwise
 #'             return the full SNP distance matrix.
 #'
@@ -21,8 +21,9 @@ get_snp_dist_matrix <- function(dna_aln, core = TRUE) {
 #' This function constructs a neighbor-joining or maximum parsimony phylogenetic
 #' tree from a DNA alignment object and a SNP distance matrix.
 #'
-#' @param dna_aln A DNA alignment object.
-#' @param snp_dist A SNP distance matrix.
+#' @param dna_aln A DNA alignment object of class `DNAbin`.
+#' @param snp_dist A numeric matrix representing the SNP distance between sequences.
+#'                 See [`get_snp_dist_matrix`] for a useful function to generate this.
 #' @param method A string indicating the method to use for tree construction. Options are
 #'               "nj" (neighbor-joining) or "pars" (maximum parsimony).
 #'

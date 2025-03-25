@@ -9,11 +9,11 @@ typedef unsigned __int128 uint128_t;
 
 //' Compute the shared variant matrix
 //'
-//' @param dna_aln A matrix of DNA sequences (character matrix).
+//' @param dna_aln A matrix of DNA sequences (`CharacterMatrix`).
 //' @param out_group The index of the outgroup isolate (1-based).
 //'
-//' @return A matrix of shared variants, where each element represents the number
-//'         of shared variants between two isolates, with the diagonal set to Inf.
+//' @return A `NumericMatrix` of shared variants, where each element represents the
+//'         number of shared variants between two isolates, with the diagonal set to Inf.
 // [[Rcpp::export]]
 NumericMatrix computeSharedMatrix(CharacterMatrix dna_aln, int out_group) {
     int n_isolates = dna_aln.nrow();
@@ -101,12 +101,12 @@ NumericMatrix computeSharedMatrix(CharacterMatrix dna_aln, int out_group) {
 
 //' Compute the defining variants for each subtree
 //'
-//' @param dna_aln A matrix of DNA sequences (character matrix).
-//' @param isolate_names A vector of isolate names (character vector).
-//' @param subtrees A list of subtrees (phylo objects).
+//' @param dna_aln A matrix of DNA sequences (`CharacterMatrix`).
+//' @param isolate_names A vector of isolate names (`CharacterVector`).
+//' @param subtrees A list of subtrees (`phylo` objects).
 //'
-//' @return A vector of integers representing the number of defining variants
-//'         for each subtree.
+//' @return An `IntegerVector` of integers representing the number of defining
+//'         variants for each subtree.
 // [[Rcpp::export]]
 IntegerVector computeDefiningVariants(CharacterMatrix dna_aln, CharacterVector isolate_names, List subtrees) {
     int n_isolates = dna_aln.nrow();
