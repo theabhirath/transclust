@@ -1,40 +1,42 @@
 #' Perform clustering of isolates using a hard SNP distance cutoff.
 #'
-#' @param dna_aln A DNA object for sequences of interest.
-#' @param snp_dist A matrix of SNP distances between isolates constructed using a model of DNA evolution.
+#' @param snp_hclust An object of class `hclust` constructed from the SNP distance matrix.
+#'                   The SNP distance matrix can be generated using the [`get_snp_dist_matrix`] function.
+#'                   Then this object can be generated as: `hclust(as.dist(snp_dist))`.
+#' @param tree A phylogenetic tree object of class `phylo` constructed from the DNA alignment.
 #' @param snp_thresh A threshold for defining clusters.
 #'
 #' @return A numeric vector indicating the cluster that each isolate belongs to.
 #'
-#' @importFrom ape as.phylo subtrees
-#' @importFrom stats as.dist hclust cutree setNames
+#' @importFrom ape subtrees
+#' @importFrom stats cutree setNames
+#'
+#' @details This function uses a hard SNP distance cutoff to define clusters. It first cuts the tree at the specified
+#' threshold and then assigns each cluster to the best matching subtree. The best matching subtree is determined by
+#' counting how many sequences in the cluster are in each subtree. If a cluster has more than one sequence, it is
+#' assigned to the smallest matching subtree. See `vignette("transclust")` for more details.
 #'
 #' @export
-get_tn_clusters_snp_thresh <- function(dna_aln, snp_dist, snp_thresh) {
-    # Perform hierarchical clustering based on SNP distance matrix
-    snp_clust <- hclust(as.dist(snp_dist))
-    clusters <- cutree(snp_clust, h = snp_thresh)
-
-    # Convert hierarchical clustering into a phylogenetic tree
-    # using the complete linkage method
-    phylo_tree <- as.phylo(snp_clust)
+get_tn_clusters_snp_thresh <- function(snp_hclust, tree, snp_thresh) {
+    # h is the height at which to cut the tree, which is the SNP threshold in this case
+    hclusters <- cutree(snp_hclust, h = snp_thresh)
     # Extract all subtrees from the phylogenetic tree
-    phylo_sub_trees <- subtrees(phylo_tree)
+    phylo_sub_trees <- subtrees(tree)
 
     # Pre-compute the size and labels of each subtree to avoid recomputing
     sub_tree_data <- lapply(phylo_sub_trees, function(st) list(size = length(st$tip.label), labels = st$tip.label))
 
     # Sequentially assign each cluster to the best matching subtree
-    st_clusters <- vapply(unique(clusters), function(c) {
+    st_clusters <- vapply(unique(hclusters), function(clust) {
         # Count how many sequences in the cluster are in each subtree
         sub_tree_match <- vapply(sub_tree_data, function(st) {
-            sum(names(clusters)[clusters == c] %in% st$labels)
+            sum(names(hclusters)[hclusters == clust] %in% st$labels)
         }, numeric(1))
         # Get index of best-matching subtree
         sub_tree_match_i <- which(sub_tree_match == max(sub_tree_match))
         # If the cluster has more than one sequence, assign it to the smallest matching subtree
-        # else assign it to the default subtree
-        if (sum(clusters == c) > 1) {
+        # Else assign it to the default subtree
+        if (sum(hclusters == clust) > 1) {
             smallest_subtree <- which.min(vapply(sub_tree_data[sub_tree_match_i], function(st) st$size, numeric(1)))
             sub_tree_match_i[smallest_subtree]
         } else {
@@ -43,7 +45,7 @@ get_tn_clusters_snp_thresh <- function(dna_aln, snp_dist, snp_thresh) {
     }, numeric(1))
 
     # Each cluster is associated with a subtree
-    setNames(st_clusters[match(clusters, unique(clusters))], names(clusters))
+    setNames(st_clusters[match(hclusters, unique(hclusters))], names(hclusters))
 }
 
 #' Identify transmission clusters based on the number of shared variants.
