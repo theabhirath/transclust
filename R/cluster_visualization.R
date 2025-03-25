@@ -1,3 +1,46 @@
+#' Maps clusters onto a phylogenetic tree and visualizes them
+#'
+#' @author [Aryan Singh](mailto:aryansin@umich.edu)
+#'
+#' @param clusters A vector named by sequence IDs with values indicating the cluster (subtree) each sequence belongs to.
+#' @param tree A phylogenetic tree object of class `phylo`.
+#'
+#' @return A `ggtree` object with clusters visualized on the tree.
+#'
+#' @importFrom ggtree ggtree geom_tippoint
+#' @importFrom hues iwanthue
+#' @importFrom dplyr .data left_join
+#' @importFrom ggplot2 aes scale_color_manual ggtitle theme element_text unit guides guide_legend
+#' @importFrom stats setNames
+#' @export
+plot_clusters_phylo <- function(clusters, tree) {
+    # Convert phylo object to ggtree object
+    tree <- ggtree(tree)
+
+    # Format the clusters into a dataframe
+    cluster_df <- data.frame(isolate = names(clusters), clust_id = factor(clusters))
+
+    # Use iwanthue to generate colors for clusters
+    cluster_colors <- setNames(iwanthue(length(unique(cluster_df$clust_id))), levels(cluster_df$clust_id))
+
+    # Add cluster information to the tree
+    tree$data <- tree$data |> left_join(cluster_df, by = c("label" = "isolate"))
+
+    # Return the tree labelled with clusters
+    tree +
+        geom_tippoint(aes(color = .data$clust_id), size = 1.5) +
+        scale_color_manual(values = cluster_colors) +
+        ggtitle("Phylogenetic Tree labelled with Clusters") +
+        guides(color = guide_legend(title = "Cluster ID", override.aes = list(size = 5, shape = "square"))) +
+        theme(
+            plot.title.position = "plot",
+            plot.title = element_text(hjust = 0.5),
+            legend.position = "right",
+            legend.key.height = unit(0.5, "cm"),
+            legend.key.width = unit(0.2, "cm")
+        )
+}
+
 #' Compares the content of clusters created with two different methods.
 #'
 #' @param clusters1 A vector named by sequence IDs with values being subtrees defining the cluster.
