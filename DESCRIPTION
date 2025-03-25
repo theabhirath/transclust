@@ -20,7 +20,11 @@ Imports:
     pheatmap,
     phangorn,
     phytools,
-    Rcpp
+    Rcpp,
+    hues,
+    dplyr,
+    ggplot2,
+    ggtree,
 Suggests:
     fastcluster,
     testthat (>= 3.0.0)

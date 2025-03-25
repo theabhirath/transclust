@@ -34,5 +34,6 @@ reference:
     desc: >
       A collection of visualization functions for this package.
     contents:
+      - plot_clusters_phylo
       - compare_clusters
       - cluster_genetic_context
