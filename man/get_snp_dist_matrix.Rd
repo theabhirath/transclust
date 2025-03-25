@@ -7,7 +7,7 @@
 get_snp_dist_matrix(dna_aln, core = TRUE)
 }
 \arguments{
-\item{dna_aln}{A DNA alignment object.}
+\item{dna_aln}{A DNA alignment object of class \code{DNAbin}.}
 
 \item{core}{Logical: if \code{TRUE}, return the core SNP distance matrix, otherwise
 return the full SNP distance matrix.}
