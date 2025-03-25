@@ -22,10 +22,10 @@ test_that("get_tn_clusters_snp_thresh works", {
     expect_equal(length(clusters), nrow(dna_var))
 })
 
-# test get_tn_clusters_MSV_SVst_index_first
-test_that("get_tn_clusters_MSV_SVst_index_first works", {
+# test get_tn_clusters_sv_index
+test_that("get_tn_clusters_sv_index works", {
     tree <- get_phylo_tree(dna_var, snp_dist, "pars")
-    clusters <- get_tn_clusters_MSV_SVst_index_first(
+    clusters <- get_tn_clusters_sv_index(
         dna_var, snp_dist, ip_seqs_3days, ip_seqs, dna_pt_labels, dates, tree
     )
     # clusters should be a vector
