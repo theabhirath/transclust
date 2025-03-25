@@ -48,15 +48,16 @@ get_tn_clusters_snp_thresh <- function(dna_aln, snp_dist, snp_thresh) {
 
 #' Identify transmission clusters based on the number of shared variants.
 #'
-#' @param dna_aln A DNA object for sequences of interest.
+#' @param dna_aln A DNA alignment object of class `DNAbin`.
 #' @param snp_dist A matrix of SNP distances between isolates constructed using a model of DNA evolution.
+#'                 See [`get_snp_dist_matrix`] for a useful function to generate this.
 #' @param ip_seqs A vector of sequence IDs which correspond to intake patient sequences
 #'                presumed to be imported.
 #' @param ip_pt_seqs A vector of sequence IDs which correspond to intake-positive patients.
 #' @param seq2pt A named vector linking sequence IDs to patient IDs.
 #' @param dates A vector of isolate dates named by sequence IDs.
 #' @param tree A phylogenetic tree object of class `phylo` constructed from the DNA alignment. This can be
-#'             constructed using the [get_phylo_tree] or can be any other tree object constructed from the
+#'             constructed using the [`get_phylo_tree`] or can be any other tree object constructed from the
 #'             same isolates.
 #'
 #' @return A numeric vector indicating the cluster that each isolate belongs to.
@@ -65,11 +66,16 @@ get_tn_clusters_snp_thresh <- function(dna_aln, snp_dist, snp_thresh) {
 #' that occurs before all cluster converts. The clustering metric is the number of shared variants, and clusters
 #' can have multiple intake-positive patients if they share an identical number of variants with other cluster
 #' members or intake-positive patients occur after converts. This clustering also requires that clusters be
-#' defined by at least one shared variant that other isolates don't have.
+#' defined by at least one shared variant that other isolates don't have. See `vignette("transclust")` for more details.
+#'
+#' @references Hawken, S. E., Yelin, R. D., Lolans, K., Pirani, A., Weinstein, R. A., Lin, M. Y., Hayden, M. K., &
+#'             Snitkin, E. S. (2022). Threshold-free genomic cluster detection to track transmission pathways in
+#'             health-care settings: A genomic epidemiology analysis. The Lancet Microbe, 3(9), e652–e662.
+#'             \doi{10.1016/S2666-5247(22)00115-X}
 #'
 #' @importFrom ape subtrees
 #' @export
-get_tn_clusters_MSV_SVst_index_first <- function(dna_aln, snp_dist, ip_seqs, ip_pt_seqs, seq2pt, dates, tree) {
+get_tn_clusters_sv_index <- function(dna_aln, snp_dist, ip_seqs, ip_pt_seqs, seq2pt, dates, tree) {
     #####################################################################################
     # 1. Compute the shared variant matrix #####
     # For each pair of isolates, we compute the number of positions where:
