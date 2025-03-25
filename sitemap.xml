@@ -10,9 +10,10 @@
 <url><loc>https://theabhirath.github.io/transclust/reference/computeSharedMatrix.html</loc></url>
 <url><loc>https://theabhirath.github.io/transclust/reference/get_phylo_tree.html</loc></url>
 <url><loc>https://theabhirath.github.io/transclust/reference/get_snp_dist_matrix.html</loc></url>
-<url><loc>https://theabhirath.github.io/transclust/reference/get_tn_clusters_MSV_SVst_index_first.html</loc></url>
 <url><loc>https://theabhirath.github.io/transclust/reference/get_tn_clusters_snp_thresh.html</loc></url>
+<url><loc>https://theabhirath.github.io/transclust/reference/get_tn_clusters_sv_index.html</loc></url>
 <url><loc>https://theabhirath.github.io/transclust/reference/index.html</loc></url>
+<url><loc>https://theabhirath.github.io/transclust/reference/plot_clusters_phylo.html</loc></url>
 <url><loc>https://theabhirath.github.io/transclust/reference/read_in_seq_aln.html</loc></url>
 <url><loc>https://theabhirath.github.io/transclust/reference/transclust-package.html</loc></url>
 </urlset>

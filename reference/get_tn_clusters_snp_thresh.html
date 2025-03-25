@@ -44,19 +44,21 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">get_tn_clusters_snp_thresh</span><span class="op">(</span><span class="va">dna_aln</span>, <span class="va">snp_dist</span>, <span class="va">snp_thresh</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">get_tn_clusters_snp_thresh</span><span class="op">(</span><span class="va">snp_hclust</span>, <span class="va">tree</span>, <span class="va">snp_thresh</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
 
-<dl><dt id="arg-dna-aln">dna_aln<a class="anchor" aria-label="anchor" href="#arg-dna-aln"></a></dt>
-<dd><p>A DNA object for sequences of interest.</p></dd>
+<dl><dt id="arg-snp-hclust">snp_hclust<a class="anchor" aria-label="anchor" href="#arg-snp-hclust"></a></dt>
+<dd><p>An object of class <code>hclust</code> constructed from the SNP distance matrix.
+The SNP distance matrix can be generated using the <code><a href="get_snp_dist_matrix.html">get_snp_dist_matrix</a></code> function.
+Then this object can be generated as: <code>hclust(as.dist(snp_dist))</code>.</p></dd>
 
 
-<dt id="arg-snp-dist">snp_dist<a class="anchor" aria-label="anchor" href="#arg-snp-dist"></a></dt>
-<dd><p>A matrix of SNP distances between isolates constructed using a model of DNA evolution.</p></dd>
+<dt id="arg-tree">tree<a class="anchor" aria-label="anchor" href="#arg-tree"></a></dt>
+<dd><p>A phylogenetic tree object of class <code>phylo</code> constructed from the DNA alignment.</p></dd>
 
 
 <dt id="arg-snp-thresh">snp_thresh<a class="anchor" aria-label="anchor" href="#arg-snp-thresh"></a></dt>
@@ -66,6 +68,13 @@
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A numeric vector indicating the cluster that each isolate belongs to.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>This function uses a hard SNP distance cutoff to define clusters. It first cuts the tree at the specified
+threshold and then assigns each cluster to the best matching subtree. The best matching subtree is determined by
+counting how many sequences in the cluster are in each subtree. If a cluster has more than one sequence, it is
+assigned to the smallest matching subtree. See <code>vignette("transclust")</code> for more details.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
