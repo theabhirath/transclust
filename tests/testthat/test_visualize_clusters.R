@@ -1,8 +1,7 @@
-load(test_path("testdata", "init.Rdata"))
+load(system.file("extdata", "example.Rdata", package = "transclust"))
 
 # Read in sequence file
-aln_file <- "KPNIH1_genome_aln_w_alt_allele_unmapped.filtered_polymorphic_sites.fasta"
-dna <- read_in_seq_aln(test_path("testdata", aln_file))
+dna <- read_in_seq_aln(system.file("extdata", "example.fasta", package = "transclust"))
 
 # Get variable positions in the alignment
 dna_var_pos <- apply(dna, 2, function(x) sum(x == x[1]) < nrow(dna))
