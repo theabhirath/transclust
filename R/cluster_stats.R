@@ -56,18 +56,6 @@ intra_cluster_genetic_var_analysis <- function(clusters, dna_aln) {
             sum(pos_aln == pos_aln[1]) < length(seq_ids)
         })
 
-        # If no positions are variable, assign NA and continue.
-        if (!any(var_pos_cluster)) {
-            num_var_sites[iter] <- 0
-            gc_at_transition_rate[iter] <- NA
-            at_gc_transition_rate[iter] <- NA
-            gc_ta_transversion_rate[iter] <- NA
-            at_cg_transversion_rate[iter] <- NA
-            at_ta_transversion_rate[iter] <- NA
-            gc_cg_transversion_rate[iter] <- NA
-            iter <- iter + 1
-            next
-        }
 
         # Get indices of variable positions in this cluster.
         var_idx <- which(var_pos_cluster)
@@ -101,8 +89,8 @@ intra_cluster_genetic_var_analysis <- function(clusters, dna_aln) {
         num_sites <- length(valid_pos)
         num_var_sites[iter] <- num_sites
 
-        # If no valid sites are found, assign NA to mutation rates.
-        if (num_sites == 0) {
+        # If no positions are variable or no valid sites are found, assign NA to mutation rates
+        if (num_sites == 0 || !any(var_pos_cluster)) {
             gc_at_transition_rate[iter] <- NA
             at_gc_transition_rate[iter] <- NA
             gc_ta_transversion_rate[iter] <- NA
@@ -118,24 +106,30 @@ intra_cluster_genetic_var_analysis <- function(clusters, dna_aln) {
         minor_valid <- minor_alleles[valid_pos]
 
         # Calculate mutation rates.
-        gc_at_transition_rate[iter] <- sum((maj_valid == "g" & minor_valid == "a") |
-            (maj_valid == "c" & minor_valid == "t")) / num_sites
-        at_gc_transition_rate[iter] <- sum((maj_valid == "a" & minor_valid == "g") |
-            (maj_valid == "t" & minor_valid == "c")) / num_sites
-        gc_ta_transversion_rate[iter] <- sum((maj_valid == "g" & minor_valid == "t") |
-            (maj_valid == "c" & minor_valid == "a")) / num_sites
-        at_cg_transversion_rate[iter] <- sum((maj_valid == "a" & minor_valid == "c") |
-            (maj_valid == "t" & minor_valid == "g")) / num_sites
-        at_ta_transversion_rate[iter] <- sum((maj_valid == "a" & minor_valid == "t") |
-            (maj_valid == "t" & minor_valid == "a")) / num_sites
-        gc_cg_transversion_rate[iter] <- sum((maj_valid == "g" & minor_valid == "c") |
-            (maj_valid == "c" & minor_valid == "g")) / num_sites
+        gc_at_transition_rate[iter] <- sum(
+            (maj_valid == "g" & minor_valid == "a") | (maj_valid == "c" & minor_valid == "t")
+        ) / num_sites
+        at_gc_transition_rate[iter] <- sum(
+            (maj_valid == "a" & minor_valid == "g") | (maj_valid == "t" & minor_valid == "c")
+        ) / num_sites
+        gc_ta_transversion_rate[iter] <- sum(
+            (maj_valid == "g" & minor_valid == "t") | (maj_valid == "c" & minor_valid == "a")
+        ) / num_sites
+        at_cg_transversion_rate[iter] <- sum(
+            (maj_valid == "a" & minor_valid == "c") | (maj_valid == "t" & minor_valid == "g")
+        ) / num_sites
+        at_ta_transversion_rate[iter] <- sum(
+            (maj_valid == "a" & minor_valid == "t") | (maj_valid == "t" & minor_valid == "a")
+        ) / num_sites
+        gc_cg_transversion_rate[iter] <- sum(
+            (maj_valid == "g" & minor_valid == "c") | (maj_valid == "c" & minor_valid == "g")
+        ) / num_sites
 
         iter <- iter + 1
     }
 
-    # Combine the computed metrics into a result data frame.
-    result_df <- data.frame(
+    # Combine the computed metrics and return the result data frame
+    data.frame(
         num_var_sites = num_var_sites,
         GC_AT_transition_rate = round(gc_at_transition_rate, 2),
         AT_GC_transition_rate = round(at_gc_transition_rate, 2),
@@ -146,6 +140,4 @@ intra_cluster_genetic_var_analysis <- function(clusters, dna_aln) {
         row.names = cluster_labels,
         check.names = FALSE
     )
-
-    return(result_df)
 }
