@@ -11,6 +11,7 @@ An R package for transmission cluster analysis for pathogens.
 \seealso{
 Useful links:
 \itemize{
+  \item \url{https://theabhirath.github.io/transclust}
   \item \url{https://github.com/theabhirath/transclust}
   \item Report bugs at \url{https://github.com/theabhirath/transclust/issues}
 }

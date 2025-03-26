@@ -3,14 +3,16 @@ Title: An R package for transmission cluster analysis for pathogens
 Version: 0.0.1
 Date: 2025-02-14
 Authors@R:
-    person(
-        "Abhirath", "Anand", 
-        email = "abhirath@umich.edu",
-        role = c("aut", "cre"),
-        comment = c(ORCID = "0009-0008-6985-9266")
+    c(
+        person(
+            "Abhirath", "Anand", 
+            email = "abhirath@umich.edu",
+            role = c("aut", "cre"),
+            comment = c(ORCID = "0009-0008-6985-9266")
+        )
     )
 Description: An R package for transmission cluster analysis for pathogens.
-URL: https://github.com/theabhirath/transclust
+URL: https://theabhirath.github.io/transclust, https://github.com/theabhirath/transclust
 BugReports: https://github.com/theabhirath/transclust/issues
 License: MIT + file LICENSE
 Depends:
