@@ -16,10 +16,10 @@
 #' @keywords internal
 #' @export
 read_in_seq_aln <- function(aln_file) {
-    dna <- ape::read.dna(aln_file, format = "fasta")
+    dna_aln <- ape::read.dna(aln_file, format = "fasta")
 
     # Clean up sequence names
-    dna_labels <- labels(dna)
+    dna_labels <- labels(dna_aln)
     dna_labels <- gsub("Rush_KPC_|Sample_|001_final_|_R1_|_R_|__|_$", "", dna_labels)
     dna_labels <- gsub("_S.*$", "", dna_labels)
     dna_labels[grepl("KPNIH1", dna_labels)] <- "KPNIH1"
@@ -40,6 +40,6 @@ read_in_seq_aln <- function(aln_file) {
     #     row.names(dna) <- dna_labels
     # }
 
-    row.names(dna) <- dna_labels
-    dna
+    row.names(dna_aln) <- dna_labels
+    dna_aln
 }
