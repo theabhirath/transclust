@@ -17,9 +17,14 @@ tree <- ape::as.phylo(snp_hclust)
 # Get the clusters based on a SNP threshold
 clusters <- get_tn_clusters_snp_thresh(snp_hclust, tree, 10)
 
-# test cluster_genetic_context
-test_that("cluster_genetic_context works", {
-    distances <- cluster_genetic_context(clusters, dna_pt_labels, ip_seqs, snp_dist, "my_analysis")
-    # distances should be a matrix.
-    expect_true(is.matrix(distances))
+# test intra_cluster_genetic_var_analysis
+test_that("intra_cluster_genetic_var_analysis works", {
+    # Get the genetic variation within each cluster
+    var_df <- intra_cluster_genetic_var_analysis(clusters, dna_var)
+    # var_df should be a data frame.
+    expect_true(is.data.frame(var_df))
+    # var_df should have the correct number of rows and columns.
+    # For nrows: +1 for the overall population but -1 for the singleton, so actually no change.
+    expect_equal(nrow(var_df), length(unique(clusters)))
+    expect_equal(ncol(var_df), 7)
 })
