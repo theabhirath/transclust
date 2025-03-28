@@ -19,7 +19,6 @@ Depends:
     R (>= 4.2)
 Imports:
     ape,
-    pheatmap,
     phangorn,
     phytools,
     Rcpp,
@@ -29,7 +28,10 @@ Imports:
     ggtree,
     ComplexHeatmap
 Suggests:
-    fastcluster,
+    tidyr,
+    paletteer,
+    knitr,
+    rmarkdown,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Encoding: UTF-8
@@ -38,3 +40,4 @@ RoxygenNote: 7.3.2
 Roxygen: list(markdown = TRUE)
 LinkingTo: 
     Rcpp
+VignetteBuilder: knitr

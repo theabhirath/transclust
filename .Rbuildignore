@@ -1,5 +1,9 @@
-figures/
-design_docs/
+^figures$
+^design_docs$
+^docs$
+^pkgdown$
+^.*\.Rproj$
+^\.Rproj\.user$
 ^\.github$
 ^codecov\.yml$
 .vscode/
