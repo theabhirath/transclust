@@ -30,6 +30,8 @@ Imports:
     ComplexHeatmap
 Suggests:
     fastcluster,
+    knitr,
+    rmarkdown,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Encoding: UTF-8
@@ -38,3 +40,4 @@ RoxygenNote: 7.3.2
 Roxygen: list(markdown = TRUE)
 LinkingTo: 
     Rcpp
+VignetteBuilder: knitr
