@@ -4,17 +4,19 @@
 \alias{intra_cluster_genetic_var_analysis}
 \title{Analyze Intra-Cluster Genetic Variation}
 \usage{
-intra_cluster_genetic_var_analysis(clusters, dna_aln)
+intra_cluster_genetic_var_analysis(clusters, dna_aln, var_pos)
 }
 \arguments{
 \item{clusters}{A named vector of cluster assignments (cluster IDs) with names corresponding to sequence IDs.}
 
-\item{dna_aln}{A matrix (or data frame) representing the DNA sequence alignment, where rows are sequences
-(named by sequence IDs) and columns represent nucleotide positions.}
+\item{dna_aln}{A matrix representing the DNA sequence alignment, where rows are sequences (named by sequence IDs)
+and columns represent nucleotide positions.}
+
+\item{var_pos}{A logical vector indicating which positions in the alignment are variable.}
 }
 \value{
 A data frame with one row per cluster (plus a row for the overall population) containing the
-number of variable sites and the rates for six mutation types. Mutation rates are rounded to two decimals.
+number of variable sites and the rates for six mutation types. Mutation rates are rounded to three decimals.
 }
 \description{
 This function analyzes genetic diversity within clusters by identifying variant sites and calculating

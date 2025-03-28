@@ -1,34 +1,38 @@
 #' Analyze Intra-Cluster Genetic Variation
 #'
+#' @description
 #' This function analyzes genetic diversity within clusters by identifying variant sites and calculating
 #' mutational spectra (e.g. transition and transversion rates). It uses a DNA alignment and a vector
 #' of cluster assignments (named by sequence IDs) and returns a data frame summarizing the diversity
 #' measures for each cluster as well as for the overall population.
 #'
 #' @param clusters A named vector of cluster assignments (cluster IDs) with names corresponding to sequence IDs.
-#' @param dna_aln A matrix (or data frame) representing the DNA sequence alignment, where rows are sequences
-#'   (named by sequence IDs) and columns represent nucleotide positions.
+#' @param dna_aln A matrix representing the DNA sequence alignment, where rows are sequences (named by sequence IDs)
+#'                and columns represent nucleotide positions.
+#' @param var_pos A logical vector indicating which positions in the alignment are variable.
 #'
 #' @return A data frame with one row per cluster (plus a row for the overall population) containing the
-#'   number of variable sites and the rates for six mutation types. Mutation rates are rounded to two decimals.
-intra_cluster_genetic_var_analysis <- function(clusters, dna_aln) {
+#'   number of variable sites and the rates for six mutation types. Mutation rates are rounded to three decimals.
+#'
+#' @export
+intra_cluster_genetic_var_analysis <- function(clusters, dna_aln, var_pos) {
+    # Pre-compute a character matrix of the alignment
+    dna_aln_char <- matrix(as.character(dna_aln), nrow = nrow(dna_aln), dimnames = dimnames(dna_aln))
+
     # Identify cluster IDs (excluding a potential singleton "1" if present)
     cluster_ids <- setdiff(sort(unique(clusters)), 1)
 
-    # Compute major alleles across the entire alignment (as characters)
-    aln_chars <- as.character(dna_aln)
-    major_alleles_all <- apply(aln_chars, 2, function(pos_aln) {
+    # Compute major alleles across the entire alignment
+    major_alleles_all <- apply(dna_aln_char, 2, function(pos_aln) {
         allele_tab <- table(pos_aln)
-        names(sort(allele_tab, decreasing = TRUE))[1]
+        names(allele_tab)[which.max(allele_tab)]
     })
 
-    # Identify positions that are variable among the population sequences
-    var_pos_all <- apply(aln_chars, 2, function(pos_aln) {
-        sum(pos_aln == pos_aln[1]) < nrow(dna_aln)
-    })
-    major_alleles_all <- major_alleles_all[var_pos_all]
+    # Filter the alignment to only include variable positions
+    dna_aln_char <- dna_aln_char[, var_pos, drop = FALSE]
+    major_alleles_all <- major_alleles_all[var_pos]
 
-    # Prepare pre-allocated vectors for the results.
+    # Pre-allocate vectors for results
     n_iter <- length(cluster_ids) + 1 # +1 for the overall population
     num_var_sites <- numeric(n_iter)
     gc_at_transition_rate <- numeric(n_iter)
@@ -38,7 +42,7 @@ intra_cluster_genetic_var_analysis <- function(clusters, dna_aln) {
     at_ta_transversion_rate <- numeric(n_iter)
     gc_cg_transversion_rate <- numeric(n_iter)
 
-    # Define row names for the output: overall population and each cluster.
+    # Define row names for the output: overall population and each cluster
     cluster_labels <- c("Population frequency", cluster_ids)
 
     iter <- 1
@@ -50,41 +54,41 @@ intra_cluster_genetic_var_analysis <- function(clusters, dna_aln) {
             seq_ids <- names(clusters)[clusters == cluster]
         }
 
-        # Subset the alignment for the current group and determine variable positions within this group.
-        aln_subset <- as.character(dna_aln[seq_ids, , drop = FALSE])
+        # Subset the alignment for the current group
+        aln_subset <- dna_aln_char[seq_ids, , drop = FALSE]
+        # Determine variable positions within the current group
         var_pos_cluster <- apply(aln_subset, 2, function(pos_aln) {
             sum(pos_aln == pos_aln[1]) < length(seq_ids)
         })
-
-
-        # Get indices of variable positions in this cluster.
         var_idx <- which(var_pos_cluster)
 
-        # For each variable position, determine the "minor allele" call for the cluster.
-        minor_alleles <- sapply(var_idx, function(j) {
-            pos_aln <- as.character(dna_aln[, j])
-            allele_tab <- table(pos_aln)
-            major_allele <- names(sort(allele_tab, decreasing = TRUE))[1]
+        # Compute minor allele for each variable position
+        # CHECK: why compute X, Y, Z?
+        minor_alleles <- vapply(var_idx, function(j) {
+            pos_aln_full <- dna_aln_char[, j]
+            allele_tab <- table(pos_aln_full)
+            major_allele <- major_alleles_all[j]
             cluster_alleles <- unique(aln_subset[, j])
-
-            if (length(cluster_alleles) == 1 && major_allele %in% cluster_alleles) {
-                "X" # Cluster has the major allele
-            } else if (length(cluster_alleles) == 1) {
-                "Y" # Cluster has a minor allele shared by all members
-            } else if (length(cluster_alleles) == 2 && major_allele %in% cluster_alleles) {
-                setdiff(cluster_alleles, major_allele)  # Cluster has a variable minor allele
+            allele_count <- length(cluster_alleles)
+            # Check if the major allele is present in the cluster
+            is_major_present <- major_allele %in% cluster_alleles
+            if (allele_count == 1) {
+                # Cluster has a major or minor allele
+                if (is_major_present) "X" else "Y"
+            } else if (allele_count == 2 && is_major_present) {
+                # Cluster has a variable minor allele # CHECK: major or minor?
+                setdiff(cluster_alleles, major_allele)
             } else {
                 "Z" # Cluster has multiple minor alleles
             }
-        })
-
-        # Get the corresponding major alleles from the overall set.
-        maj_alleles <- major_alleles_all[var_idx]
+        }, character(1))
+        # Compute major allele for each variable position
+        major_alleles <- major_alleles_all[var_idx]
 
         # Filter positions to those with valid nucleotide calls (both alleles among a, c, t, g)
-        valid_pos <- which((minor_alleles != maj_alleles) & 
-                            (maj_alleles %in% c("a", "c", "t", "g")) &
-                            (minor_alleles %in% c("a", "c", "t", "g")))
+        valid_pos <- which(minor_alleles != major_alleles &
+                               major_alleles %in% c("a", "c", "t", "g") &
+                               minor_alleles %in% c("a", "c", "t", "g"))
 
         num_sites <- length(valid_pos)
         num_var_sites[iter] <- num_sites
@@ -101,42 +105,46 @@ intra_cluster_genetic_var_analysis <- function(clusters, dna_aln) {
             next
         }
 
-        # Extract valid alleles for computation.
-        maj_valid <- maj_alleles[valid_pos]
+        major_valid <- major_alleles[valid_pos]
         minor_valid <- minor_alleles[valid_pos]
 
-        # Calculate mutation rates.
+        # Calculate mutation rates
         gc_at_transition_rate[iter] <- sum(
-            (maj_valid == "g" & minor_valid == "a") | (maj_valid == "c" & minor_valid == "t")
+            (major_valid == "g" & minor_valid == "a") |
+                (major_valid == "c" & minor_valid == "t")
         ) / num_sites
         at_gc_transition_rate[iter] <- sum(
-            (maj_valid == "a" & minor_valid == "g") | (maj_valid == "t" & minor_valid == "c")
+            (major_valid == "a" & minor_valid == "g") |
+                (major_valid == "t" & minor_valid == "c")
         ) / num_sites
         gc_ta_transversion_rate[iter] <- sum(
-            (maj_valid == "g" & minor_valid == "t") | (maj_valid == "c" & minor_valid == "a")
+            (major_valid == "g" & minor_valid == "t") |
+                (major_valid == "c" & minor_valid == "a")
         ) / num_sites
         at_cg_transversion_rate[iter] <- sum(
-            (maj_valid == "a" & minor_valid == "c") | (maj_valid == "t" & minor_valid == "g")
+            (major_valid == "a" & minor_valid == "c") |
+                (major_valid == "t" & minor_valid == "g")
         ) / num_sites
         at_ta_transversion_rate[iter] <- sum(
-            (maj_valid == "a" & minor_valid == "t") | (maj_valid == "t" & minor_valid == "a")
+            (major_valid == "a" & minor_valid == "t") |
+                (major_valid == "t" & minor_valid == "a")
         ) / num_sites
         gc_cg_transversion_rate[iter] <- sum(
-            (maj_valid == "g" & minor_valid == "c") | (maj_valid == "c" & minor_valid == "g")
+            (major_valid == "g" & minor_valid == "c") |
+                (major_valid == "c" & minor_valid == "g")
         ) / num_sites
 
         iter <- iter + 1
     }
 
-    # Combine the computed metrics and return the result data frame
     data.frame(
         num_var_sites = num_var_sites,
-        GC_AT_transition_rate = round(gc_at_transition_rate, 2),
-        AT_GC_transition_rate = round(at_gc_transition_rate, 2),
-        GC_TA_transversion_rate = round(gc_ta_transversion_rate, 2),
-        AT_TA_transversion_rate = round(at_ta_transversion_rate, 2),
-        GC_CG_transversion_rate = round(gc_cg_transversion_rate, 2),
-        AT_CG_transversion_rate = round(at_cg_transversion_rate, 2),
+        GC_AT_transition_rate = round(gc_at_transition_rate, 3),
+        AT_GC_transition_rate = round(at_gc_transition_rate, 3),
+        GC_TA_transversion_rate = round(gc_ta_transversion_rate, 3),
+        AT_TA_transversion_rate = round(at_ta_transversion_rate, 3),
+        GC_CG_transversion_rate = round(gc_cg_transversion_rate, 3),
+        AT_CG_transversion_rate = round(at_cg_transversion_rate, 3),
         row.names = cluster_labels,
         check.names = FALSE
     )
