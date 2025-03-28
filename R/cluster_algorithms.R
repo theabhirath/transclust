@@ -1,5 +1,11 @@
 #' Perform clustering of isolates using a hard SNP distance cutoff.
 #'
+#' @description
+#' This function uses a hard SNP distance cutoff to define clusters. It first cuts the tree at the specified
+#' threshold and then assigns each cluster to the best matching subtree. The best matching subtree is determined by
+#' counting how many sequences in the cluster are in each subtree. If a cluster has more than one sequence, it is
+#' assigned to the smallest matching subtree. See `vignette("transclust")` for more details.
+#'
 #' @param snp_hclust An object of class `hclust` constructed from the SNP distance matrix.
 #'                   The SNP distance matrix can be generated using the [`get_snp_dist_matrix`] function.
 #'                   Then this object can be generated as: `hclust(as.dist(snp_dist))`.
@@ -10,12 +16,6 @@
 #'
 #' @importFrom ape subtrees
 #' @importFrom stats cutree setNames
-#'
-#' @details This function uses a hard SNP distance cutoff to define clusters. It first cuts the tree at the specified
-#' threshold and then assigns each cluster to the best matching subtree. The best matching subtree is determined by
-#' counting how many sequences in the cluster are in each subtree. If a cluster has more than one sequence, it is
-#' assigned to the smallest matching subtree. See `vignette("transclust")` for more details.
-#'
 #' @export
 get_tn_clusters_snp_thresh <- function(snp_hclust, tree, snp_thresh) {
     # h is the height at which to cut the tree, which is the SNP threshold in this case
@@ -50,6 +50,13 @@ get_tn_clusters_snp_thresh <- function(snp_hclust, tree, snp_thresh) {
 
 #' Identify transmission clusters based on the number of shared variants.
 #'
+#' @description
+#' Clustering is performed to identify the maximal clusters containing a single intake-positive patient
+#' that occurs before all cluster converts. The clustering metric is the number of shared variants, and clusters
+#' can have multiple intake-positive patients if they share an identical number of variants with other cluster
+#' members or intake-positive patients occur after converts. This clustering also requires that clusters be
+#' defined by at least one shared variant that other isolates don't have. See `vignette("transclust")` for more details.
+#'
 #' @param dna_aln A DNA alignment object of class `DNAbin`.
 #' @param snp_dist A matrix of SNP distances between isolates constructed using a model of DNA evolution.
 #'                 See [`get_snp_dist_matrix`] for a useful function to generate this.
@@ -63,12 +70,6 @@ get_tn_clusters_snp_thresh <- function(snp_hclust, tree, snp_thresh) {
 #'             same isolates.
 #'
 #' @return A numeric vector indicating the cluster that each isolate belongs to.
-#'
-#' @details Clustering is performed to identify the maximal clusters containing a single intake-positive patient
-#' that occurs before all cluster converts. The clustering metric is the number of shared variants, and clusters
-#' can have multiple intake-positive patients if they share an identical number of variants with other cluster
-#' members or intake-positive patients occur after converts. This clustering also requires that clusters be
-#' defined by at least one shared variant that other isolates don't have. See `vignette("transclust")` for more details.
 #'
 #' @references Hawken, S. E., Yelin, R. D., Lolans, K., Pirani, A., Weinstein, R. A., Lin, M. Y., Hayden, M. K., &
 #'             Snitkin, E. S. (2022). Threshold-free genomic cluster detection to track transmission pathways in

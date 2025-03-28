@@ -19,9 +19,6 @@ Then this object can be generated as: \code{hclust(as.dist(snp_dist))}.}
 A numeric vector indicating the cluster that each isolate belongs to.
 }
 \description{
-Perform clustering of isolates using a hard SNP distance cutoff.
-}
-\details{
 This function uses a hard SNP distance cutoff to define clusters. It first cuts the tree at the specified
 threshold and then assigns each cluster to the best matching subtree. The best matching subtree is determined by
 counting how many sequences in the cluster are in each subtree. If a cluster has more than one sequence, it is

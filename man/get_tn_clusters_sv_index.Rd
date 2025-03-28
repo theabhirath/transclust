@@ -37,9 +37,6 @@ same isolates.}
 A numeric vector indicating the cluster that each isolate belongs to.
 }
 \description{
-Identify transmission clusters based on the number of shared variants.
-}
-\details{
 Clustering is performed to identify the maximal clusters containing a single intake-positive patient
 that occurs before all cluster converts. The clustering metric is the number of shared variants, and clusters
 can have multiple intake-positive patients if they share an identical number of variants with other cluster
