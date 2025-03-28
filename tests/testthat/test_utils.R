@@ -1,7 +1,8 @@
+library(ape)
 load(system.file("extdata", "example.Rdata", package = "transclust"))
 
 # Read in sequence file
-dna_aln <- read_in_seq_aln(system.file("extdata", "example.fasta", package = "transclust"))
+dna_aln <- read.dna(system.file("extdata", "example.fasta", package = "transclust"), format = "fasta")
 
 # Only keep those sequences that are in the trace matrix
 dna_aln <- dna_aln[dna_pt_labels[labels(dna_aln)] %in% colnames(trace_mat), ]
@@ -40,3 +41,4 @@ test_that("get_phylo_tree works", {
     # Check that the tree has the same number of tips as the input data
     expect_equal(length(tree$tip.label), nrow(dna_var))
 })
+2

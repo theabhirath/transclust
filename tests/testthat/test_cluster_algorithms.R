@@ -1,7 +1,8 @@
+library(ape)
 load(system.file("extdata", "example.Rdata", package = "transclust"))
 
 # Read in sequence file
-dna_aln <- read_in_seq_aln(system.file("extdata", "example.fasta", package = "transclust"))
+dna_aln <- read.dna(system.file("extdata", "example.fasta", package = "transclust"), format = "fasta")
 
 # Only keep those sequences that are in the trace matrix
 dna_aln <- dna_aln[dna_pt_labels[labels(dna_aln)] %in% colnames(trace_mat), ]
@@ -17,7 +18,7 @@ test_that("get_tn_clusters_snp_thresh works", {
     # Create a hclust object from the distance matrix
     snp_hclust <- hclust(as.dist(snp_dist))
     # Create a phylogenetic tree from the hclust object
-    tree <- ape::as.phylo(snp_hclust)
+    tree <- as.phylo(snp_hclust)
     clusters <- get_tn_clusters_snp_thresh(snp_hclust, tree, 10)
     # clusters should be a vector
     expect_true(is.vector(clusters))
