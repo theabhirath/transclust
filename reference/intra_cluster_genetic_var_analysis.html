@@ -53,7 +53,7 @@ measures for each cluster as well as for the overall population.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">intra_cluster_genetic_var_analysis</span><span class="op">(</span><span class="va">clusters</span>, <span class="va">dna_aln</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">intra_cluster_genetic_var_analysis</span><span class="op">(</span><span class="va">clusters</span>, <span class="va">dna_aln</span>, <span class="va">var_pos</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -65,14 +65,18 @@ measures for each cluster as well as for the overall population.</p>
 
 
 <dt id="arg-dna-aln">dna_aln<a class="anchor" aria-label="anchor" href="#arg-dna-aln"></a></dt>
-<dd><p>A matrix (or data frame) representing the DNA sequence alignment, where rows are sequences
-(named by sequence IDs) and columns represent nucleotide positions.</p></dd>
+<dd><p>A matrix representing the DNA sequence alignment, where rows are sequences (named by sequence IDs)
+and columns represent nucleotide positions.</p></dd>
+
+
+<dt id="arg-var-pos">var_pos<a class="anchor" aria-label="anchor" href="#arg-var-pos"></a></dt>
+<dd><p>A logical vector indicating which positions in the alignment are variable.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A data frame with one row per cluster (plus a row for the overall population) containing the
-number of variable sites and the rates for six mutation types. Mutation rates are rounded to two decimals.</p>
+number of variable sites and the rates for six mutation types. Mutation rates are rounded to three decimals.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
