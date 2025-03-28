@@ -44,9 +44,7 @@ Now that the sequence file is loaded, we can extract the variable positions in t
 
 ```{r var_pos}
 # Get all variable positions in the alignment
-var_pos <- function(x) sum(x == x[1]) < nrow(dna_aln)
-# Get the variable positions in the alignment
-dna_var_pos <- apply(dna_aln, 2, var_pos)
+var_pos <- apply(dna_aln, 2, function(x) sum(x == x[1]) < nrow(dna_aln))
 # Only keep those labels that are in the trace matrix
 valid_labels <- dna_pt_labels[labels(dna_aln)] %in% colnames(trace_mat)
 ```
@@ -54,7 +52,7 @@ valid_labels <- dna_pt_labels[labels(dna_aln)] %in% colnames(trace_mat)
 We can then subset the alignment to include only the variable positions from the isolates with valid labels:
 
 ```{r subset_var}
-dna_var <- dna_aln[valid_labels, dna_var_pos]
+dna_var <- dna_aln[valid_labels, var_pos]
 ```
 
 We then use the helper function `get_snp_dist_matrix()` to calculate the SNP distance matrix for these isolates:
@@ -121,6 +119,45 @@ These two trees look quite different. We can compare the clusters generated usin
 ```{r compare_clusters, fig.width=10, fig.height=10}
 compare_clusters(clusters_snp, clusters_sv)
 ```
+
+
+
+## Some statistical analysis of the clustering results
+
+The `transclust` package also provides functions for statistical analysis of the clustering results. For example, we can use the `intra_cluster_genetic_var_analysis()` function to calculate the genetic variation within each cluster:
+
+```{r cluster_stats}
+mut_var_df <- intra_cluster_genetic_var_analysis(clusters_sv, dna_aln, var_pos)
+```
+
+This dataframe has columns for the total number of variable sites, and also the proportions of each of the six types of base substitutions present in each cluster. But this isn't very intuitive to just look at, so we can plot this. First, we drop any possible NA values. For this plot, we only want to compare relative frequencies of the different types of base substitutions, so we also exclude the first column - the total number of variable sites. We further subset the data frame to only include the first few rows for clarity in the plot:
+
+```{r drop_na_subset}
+mut_var_df <- head(na.omit(mut_var_df)[, -1])
+```
+
+Then we can plot the proportions of each type of base substitution in each cluster. For this, the `ggplot2` package is used to create a stacked bar plot:
+
+```{r plot_cluster_stats, fig.width=10, fig.height=6}
+# Add column for cluster using rownames before pivoting
+mut_var_df$cluster <- row.names(mut_var_df)
+
+# Convert the data frame to long format for ggplot
+mut_var_df_long <- pivot_longer(
+    mut_var_df,
+    cols = -cluster,
+    names_to = "mutation_type",
+    values_to = "proportion"
+)
+
+# Create the stacked bar plot
+ggplot(mut_var_df_long, aes(x = cluster, y = proportion, fill = mutation_type)) +
+    geom_bar(stat = "identity") +
+    labs(x = "Cluster", y = "Proportion", fill = "Mutation Type") +
+    scale_fill_paletteer_d("ggsci::lanonc_lancet")
+```
+
+We can clearly see very specific mutational signatures emerge in the clusters when compared to the population as a whole.
 
 ## References
 

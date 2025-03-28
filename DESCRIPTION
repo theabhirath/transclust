@@ -19,7 +19,6 @@ Depends:
     R (>= 4.2)
 Imports:
     ape,
-    pheatmap,
     phangorn,
     phytools,
     Rcpp,
@@ -29,7 +28,8 @@ Imports:
     ggtree,
     ComplexHeatmap
 Suggests:
-    fastcluster,
+    tidyr,
+    paletteer,
     knitr,
     rmarkdown,
     testthat (>= 3.0.0)
