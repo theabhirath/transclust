@@ -17,7 +17,7 @@ defining the cluster.}
 \item{height}{The height of the heatmap plot.}
 }
 \value{
-A heatmap plot object from \code{ComplexHeatmap} showing the overlap between clusters.
+A ggplot plot object showing the overlap between clusters.
 }
 \description{
 Compares the content of clusters created with two different methods.

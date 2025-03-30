@@ -24,9 +24,9 @@ Imports:
     Rcpp,
     hues,
     dplyr,
+    ggalign,
     ggplot2,
-    ggtree,
-    ComplexHeatmap
+    ggtree
 Suggests:
     tidyr,
     paletteer,

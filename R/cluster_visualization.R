@@ -49,14 +49,15 @@ plot_clusters_phylo <- function(clusters, tree) {
 #' @param width The width of the heatmap plot.
 #' @param height The height of the heatmap plot.
 #'
-#' @return A heatmap plot object from `ComplexHeatmap` showing the overlap between clusters.
+#' @return A ggplot plot object showing the overlap between clusters.
+#' @importFrom ggalign ggheatmap
+#' @importFrom ggplot2 theme element_text scale_fill_gradient
 #'
-#' @importFrom ComplexHeatmap Heatmap
 #' @export
 compare_clusters <- function(clusters1, clusters2, width = 10, height = 10) {
-    # Unique cluster labels
-    clusters1_unique <- sort(unique(clusters1))
-    clusters2_unique <- sort(unique(clusters2))
+    # Unique cluster labels excluding 1 ("default" cluster)
+    clusters1_unique <- setdiff(sort(unique(clusters1)), 1)
+    clusters2_unique <- setdiff(sort(unique(clusters2)), 1)
 
     # Create a matrix to store the overlap between clusters
     cluster_overlap <- matrix(
@@ -64,9 +65,12 @@ compare_clusters <- function(clusters1, clusters2, width = 10, height = 10) {
         dimnames = list(clusters1_unique, clusters2_unique)
     )
 
+    clusters1_char <- as.character(clusters1_unique)
+    clusters2_char <- as.character(clusters2_unique)
+
     # Compute cluster overlap
-    for (cluster1 in as.character(clusters1_unique)) {
-        for (cluster2 in as.character(clusters2_unique)) {
+    for (cluster1 in clusters1_char) {
+        for (cluster2 in clusters2_char) {
             cluster_overlap[cluster1, cluster2] <- length(intersect(
                 names(clusters1)[clusters1 == cluster1],
                 names(clusters2)[clusters2 == cluster2]
@@ -77,8 +81,8 @@ compare_clusters <- function(clusters1, clusters2, width = 10, height = 10) {
         }
     }
 
-    # Plot heatmap of cluster overlap
-    Heatmap(cluster_overlap, height = height, width = width)
+    # Return the ggheatmap plot
+    ggheatmap(cluster_overlap, width = width, height = height)
 }
 
 #' Produces summary plots regarding genetic distances within and between transmission clusters.
