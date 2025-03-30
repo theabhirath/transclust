@@ -83,6 +83,7 @@ data manipulation and visualization.</p>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/emmanuelparadis/ape" class="external-link">ape</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://tidyr.tidyverse.org" class="external-link">tidyr</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/Yunuuuu/ggalign" class="external-link">ggalign</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/EmilHvitfeldt/paletteer" class="external-link">paletteer</a></span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
 <h2 id="loading-and-preparing-data">Loading and preparing data<a class="anchor" aria-label="anchor" href="#loading-and-preparing-data"></a>
@@ -195,7 +196,20 @@ showing the overlap between the clusters by indicating the proportion of
 isolates in each cluster that are also present in the clusters generated
 by the other method:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/compare_clusters.html">compare_clusters</a></span><span class="op">(</span><span class="va">clusters_snp</span>, <span class="va">clusters_sv</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/compare_clusters.html">compare_clusters</a></span><span class="op">(</span><span class="va">clusters_snp</span>, <span class="va">clusters_sv</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="co"># change the color palette</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/pkg/paletteer/man/ggplot2-scales-continuous.html" class="external-link">scale_fill_paletteer_c</a></span><span class="op">(</span><span class="st">"grDevices::Mint"</span>, direction <span class="op">=</span> <span class="op">-</span><span class="fl">1</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="co"># add a title</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ggtitle</a></span><span class="op">(</span><span class="st">"Comparison of clusters using SNP threshold and threshold-free methods"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="co"># add x and y axis labels</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">xlab</a></span><span class="op">(</span><span class="st">"Threshold-free clusters"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ylab</a></span><span class="op">(</span><span class="st">"SNP threshold clusters"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="co"># center the title and rotate x axis labels</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span></span>
+<span>        plot.title <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>hjust <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span>,</span>
+<span>        axis.text.x <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>angle <span class="op">=</span> <span class="fl">45</span>, hjust <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span>    <span class="op">)</span></span>
+<span><span class="co">#&gt; → heatmap built with `geom_tile()`</span></span></code></pre></div>
 <p><img src="transclust_files/figure-html/compare_clusters-1.png" width="3200"></p>
 </div>
 <div class="section level2">
