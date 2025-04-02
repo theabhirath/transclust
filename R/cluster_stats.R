@@ -539,3 +539,252 @@ cluster_properties <- function(cluster_seqs, pt_trace, seq2pt, ip_pt_seqs, ip_se
     # Return the final numeric vector of cluster properties
     cluster_prop
 }
+
+#' Permute Clusters While Preserving Size Distribution and Patient Counts
+#'
+#' @description
+#' Randomly assigns sequences to new clusters while maintaining the original distribution of patient types
+#' (index start, index not start, convert) within each cluster size group.
+#'
+#' @param clusters A named numeric vector where names are sequence IDs and values are subtrees defining the cluster.
+#' @param seq2pt A named vector mapping sequence IDs to patient IDs.
+#' @param ip_seqs A vector of sequence IDs which correspond to intake patient sequences presumed to be imported.
+#' @param ip_pt_seqs A vector of sequence IDs which correspond to intake positive patients.
+#' @param all Logical flag indicating whether patients not included in clusters (i.e. default cluster 1) should
+#'            be considered.
+#'
+#' @return A numeric vector of permuted clusters (with the same names as the input clusters) maintaining the
+#'         original size distribution and patient structure.
+#'
+#' @details
+#' The function categorizes patients within each original cluster into three types: `index start`, `index not start`,
+#' and `convert`.
+#'
+#' The permutation process works by:
+#'   - Calculating the number of unique patients of each category required for each target cluster
+#'     (based on the original cluster compositions).
+#'   - Identifying unique "patient-cluster groups" (all sequences from a patient within one original cluster).
+#'   - Prioritizing patients who belong to multiple original clusters to ensure they can be placed correctly.
+#'   - Iteratively assigning each patient-cluster group (belonging to a specific category) to a randomly
+#'     chosen eligible target cluster (one that still needs a patient of that category).
+#'
+#' @export
+permute_clusters <- function(clusters, seq2pt, ip_seqs, ip_pt_seqs, all = FALSE) {
+    # If all is TRUE, include all patients in the clusters; otherwise, exclude patients in default cluster 1
+    clusters <- if (!all) clusters[clusters != 1] else clusters
+    cluster_names <- names(clusters)
+
+    # Create list of eligible index patients and convert patients to be added to clusters
+    # Note that this accounts for patients being in multiple clusters (those patients are
+    # eligible to go into multiple clusters) and multiple isolates from the same patient
+    # being in a single cluster (those isolates always stay together)
+    index_pt_start_seqs <- unlist(sapply(ip_seqs, function(seq_id) {
+        cluster_names[clusters == clusters[seq_id] & seq2pt[cluster_names] == seq2pt[seq_id]]
+    }))
+
+    index_seqs_start <- intersect(index_pt_start_seqs, cluster_names)
+    index_seqs_not_start <- intersect(setdiff(ip_pt_seqs, index_seqs_start), cluster_names)
+    convert_seqs <- setdiff(cluster_names, c(index_seqs_start, index_seqs_not_start))
+
+    # Create eligibility matrices
+    get_elig_mat <- function(seqs) {
+        cbind(
+            seq = as.character(seqs),
+            patient = seq2pt[seqs],
+            cluster = clusters[seqs],
+            comb = paste(seq2pt[seqs], clusters[seqs], sep = "-")
+        )
+    }
+    elig_index_start_pts <- get_elig_mat(index_seqs_start)
+    elig_index_not_start_pts <- get_elig_mat(index_seqs_not_start)
+    elig_convert_pts <- get_elig_mat(convert_seqs)
+
+    # Determine the number of clusters each patient is in
+    cluster_per_patient <- function(elig_mat) {
+        pt_unique_sorted <- sort(unique(elig_mat[, "patient"]))
+        setNames(sapply(pt_unique_sorted, function(pt) {
+            length(unique(elig_mat[elig_mat[, "patient"] == pt, "cluster"]))
+        }), pt_unique_sorted)
+    }
+    cluster_per_index_start <- cluster_per_patient(elig_index_start_pts)
+    cluster_per_index_not_start <- cluster_per_patient(elig_index_not_start_pts)
+    cluster_per_convert <- cluster_per_patient(elig_convert_pts)
+
+    # Determine the number of index and convert patients in each cluster
+    pt_per_cluster <- function(elig_mat) {
+        clusters_unique_sorted <- sort(unique(clusters))
+        setNames(sapply(clusters_unique_sorted, function(clust) {
+            length(unique(elig_mat[elig_mat[, "cluster"] == clust, "patient"]))
+        }), clusters_unique_sorted)
+    }
+    index_start_per_cluster <- pt_per_cluster(elig_index_start_pts)
+    index_not_start_per_cluster <- pt_per_cluster(elig_index_not_start_pts)
+    convert_per_cluster <- pt_per_cluster(elig_convert_pts)
+
+    # Assign patients to clusters, starting with patients in multiple clusters to ensure they can be separated
+    rand_clusters <- setNames(rep(-1, length(clusters)), cluster_names)
+
+    # Assign patients to clusters, starting with patients in multiple clusters
+    assign_pt_clusters <- function(elig_vec, cluster_per_pt, pt_per_cluster, rand_clusters) {
+        names_pt_per_cluster <- names(pt_per_cluster)
+        # For each patient, assign them to a cluster
+        for (pt in names(sort(cluster_per_pt, decreasing = TRUE))) {
+            # Get unique cluster assignments for the current patient
+            pt_clust_ids <- unique(elig_vec[elig_vec[, "patient"] == pt, "comb"])
+            # Pick correct number of eligible clusters to assign to them
+            cluster_assign <- sample(names_pt_per_cluster[pt_per_cluster > 0], length(pt_clust_ids))
+            # Remove one from available openings in assigned
+            pt_per_cluster[cluster_assign] <- pt_per_cluster[cluster_assign] - 1
+            # For each patient-cluster, assign all associated isolates to new cluster
+            for (pt_c_i in seq_along(pt_clust_ids)) {
+                # Get all sequences for this patient-cluster combination
+                seqs_to_assign <- elig_vec[elig_vec[, "comb"] == pt_clust_ids[pt_c_i], "seq"]
+                # Assign all sequences to the target cluster
+                rand_clusters[seqs_to_assign] <- as.numeric(cluster_assign[pt_c_i])
+            }
+        }
+        rand_clusters
+    }
+
+    # Sequentially assign patients to clusters from each category
+    rand_clusters <- assign_pt_clusters(
+        elig_convert_pts, cluster_per_convert,
+        convert_per_cluster, rand_clusters
+    ) # Converts
+    rand_clusters <- assign_pt_clusters(
+        elig_index_start_pts, cluster_per_index_start,
+        index_start_per_cluster, rand_clusters
+    ) # Index patients who started clusters
+    rand_clusters <- assign_pt_clusters(
+        elig_index_not_start_pts, cluster_per_index_not_start,
+        index_not_start_per_cluster, rand_clusters
+    ) # Index patients whose isolate was not an index isolate
+
+    rand_clusters
+}
+
+#' Permutation Test for Cluster Properties
+#'
+#' This function compares the properties of actual clusters to properties of randomly
+#' permuted clusters with the same size distribution. It computes various summary statistics,
+#' calculates permutation-based p-values, and generates histogram plots of the statistics.
+#'
+#' @param clusters A named numeric vector where names are sequence IDs and values are subtrees defining the cluster.
+#' @param pt_trace A matrix or data frame with rows representing days and columns representing patients.
+#' @param seq2pt A named vector mapping sequence IDs to patient IDs.
+#' @param ip_pt_seqs A vector of sequence IDs corresponding to intake positive patients.
+#' @param ip_seqs A vector of sequence IDs corresponding to intake patient sequences presumed to be imported.
+#' @param dates A vector of isolate dates named by sequence IDs.
+#' @param snp_dist A matrix of SNP distances between isolates.
+#' @param prefix A descriptor string (used to name output figures).
+#' @param nperm The number of permutations to perform (default is 1000).
+#' @param floor_trace An optional floor trace (rows: days, columns: patients).
+#' @param room_trace An optional room trace (rows: days, columns: patients).
+#'
+#' @return A matrix of permutation statistics. Rows correspond to each permutation (with the last row
+#' containing the observed statistic) and columns correspond to the computed properties.
+#'
+#' @export
+cluster_property_perm_test <- function(clusters, pt_trace, seq2pt, ip_pt_seqs, ip_seqs, dates,
+                                       snp_dist, prefix, nperm = 1000, floor_trace = NULL, room_trace = NULL) {
+    # Process clusters to set single-patient clusters to 1
+    unique_clusters <- sort(unique(clusters))
+    cluster_size <- sapply(unique_clusters, function(x) {
+        length(unique(seq2pt[names(clusters)[clusters == x]]))
+    })
+    names(cluster_size) <- unique_clusters
+    single_clusters <- names(cluster_size)[cluster_size == 1]
+    clusters[clusters %in% single_clusters] <- 1
+
+    # Compute properties of the actual (observed) clusters
+    valid_clusters <- sort(unique(clusters[clusters != 1]))
+    cluster_props <- t(sapply(valid_clusters, function(c) {
+        cluster_properties(
+            names(clusters)[clusters == c],
+            pt_trace, seq2pt, ip_pt_seqs, ip_seqs, snp_dist,
+            dates, floor_trace, room_trace
+        )
+    }))
+    row.names(cluster_props) <- valid_clusters
+
+    # Permute clusters and compute their properties
+    n_props <- ncol(cluster_props)
+    prop_array <- array(
+        dim = c(nrow(cluster_props), n_props, nperm + 1),
+        dimnames = list(
+            seq_len(nrow(cluster_props)),
+            colnames(cluster_props),
+            seq_len(nperm + 1)
+        )
+    )
+
+    for (n in seq_len(nperm)) {
+        message("Permutation: ", n)
+        perm_clust <- permute_clusters(clusters, seq2pt, ip_seqs, ip_pt_seqs, all = FALSE)
+        perm_valid <- sort(unique(perm_clust))
+        perm_cluster_props <- t(sapply(perm_valid, function(c) {
+            cluster_properties(
+                names(perm_clust)[perm_clust == c],
+                pt_trace, seq2pt, ip_pt_seqs, ip_seqs,
+                snp_dist, dates, floor_trace, room_trace
+            )
+        }))
+        # Store the permuted cluster properties; assumes dimensions are consistent with observed clusters
+        prop_array[, , n] <- perm_cluster_props
+    }
+    # Store observed cluster properties in the final slice of the array
+    prop_array[, , nperm + 1] <- cluster_props
+
+    # Compute summary statistics for each permutation
+    median_stat_names <- paste("Median", colnames(cluster_props))
+
+    per_conv_cols <- c(
+        "Number_of_converts_with_source", "Number_of_converts_with_floor_source",
+        "Number_of_converts_with_room_source", "Number_of_converts_after_index"
+    )
+    per_conv_stat_names <- paste("Per convert", per_conv_cols)
+
+    per_init_conv_cols <- c(
+        "Number_of_initial_converts_with_source", "Number_of_initial_converts_with_floor_source",
+        "Number_of_initial_converts_with_room_source", "Number_of_initial_converts_after_index"
+    )
+    per_init_conv_stat_names <- paste("Per convert", per_init_conv_cols)
+
+    cluster_cols <- c(
+        "Number_of_converts_with_source", "Number_of_converts_with_floor_source",
+        "Number_of_converts_with_room_source", "Number_of_converts_after_index"
+    )
+    cluster_stat_names <- paste("Fraction of clusters", cluster_cols)
+
+    prop_stat_names <- c(
+        median_stat_names, per_conv_stat_names,
+        per_init_conv_stat_names, cluster_stat_names
+    )
+
+    perm_props <- matrix(
+        nrow = nperm + 1, ncol = length(prop_stat_names),
+        dimnames = list(seq_len(nperm + 1), prop_stat_names)
+    )
+
+    for (i in seq_len(nperm + 1)) {
+        # Median statistics
+        perm_props[i, median_stat_names] <- apply(prop_array[, , i], 2, median, na.rm = TRUE)
+
+        # Per-convert statistics (as a fraction of the total converts in observed clusters)
+        perm_props[i, per_conv_stat_names] <- sapply(per_conv_cols, function(col) {
+            round(sum(prop_array[, col, i]) / sum(cluster_props[, "Number_of_converts"]), 2)
+        })
+
+        # Per-initial-convert statistics
+        perm_props[i, per_init_conv_stat_names] <- sapply(per_init_conv_cols, function(col) {
+            round(sum(prop_array[, col, i]) / sum(cluster_props[, "Number_of_initial_converts"]), 2)
+        })
+
+        # Fraction of clusters statistic
+        perm_props[i, cluster_stat_names] <- sapply(cluster_cols, function(col) {
+            round(sum(prop_array[, col, i] == cluster_props[, "Number_of_converts"]) / nrow(cluster_props), 2)
+        })
+    }
+
+    perm_props
+}
