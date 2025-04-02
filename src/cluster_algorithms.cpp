@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <Rcpp.h>
+
 using namespace Rcpp;
 
 // unsigned 128-bit integer
@@ -143,7 +144,7 @@ IntegerVector computeDefiningVariants(CharacterMatrix dna_aln, CharacterVector i
     };
 
     // Vector to store the number of defining variants for each subtree
-    IntegerVector defining_variants(n_subtrees);
+    std::vector<int> defining_variants(n_subtrees);
 
     // Iterate over each subtree
     for (int s = 0; s < n_subtrees; s++) {
@@ -212,5 +213,5 @@ IntegerVector computeDefiningVariants(CharacterMatrix dna_aln, CharacterVector i
     }
 
     // Return the vector of defining variant counts
-    return defining_variants;
+    return wrap(defining_variants);
 }
