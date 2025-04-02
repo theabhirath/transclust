@@ -1,6 +1,7 @@
 #' Maps clusters onto a phylogenetic tree and visualizes them
 #'
-#' @author [Aryan Singh](mailto:aryansin@umich.edu)
+#' @author [Aryan Singh](mailto:aryansin@umich.edu) -
+#'         ORCID ID: [0000-0002-1850-5598](https://orcid.org/0000-0002-1850-5598)
 #'
 #' @param clusters A vector named by sequence IDs with values indicating the cluster (subtree) each sequence belongs to.
 #' @param tree A phylogenetic tree object of class `phylo`.

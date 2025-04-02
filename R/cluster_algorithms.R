@@ -51,23 +51,21 @@ get_tn_clusters_snp_thresh <- function(snp_hclust, tree, snp_thresh) {
 #' Identify transmission clusters based on the number of shared variants.
 #'
 #' @description
-#' Clustering is performed to identify the maximal clusters containing a single intake-positive patient
-#' that occurs before all cluster converts. The clustering metric is the number of shared variants, and clusters
-#' can have multiple intake-positive patients if they share an identical number of variants with other cluster
-#' members or intake-positive patients occur after converts. This clustering also requires that clusters be
-#' defined by at least one shared variant that other isolates don't have. See `vignette("transclust")` for more details.
+#' Clustering is performed to identify the maximal clusters containing a single intake-positive patient that occurs
+#' before all cluster converts. The clustering metric is the number of shared variants, and clusters can have multiple
+#' intake-positive patients if they share an identical number of variants with other cluster members or intake-positive
+#' patients occur after converts. This clustering also requires that clusters be defined by at least one shared variant
+#' that other isolates don't have. See `vignette("transclust")` for more details.
 #'
 #' @param dna_aln A DNA alignment object of class `DNAbin`.
 #' @param snp_dist A matrix of SNP distances between isolates constructed using a model of DNA evolution.
 #'                 See [`get_snp_dist_matrix`] for a useful function to generate this.
-#' @param ip_seqs A vector of sequence IDs which correspond to intake patient sequences
-#'                presumed to be imported.
+#' @param ip_seqs A vector of sequence IDs which correspond to intake patient sequences presumed to be imported.
 #' @param ip_pt_seqs A vector of sequence IDs which correspond to intake-positive patients.
-#' @param seq2pt A named vector linking sequence IDs to patient IDs.
+#' @param seq2pt A named vector mapping sequence IDs to patient IDs.
 #' @param dates A vector of isolate dates named by sequence IDs.
-#' @param tree A phylogenetic tree object of class `phylo` constructed from the DNA alignment. This can be
-#'             constructed using the [`get_phylo_tree`] or can be any other tree object constructed from the
-#'             same isolates.
+#' @param tree A phylogenetic tree object of class `phylo` constructed from the DNA alignment. This can be constructed
+#'             using the [`get_phylo_tree`] or can be any other tree object constructed from the same isolates.
 #'
 #' @return A numeric vector indicating the cluster that each isolate belongs to.
 #'

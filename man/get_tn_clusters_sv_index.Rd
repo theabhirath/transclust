@@ -20,28 +20,26 @@ get_tn_clusters_sv_index(
 \item{snp_dist}{A matrix of SNP distances between isolates constructed using a model of DNA evolution.
 See \code{\link{get_snp_dist_matrix}} for a useful function to generate this.}
 
-\item{ip_seqs}{A vector of sequence IDs which correspond to intake patient sequences
-presumed to be imported.}
+\item{ip_seqs}{A vector of sequence IDs which correspond to intake patient sequences presumed to be imported.}
 
 \item{ip_pt_seqs}{A vector of sequence IDs which correspond to intake-positive patients.}
 
-\item{seq2pt}{A named vector linking sequence IDs to patient IDs.}
+\item{seq2pt}{A named vector mapping sequence IDs to patient IDs.}
 
 \item{dates}{A vector of isolate dates named by sequence IDs.}
 
-\item{tree}{A phylogenetic tree object of class \code{phylo} constructed from the DNA alignment. This can be
-constructed using the \code{\link{get_phylo_tree}} or can be any other tree object constructed from the
-same isolates.}
+\item{tree}{A phylogenetic tree object of class \code{phylo} constructed from the DNA alignment. This can be constructed
+using the \code{\link{get_phylo_tree}} or can be any other tree object constructed from the same isolates.}
 }
 \value{
 A numeric vector indicating the cluster that each isolate belongs to.
 }
 \description{
-Clustering is performed to identify the maximal clusters containing a single intake-positive patient
-that occurs before all cluster converts. The clustering metric is the number of shared variants, and clusters
-can have multiple intake-positive patients if they share an identical number of variants with other cluster
-members or intake-positive patients occur after converts. This clustering also requires that clusters be
-defined by at least one shared variant that other isolates don't have. See \code{vignette("transclust")} for more details.
+Clustering is performed to identify the maximal clusters containing a single intake-positive patient that occurs
+before all cluster converts. The clustering metric is the number of shared variants, and clusters can have multiple
+intake-positive patients if they share an identical number of variants with other cluster members or intake-positive
+patients occur after converts. This clustering also requires that clusters be defined by at least one shared variant
+that other isolates don't have. See \code{vignette("transclust")} for more details.
 }
 \references{
 Hawken, S. E., Yelin, R. D., Lolans, K., Pirani, A., Weinstein, R. A., Lin, M. Y., Hayden, M. K., &
