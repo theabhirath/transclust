@@ -26,7 +26,8 @@ Imports:
     dplyr,
     ggalign,
     ggplot2,
-    ggtree
+    ggtree,
+    parallel
 Suggests:
     tidyr,
     paletteer,

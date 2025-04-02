@@ -205,6 +205,7 @@ intra_cluster_genetic_var_analysis <- function(clusters, dna_aln, var_pos) {
 #'     \item Time_from_index_to_first_convert
 #'     \item Time_from_index_to_last_convert
 #'   }
+#' @keywords internal
 cluster_properties <- function(cluster_seqs, pt_trace, seq2pt, ip_pt_seqs, ip_seqs, snp_dist,
                                dates, floor_trace = NULL, room_trace = NULL) {
     # Define names for all output properties
@@ -649,13 +650,18 @@ cluster_property_perm_test <- function(clusters, pt_trace, seq2pt, ip_pt_seqs, i
 #' @param nperm The number of permutations to perform (default is 1000).
 #' @param floor_trace An optional floor trace (rows: days, columns: patients).
 #' @param room_trace An optional room trace (rows: days, columns: patients).
+#' @param mc.cores The number of cores to use for parallel processing (default is one less than the total
+#'                 number of cores). This is only for *nix systems and does not work on Windows - for Windows,
+#'                 set mc.cores = 1.
 #'
 #' @return A matrix of permutation statistics. Rows correspond to each permutation (with the last row
 #' containing the observed statistic) and columns correspond to the computed properties.
 #'
+#' @importFrom parallel detectCores mclapply
 #' @export
-cluster_property_perm_test <- function(clusters, pt_trace, seq2pt, ip_pt_seqs, ip_seqs, dates,
-                                       snp_dist, prefix, nperm = 1000, floor_trace = NULL, room_trace = NULL) {
+cluster_property_perm_test <- function(clusters, pt_trace, seq2pt, ip_pt_seqs, ip_seqs, dates, snp_dist,
+                                       prefix, nperm = 1000, floor_trace = NULL, room_trace = NULL,
+                                       mc.cores = detectCores() - 1) {
     # Process clusters to set single-patient clusters to 1
     unique_clusters <- sort(unique(clusters))
     cluster_size <- sapply(unique_clusters, function(x) {
@@ -686,9 +692,7 @@ cluster_property_perm_test <- function(clusters, pt_trace, seq2pt, ip_pt_seqs, i
             seq_len(nperm + 1)
         )
     )
-
-    for (n in seq_len(nperm)) {
-        message("Permutation: ", n)
+    perm_results <- mclapply(seq_len(nperm), function(n) {
         perm_clust <- permute_clusters(clusters, seq2pt, ip_seqs, ip_pt_seqs, all = FALSE)
         perm_valid <- sort(unique(perm_clust))
         perm_cluster_props <- t(sapply(perm_valid, function(c) {
@@ -698,8 +702,12 @@ cluster_property_perm_test <- function(clusters, pt_trace, seq2pt, ip_pt_seqs, i
                 snp_dist, dates, floor_trace, room_trace
             )
         }))
-        # Store the permuted cluster properties; assumes dimensions are consistent with observed clusters
-        prop_array[, , n] <- perm_cluster_props
+        perm_cluster_props
+    }, mc.cores = mc.cores)
+
+    # Store the permuted cluster properties in the array
+    for (n in seq_len(nperm)) {
+        prop_array[, , n] <- perm_results[[n]]
     }
     # Store observed cluster properties in the final slice of the array
     prop_array[, , nperm + 1] <- cluster_props
