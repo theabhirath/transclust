@@ -52,6 +52,5 @@ containing the observed statistic) and columns correspond to the computed proper
 }
 \description{
 This function compares the properties of actual clusters to properties of randomly
-permuted clusters with the same size distribution. It computes various summary statistics,
-calculates permutation-based p-values, and generates histogram plots of the statistics.
+permuted clusters with the same size distribution. It computes various summary statistics.
 }
