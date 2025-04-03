@@ -409,25 +409,27 @@ cluster_properties <- function(cluster_seqs, pt_trace, seq2pt, ip_pt_seqs, ip_se
     # and a trace data set, check if there's an overlap in location
     # after pt_donor has the strain and on or before pt_recipient's first positive.
     pt_overlap <- function(pt_donor, pt_recipient, first_pos_vec, trace) {
+        donor_date <- first_pos_vec[pt_donor]
+        recipient_date <- first_pos_vec[pt_recipient]
         # If the donor's earliest date is <= the recipient's earliest date:
         if (first_pos_vec[pt_donor] <= first_pos_vec[pt_recipient]) {
-            time_range <- seq(
-                from = first_pos_vec[pt_donor],
-                to   = first_pos_vec[pt_recipient],
-                by   = 1
-            )
+            time_range <- seq(from = donor_date, to = recipient_date, by = 1)
             time_range <- as.character(as.Date(time_range, origin = "1899-12-30"))
-
-            # Check if there's a day where pt_donor and pt_recipient share a location > 0
+            # Check if there's a day where pt_donor and pt_recipient share a location
             # (i.e., same floor/room/patient unit) in 'trace'
-            has_overlap <- sum(
+            any(
                 floor(trace[time_range, pt_donor]) == floor(trace[time_range, pt_recipient]) &
                     (floor(trace[time_range, pt_recipient]) > 0)
-            ) > 0
-            has_overlap
+            )
         } else {
             FALSE
         }
+    }
+
+    find_source <- function(pt_convert, trace) {
+        all_others <- setdiff(unique(seq2pt[cluster_seqs]), pt_convert)
+        any(sapply(all_others, pt_overlap, pt_recipient = pt_convert,
+                   first_pos_vec = earliest_pos_by_pt, trace = trace))
     }
 
     # Count how many converts can be assigned a source patient in the cluster
@@ -437,46 +439,17 @@ cluster_properties <- function(cluster_seqs, pt_trace, seq2pt, ip_pt_seqs, ip_se
             !any(is.infinite(earliest_pos_by_pt))) {
         # convert_pts was captured above as all convert patient IDs
         # for each convert, see if any other patient in the cluster can be a source
-        find_source_for_convert <- function(pt_convert) {
-            # All other patients in cluster
-            all_others <- setdiff(unique(seq2pt[cluster_seqs]), pt_convert)
-            # Did any of them overlap with the convert in 'pt_trace'?
-            overlap_vector <- sapply(all_others, pt_overlap,
-                pt_recipient = pt_convert,
-                first_pos_vec = earliest_pos_by_pt,
-                trace = pt_trace
-            )
-            any(overlap_vector)
-        }
-
-        cluster_prop["Number_of_converts_with_source"] <- sum(sapply(convert_pts, find_source_for_convert))
-
+        cluster_prop["Number_of_converts_with_source"] <-
+            sum(sapply(convert_pts, find_source, trace = pt_trace))
         # If we have floor_trace, do the same overlap check
         if (!is.null(floor_trace)) {
-            find_floor_source <- function(pt_convert) {
-                all_others <- setdiff(unique(seq2pt[cluster_seqs]), pt_convert)
-                overlap_vector <- sapply(all_others, pt_overlap,
-                    pt_recipient = pt_convert,
-                    first_pos_vec = earliest_pos_by_pt,
-                    trace = floor_trace
-                )
-                any(overlap_vector)
-            }
-            cluster_prop["Number_of_converts_with_floor_source"] <- sum(sapply(convert_pts, find_floor_source))
+            cluster_prop["Number_of_converts_with_floor_source"] <-
+                sum(sapply(convert_pts, find_source, trace = floor_trace))
         }
-
         # If we have room_trace, do the same overlap check
         if (!is.null(room_trace)) {
-            find_room_source <- function(pt_convert) {
-                all_others <- setdiff(unique(seq2pt[cluster_seqs]), pt_convert)
-                overlap_vector <- sapply(all_others, pt_overlap,
-                    pt_recipient = pt_convert,
-                    first_pos_vec = earliest_pos_by_pt,
-                    trace = room_trace
-                )
-                any(overlap_vector)
-            }
-            cluster_prop["Number_of_converts_with_room_source"] <- sum(sapply(convert_pts, find_room_source))
+            cluster_prop["Number_of_converts_with_room_source"] <-
+                sum(sapply(convert_pts, find_source, trace = room_trace))
         }
     } else {
         cluster_prop["Number_of_converts_with_source"] <- 0
@@ -488,44 +461,15 @@ cluster_properties <- function(cluster_seqs, pt_trace, seq2pt, ip_pt_seqs, ip_se
     if (cluster_prop["Number_of_initial_converts"] > 0 &&
             cluster_prop["Number_of_patients"] > 1 &&
             !any(is.infinite(earliest_pos_by_pt))) {
-        find_source_for_initial <- function(pt_convert) {
-            all_others <- setdiff(unique(seq2pt[cluster_seqs]), pt_convert)
-            overlap_vector <- sapply(all_others, pt_overlap,
-                pt_recipient = pt_convert,
-                first_pos_vec = earliest_pos_by_pt,
-                trace = pt_trace
-            )
-            any(overlap_vector)
-        }
         cluster_prop["Number_of_initial_converts_with_source"] <-
-            sum(sapply(initial_convert_pts, find_source_for_initial))
-
+            sum(sapply(initial_convert_pts, find_source, trace = pt_trace))
         if (!is.null(floor_trace)) {
-            find_floor_source_initial <- function(pt_convert) {
-                all_others <- setdiff(unique(seq2pt[cluster_seqs]), pt_convert)
-                overlap_vector <- sapply(all_others, pt_overlap,
-                    pt_recipient = pt_convert,
-                    first_pos_vec = earliest_pos_by_pt,
-                    trace = floor_trace
-                )
-                any(overlap_vector)
-            }
             cluster_prop["Number_of_initial_converts_with_floor_source"] <-
-                sum(sapply(initial_convert_pts, find_floor_source_initial))
+                sum(sapply(initial_convert_pts, find_source, trace = floor_trace))
         }
-
         if (!is.null(room_trace)) {
-            find_room_source_initial <- function(pt_convert) {
-                all_others <- setdiff(unique(seq2pt[cluster_seqs]), pt_convert)
-                overlap_vector <- sapply(all_others, pt_overlap,
-                    pt_recipient = pt_convert,
-                    first_pos_vec = earliest_pos_by_pt,
-                    trace = room_trace
-                )
-                any(overlap_vector)
-            }
             cluster_prop["Number_of_initial_converts_with_room_source"] <-
-                sum(sapply(initial_convert_pts, find_room_source_initial))
+                sum(sapply(initial_convert_pts, find_source, trace = room_trace))
         }
     } else {
         cluster_prop["Number_of_initial_converts_with_source"] <- 0
@@ -540,39 +484,57 @@ cluster_properties <- function(cluster_seqs, pt_trace, seq2pt, ip_pt_seqs, ip_se
     cluster_prop
 }
 
-#' Permute Clusters While Preserving Size Distribution and Patient Counts
+#' Permutation Test for Cluster Properties
 #'
 #' @description
-#' Randomly assigns sequences to new clusters while maintaining the original distribution of patient types
-#' (index start, index not start, convert) within each cluster size group.
+#' This function compares the properties of actual clusters to properties of randomly
+#' permuted clusters with the same size distribution. It computes various summary statistics.
 #'
 #' @param clusters A named numeric vector where names are sequence IDs and values are subtrees defining the cluster.
+#' @param pt_trace A matrix or data frame with rows representing days and columns representing patients.
 #' @param seq2pt A named vector mapping sequence IDs to patient IDs.
-#' @param ip_seqs A vector of sequence IDs which correspond to intake patient sequences presumed to be imported.
-#' @param ip_pt_seqs A vector of sequence IDs which correspond to intake positive patients.
-#' @param all Logical flag indicating whether patients not included in clusters (i.e. default cluster 1) should
-#'            be considered.
+#' @param ip_pt_seqs A vector of sequence IDs corresponding to intake positive patients.
+#' @param ip_seqs A vector of sequence IDs corresponding to intake patient sequences presumed to be imported.
+#' @param dates A vector of isolate dates named by sequence IDs.
+#' @param snp_dist A matrix of SNP distances between isolates.
+#' @param prefix A descriptor string (used to name output figures).
+#' @param nperm The number of permutations to perform (default is 1000).
+#' @param floor_trace An optional floor trace (rows: days, columns: patients).
+#' @param room_trace An optional room trace (rows: days, columns: patients).
+#' @param mc.cores The number of cores to use for parallel processing (default is one less than the total
+#'                 number of cores). This is only for *nix systems and does not work on Windows - for Windows,
+#'                 set mc.cores = 1.
 #'
-#' @return A numeric vector of permuted clusters (with the same names as the input clusters) maintaining the
-#'         original size distribution and patient structure.
+#' @return A matrix of permutation statistics. Rows correspond to each permutation (with the last row
+#' containing the observed statistic) and columns correspond to the computed properties.
 #'
-#' @details
-#' The function categorizes patients within each original cluster into three types: `index start`, `index not start`,
-#' and `convert`.
-#'
-#' The permutation process works by:
-#'   - Calculating the number of unique patients of each category required for each target cluster
-#'     (based on the original cluster compositions).
-#'   - Identifying unique "patient-cluster groups" (all sequences from a patient within one original cluster).
-#'   - Prioritizing patients who belong to multiple original clusters to ensure they can be placed correctly.
-#'   - Iteratively assigning each patient-cluster group (belonging to a specific category) to a randomly
-#'     chosen eligible target cluster (one that still needs a patient of that category).
-#'
+#' @importFrom parallel detectCores mclapply
 #' @export
-permute_clusters <- function(clusters, seq2pt, ip_seqs, ip_pt_seqs, all = FALSE) {
-    # If all is TRUE, include all patients in the clusters; otherwise, exclude patients in default cluster 1
-    clusters <- if (!all) clusters[clusters != 1] else clusters
+cluster_property_perm_test <- function(clusters, pt_trace, seq2pt, ip_pt_seqs, ip_seqs, dates, snp_dist,
+                                       prefix, nperm = 1000, floor_trace = NULL, room_trace = NULL,
+                                       mc.cores = detectCores() - 1) {
+    # Process clusters to set single-patient clusters to 1
+    unique_clusters <- sort(unique(clusters))
+    cluster_size <- sapply(unique_clusters, function(x) {
+        length(unique(seq2pt[names(clusters)[clusters == x]]))
+    })
+    single_clusters <- unique_clusters[cluster_size == 1]
+    clusters[clusters %in% single_clusters] <- 1
+
+    # Exclude patients in default cluster 1
+    clusters <- clusters[clusters != 1]
     cluster_names <- names(clusters)
+
+    # Compute properties of the actual (observed) clusters
+    valid_clusters <- sort(unique(clusters))
+    cluster_props <- t(sapply(valid_clusters, function(c) {
+        cluster_properties(
+            cluster_names[clusters == c],
+            pt_trace, seq2pt, ip_pt_seqs, ip_seqs, snp_dist,
+            dates, floor_trace, room_trace
+        )
+    }))
+    row.names(cluster_props) <- valid_clusters
 
     # Create list of eligible index patients and convert patients to be added to clusters
     # Note that this accounts for patients being in multiple clusters (those patients are
@@ -581,7 +543,6 @@ permute_clusters <- function(clusters, seq2pt, ip_seqs, ip_pt_seqs, all = FALSE)
     index_pt_start_seqs <- unlist(sapply(ip_seqs, function(seq_id) {
         cluster_names[clusters == clusters[seq_id] & seq2pt[cluster_names] == seq2pt[seq_id]]
     }))
-
     index_seqs_start <- intersect(index_pt_start_seqs, cluster_names)
     index_seqs_not_start <- intersect(setdiff(ip_pt_seqs, index_seqs_start), cluster_names)
     convert_seqs <- setdiff(cluster_names, c(index_seqs_start, index_seqs_not_start))
@@ -621,8 +582,16 @@ permute_clusters <- function(clusters, seq2pt, ip_seqs, ip_pt_seqs, all = FALSE)
     index_not_start_per_cluster <- pt_per_cluster(elig_index_not_start_pts)
     convert_per_cluster <- pt_per_cluster(elig_convert_pts)
 
-    # Assign patients to clusters, starting with patients in multiple clusters to ensure they can be separated
-    rand_clusters <- setNames(rep(-1, length(clusters)), cluster_names)
+    # Permute clusters and compute their properties
+    n_props <- ncol(cluster_props)
+    prop_array <- array(
+        dim = c(nrow(cluster_props), n_props, nperm + 1),
+        dimnames = list(
+            seq_len(nrow(cluster_props)),
+            colnames(cluster_props),
+            seq_len(nperm + 1)
+        )
+    )
 
     # Assign patients to clusters, starting with patients in multiple clusters
     assign_pt_clusters <- function(elig_vec, cluster_per_pt, pt_per_cluster, rand_clusters) {
