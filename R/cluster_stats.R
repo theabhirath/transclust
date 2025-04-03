@@ -409,25 +409,27 @@ cluster_properties <- function(cluster_seqs, pt_trace, seq2pt, ip_pt_seqs, ip_se
     # and a trace data set, check if there's an overlap in location
     # after pt_donor has the strain and on or before pt_recipient's first positive.
     pt_overlap <- function(pt_donor, pt_recipient, first_pos_vec, trace) {
+        donor_date <- first_pos_vec[pt_donor]
+        recipient_date <- first_pos_vec[pt_recipient]
         # If the donor's earliest date is <= the recipient's earliest date:
         if (first_pos_vec[pt_donor] <= first_pos_vec[pt_recipient]) {
-            time_range <- seq(
-                from = first_pos_vec[pt_donor],
-                to   = first_pos_vec[pt_recipient],
-                by   = 1
-            )
+            time_range <- seq(from = donor_date, to = recipient_date, by = 1)
             time_range <- as.character(as.Date(time_range, origin = "1899-12-30"))
-
-            # Check if there's a day where pt_donor and pt_recipient share a location > 0
+            # Check if there's a day where pt_donor and pt_recipient share a location
             # (i.e., same floor/room/patient unit) in 'trace'
-            has_overlap <- sum(
+            any(
                 floor(trace[time_range, pt_donor]) == floor(trace[time_range, pt_recipient]) &
                     (floor(trace[time_range, pt_recipient]) > 0)
-            ) > 0
-            has_overlap
+            )
         } else {
             FALSE
         }
+    }
+
+    find_source <- function(pt_convert, trace) {
+        all_others <- setdiff(unique(seq2pt[cluster_seqs]), pt_convert)
+        any(sapply(all_others, pt_overlap, pt_recipient = pt_convert,
+                   first_pos_vec = earliest_pos_by_pt, trace = trace))
     }
 
     # Count how many converts can be assigned a source patient in the cluster
@@ -437,46 +439,17 @@ cluster_properties <- function(cluster_seqs, pt_trace, seq2pt, ip_pt_seqs, ip_se
             !any(is.infinite(earliest_pos_by_pt))) {
         # convert_pts was captured above as all convert patient IDs
         # for each convert, see if any other patient in the cluster can be a source
-        find_source_for_convert <- function(pt_convert) {
-            # All other patients in cluster
-            all_others <- setdiff(unique(seq2pt[cluster_seqs]), pt_convert)
-            # Did any of them overlap with the convert in 'pt_trace'?
-            overlap_vector <- sapply(all_others, pt_overlap,
-                pt_recipient = pt_convert,
-                first_pos_vec = earliest_pos_by_pt,
-                trace = pt_trace
-            )
-            any(overlap_vector)
-        }
-
-        cluster_prop["Number_of_converts_with_source"] <- sum(sapply(convert_pts, find_source_for_convert))
-
+        cluster_prop["Number_of_converts_with_source"] <-
+            sum(sapply(convert_pts, find_source, trace = pt_trace))
         # If we have floor_trace, do the same overlap check
         if (!is.null(floor_trace)) {
-            find_floor_source <- function(pt_convert) {
-                all_others <- setdiff(unique(seq2pt[cluster_seqs]), pt_convert)
-                overlap_vector <- sapply(all_others, pt_overlap,
-                    pt_recipient = pt_convert,
-                    first_pos_vec = earliest_pos_by_pt,
-                    trace = floor_trace
-                )
-                any(overlap_vector)
-            }
-            cluster_prop["Number_of_converts_with_floor_source"] <- sum(sapply(convert_pts, find_floor_source))
+            cluster_prop["Number_of_converts_with_floor_source"] <-
+                sum(sapply(convert_pts, find_source, trace = floor_trace))
         }
-
         # If we have room_trace, do the same overlap check
         if (!is.null(room_trace)) {
-            find_room_source <- function(pt_convert) {
-                all_others <- setdiff(unique(seq2pt[cluster_seqs]), pt_convert)
-                overlap_vector <- sapply(all_others, pt_overlap,
-                    pt_recipient = pt_convert,
-                    first_pos_vec = earliest_pos_by_pt,
-                    trace = room_trace
-                )
-                any(overlap_vector)
-            }
-            cluster_prop["Number_of_converts_with_room_source"] <- sum(sapply(convert_pts, find_room_source))
+            cluster_prop["Number_of_converts_with_room_source"] <-
+                sum(sapply(convert_pts, find_source, trace = room_trace))
         }
     } else {
         cluster_prop["Number_of_converts_with_source"] <- 0
@@ -488,44 +461,15 @@ cluster_properties <- function(cluster_seqs, pt_trace, seq2pt, ip_pt_seqs, ip_se
     if (cluster_prop["Number_of_initial_converts"] > 0 &&
             cluster_prop["Number_of_patients"] > 1 &&
             !any(is.infinite(earliest_pos_by_pt))) {
-        find_source_for_initial <- function(pt_convert) {
-            all_others <- setdiff(unique(seq2pt[cluster_seqs]), pt_convert)
-            overlap_vector <- sapply(all_others, pt_overlap,
-                pt_recipient = pt_convert,
-                first_pos_vec = earliest_pos_by_pt,
-                trace = pt_trace
-            )
-            any(overlap_vector)
-        }
         cluster_prop["Number_of_initial_converts_with_source"] <-
-            sum(sapply(initial_convert_pts, find_source_for_initial))
-
+            sum(sapply(initial_convert_pts, find_source, trace = pt_trace))
         if (!is.null(floor_trace)) {
-            find_floor_source_initial <- function(pt_convert) {
-                all_others <- setdiff(unique(seq2pt[cluster_seqs]), pt_convert)
-                overlap_vector <- sapply(all_others, pt_overlap,
-                    pt_recipient = pt_convert,
-                    first_pos_vec = earliest_pos_by_pt,
-                    trace = floor_trace
-                )
-                any(overlap_vector)
-            }
             cluster_prop["Number_of_initial_converts_with_floor_source"] <-
-                sum(sapply(initial_convert_pts, find_floor_source_initial))
+                sum(sapply(initial_convert_pts, find_source, trace = floor_trace))
         }
-
         if (!is.null(room_trace)) {
-            find_room_source_initial <- function(pt_convert) {
-                all_others <- setdiff(unique(seq2pt[cluster_seqs]), pt_convert)
-                overlap_vector <- sapply(all_others, pt_overlap,
-                    pt_recipient = pt_convert,
-                    first_pos_vec = earliest_pos_by_pt,
-                    trace = room_trace
-                )
-                any(overlap_vector)
-            }
             cluster_prop["Number_of_initial_converts_with_room_source"] <-
-                sum(sapply(initial_convert_pts, find_room_source_initial))
+                sum(sapply(initial_convert_pts, find_source, trace = room_trace))
         }
     } else {
         cluster_prop["Number_of_initial_converts_with_source"] <- 0
