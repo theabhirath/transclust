@@ -63,7 +63,6 @@ intra_cluster_genetic_var_analysis <- function(clusters, dna_aln, var_pos) {
         var_idx <- which(var_pos_cluster)
 
         # Compute minor allele for each variable position
-        # CHECK: why compute X, Y, Z?
         minor_alleles <- vapply(var_idx, function(j) {
             pos_aln_full <- dna_aln_char[, j]
             allele_tab <- table(pos_aln_full)
@@ -76,7 +75,7 @@ intra_cluster_genetic_var_analysis <- function(clusters, dna_aln, var_pos) {
                 # Cluster has a major or minor allele
                 if (is_major_present) "X" else "Y"
             } else if (allele_count == 2 && is_major_present) {
-                # Cluster has a variable minor allele # CHECK: major or minor?
+                # Cluster has a variable minor allele
                 setdiff(cluster_alleles, major_allele)
             } else {
                 "Z" # Cluster has multiple minor alleles
@@ -86,9 +85,11 @@ intra_cluster_genetic_var_analysis <- function(clusters, dna_aln, var_pos) {
         major_alleles <- major_alleles_all[var_idx]
 
         # Filter positions to those with valid nucleotide calls (both alleles among a, c, t, g)
-        valid_pos <- which(minor_alleles != major_alleles &
-                               major_alleles %in% c("a", "c", "t", "g") &
-                               minor_alleles %in% c("a", "c", "t", "g"))
+        valid_pos <- which(
+            minor_alleles != major_alleles &
+                major_alleles %in% c("a", "c", "t", "g") &
+                minor_alleles %in% c("a", "c", "t", "g")
+        )
 
         num_sites <- length(valid_pos)
         num_var_sites[iter] <- num_sites
