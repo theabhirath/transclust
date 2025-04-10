@@ -30,7 +30,6 @@ plot_clusters_phylo <- function(clusters, tree) {
     tree +
         geom_tippoint(aes(color = .data$clust_id), size = 1.5) +
         scale_color_manual(values = cluster_colors) +
-        ggtitle("Phylogenetic Tree labelled with Clusters") +
         guides(color = guide_legend(title = "Cluster ID", override.aes = list(size = 5, shape = "square"))) +
         theme(
             plot.title.position = "plot",
