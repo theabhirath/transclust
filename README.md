@@ -20,4 +20,4 @@ devtools::install_github("theabhirath/transclust")
 > This project is still in the early stages of development and the API may change without notice.
 
 > [!NOTE]
-> This package was developed as part of the BIOINF 576 – Tool Development for Bioinformatics course at the University of Michigan.
+> This package was developed as part of the BIOINF 576 – Tool Development for Bioinformatics course at the University of Michigan. Documents pertaining to the course can be found in the `course` directory. Note, however, that these may not necessarily be up to date with the latest version of the package. The course materials are not intended for public distribution and are provided here for reference only.
