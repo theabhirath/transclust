@@ -43,7 +43,7 @@ intra_cluster_genetic_var_analysis <- function(clusters, dna_aln, var_pos) {
     gc_cg_transversion_rate <- numeric(n_iter)
 
     # Define row names for the output: overall population and each cluster
-    cluster_labels <- c("Population frequency", cluster_ids)
+    cluster_labels <- c("Pop. freq.", cluster_ids)
 
     iter <- 1
     # Loop over overall population (represented by -1) and each cluster
