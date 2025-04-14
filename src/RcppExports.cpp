@@ -23,7 +23,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // computeDefiningVariants
-IntegerVector computeDefiningVariants(CharacterMatrix dna_aln, CharacterVector isolate_names, List subtrees);
+std::vector<int> computeDefiningVariants(CharacterMatrix dna_aln, CharacterVector isolate_names, List subtrees);
 RcppExport SEXP _transclust_computeDefiningVariants(SEXP dna_alnSEXP, SEXP isolate_namesSEXP, SEXP subtreesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;

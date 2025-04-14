@@ -109,7 +109,7 @@ NumericMatrix computeSharedMatrix(CharacterMatrix dna_aln, int out_group) {
 //' @return An `IntegerVector` of integers representing the number of defining
 //'         variants for each subtree.
 // [[Rcpp::export]]
-IntegerVector computeDefiningVariants(CharacterMatrix dna_aln, CharacterVector isolate_names, List subtrees) {
+std::vector<int> computeDefiningVariants(CharacterMatrix dna_aln, CharacterVector isolate_names, List subtrees) {
     int n_isolates = dna_aln.nrow();
     int n_cols = dna_aln.ncol();
     int n_subtrees = subtrees.size();
@@ -213,5 +213,5 @@ IntegerVector computeDefiningVariants(CharacterMatrix dna_aln, CharacterVector i
     }
 
     // Return the vector of defining variant counts
-    return wrap(defining_variants);
+    return defining_variants;
 }
