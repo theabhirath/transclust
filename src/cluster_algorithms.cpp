@@ -213,5 +213,5 @@ std::vector<int> computeDefiningVariants(CharacterMatrix dna_aln, CharacterVecto
     }
 
     // Return the vector of defining variant counts
-    return wrap(defining_variants);
+    return defining_variants;
 }
