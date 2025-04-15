@@ -34,9 +34,7 @@ from outside (a subset of \code{ip_pt_seqs} or similar).}
 \item{snp_dist}{A matrix of SNP distances between isolates (row and column
 names should match sequence IDs).}
 
-\item{dates}{A named numeric or Date vector of isolate dates by sequence ID. Often
-these are numeric if read from Excel-style dates, in which case an origin
-should be considered (e.g. \code{\"1899-12-30\"}).}
+\item{dates}{A named numeric vector of isolate dates by sequence ID.}
 
 \item{floor_trace}{(Optional) A data frame or matrix for floor-level tracing.}
 
