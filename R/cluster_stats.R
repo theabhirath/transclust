@@ -203,6 +203,8 @@ intra_cluster_genetic_var_analysis <- function(clusters, dna_aln, var_pos) {
 #'     \item Time_from_index_to_first_convert
 #'     \item Time_from_index_to_last_convert
 #'   }
+#'
+#' @importFrom stats median
 #' @keywords internal
 cluster_properties <- function(cluster_seqs, pt_trace, seq2pt, ip_pt_seqs, ip_seqs, snp_dist,
                                dates, floor_trace = NULL, room_trace = NULL) {
@@ -503,6 +505,7 @@ cluster_properties <- function(cluster_seqs, pt_trace, seq2pt, ip_pt_seqs, ip_se
 #' @return A matrix of permutation statistics. Rows correspond to each permutation (with the last row
 #' containing the observed statistic) and columns correspond to the computed properties.
 #'
+#' @importFrom stats median
 #' @importFrom parallel detectCores mclapply
 #' @export
 cluster_property_perm_test <- function(clusters, pt_trace, seq2pt, ip_pt_seqs, ip_seqs, dates, snp_dist,
