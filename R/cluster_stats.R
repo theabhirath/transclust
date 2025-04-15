@@ -170,9 +170,7 @@ intra_cluster_genetic_var_analysis <- function(clusters, dna_aln, var_pos) {
 #'   from outside (a subset of \code{ip_pt_seqs} or similar).
 #' @param snp_dist A matrix of SNP distances between isolates (row and column
 #'   names should match sequence IDs).
-#' @param dates A named numeric or Date vector of isolate dates by sequence ID. Often
-#'   these are numeric if read from Excel-style dates, in which case an origin
-#'   should be considered (e.g. \code{\"1899-12-30\"}).
+#' @param dates A named numeric vector of isolate dates by sequence ID.
 #' @param floor_trace (Optional) A data frame or matrix for floor-level tracing.
 #' @param room_trace (Optional) A data frame or matrix for room-level tracing.
 #'
@@ -240,6 +238,8 @@ cluster_properties <- function(cluster_seqs, pt_trace, seq2pt, ip_pt_seqs, ip_se
 
     # Initialize output vector for cluster properties
     cluster_prop <- setNames(numeric(length(attr_names)), attr_names)
+    # Integer converted trace mat dates (row names are strings by default)
+    trace_dates <- as.integer(row.names(pt_trace))
 
     # 1. Basic cluster-level counts #####
     # Number of unique patients in this cluster
@@ -259,8 +259,7 @@ cluster_properties <- function(cluster_seqs, pt_trace, seq2pt, ip_pt_seqs, ip_se
     cluster_prop["Number_of_study_start_indexes"] <- length(setdiff(
         unique(seq2pt[cluster_seqs[cluster_seqs %in% ip_seqs]]),
         unique(seq2pt[cluster_seqs[
-            as.Date(dates[cluster_seqs], origin = "1899-12-30") >
-                (as.Date(row.names(pt_trace)[1]) + 3)
+            dates[cluster_seqs] > trace_dates[1] + 3
         ]])
     ))
 
@@ -325,12 +324,12 @@ cluster_properties <- function(cluster_seqs, pt_trace, seq2pt, ip_pt_seqs, ip_se
         conversion_day_indices <- sapply(convert_pt_ids, function(pt_id) min(which(pt_trace[, pt_id] == 1.5)))
         conversion_day_indices[is.infinite(conversion_day_indices)] <- NA
 
-        conversion_day <- row.names(pt_trace)[conversion_day_indices]
-        conversion_day[is.na(conversion_day)] <- row.names(pt_trace)[nrow(pt_trace)]
+        conversion_day <- trace_dates[conversion_day_indices]
+        conversion_day[is.na(conversion_day)] <- trace_dates[nrow(pt_trace)]
 
         # Distinguish 'initial' converts from 'later' converts based on a
         # 7-day difference threshold between the earliest cluster date and that day in trace
-        day_diff <- as.Date(convert_pos, origin = "1899-12-30") - as.Date(conversion_day)
+        day_diff <- convert_pos - conversion_day
         initial_mask <- day_diff <= 7
 
         initial_convert_pts <- convert_pt_ids[initial_mask]
@@ -384,18 +383,14 @@ cluster_properties <- function(cluster_seqs, pt_trace, seq2pt, ip_pt_seqs, ip_se
         index_pos_indices[is.infinite(index_pos_indices)] <- NA
 
         # Convert the earliest index position to a row name date
-        earliest_index_pos <- min(row.names(pt_trace)[index_pos_indices], na.rm = TRUE)
+        earliest_index_pos <- min(trace_dates[index_pos_indices], na.rm = TRUE)
         if (is.infinite(earliest_index_pos)) earliest_index_pos <- NA
 
         # Count how many convert_pos are >= that date
         if (!is.na(earliest_index_pos)) {
-            # Convert earliest_index_pos to Date
-            earliest_index_date <- as.Date(earliest_index_pos)
-            convert_dates <- as.Date(convert_pos, origin = "1899-12-30")
-
-            cluster_prop["Number_of_converts_after_index_seq"] <- sum(convert_dates >= earliest_index_date)
+            cluster_prop["Number_of_converts_after_index_seq"] <- sum(convert_pos >= earliest_index_pos)
             cluster_prop["Number_of_initial_converts_after_index_seq"] <-
-                sum(convert_dates >= earliest_index_date & convert_pos != Inf)
+                sum(convert_pos >= earliest_index_pos & convert_pos != Inf)
         } else {
             cluster_prop["Number_of_converts_after_index_seq"] <- 0
             cluster_prop["Number_of_initial_converts_after_index_seq"] <- 0
@@ -415,7 +410,6 @@ cluster_properties <- function(cluster_seqs, pt_trace, seq2pt, ip_pt_seqs, ip_se
         # If the donor's earliest date is <= the recipient's earliest date:
         if (first_pos_vec[pt_donor] <= first_pos_vec[pt_recipient]) {
             time_range <- seq(from = donor_date, to = recipient_date, by = 1)
-            time_range <- as.character(as.Date(time_range, origin = "1899-12-30"))
             # Check if there's a day where pt_donor and pt_recipient share a location
             # (i.e., same floor/room/patient unit) in 'trace'
             any(
