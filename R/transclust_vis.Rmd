@@ -1,0 +1,638 @@
+---
+title: "transclust_vis"
+output: html_document
+date: "2025-04-09"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(transclust)
+library(ape)
+library(ggtree)
+library(ggtreeExtra)
+library(phytools)
+library(ggnewscale)
+library(patchwork)
+library(RColorBrewer)
+```
+
+```{r}
+#load(system.file("extdata", "example.Rdata", package = "transclust")) # no timepoints
+load("~/Desktop/transclust/2025-02-07_tn_cluster_analysis_pre_run.RData") # NOT in package
+dna_aln <- read.dna(system.file("extdata", "example.fasta", package = "transclust"), format = "fasta") # seq from package
+
+# Get all variable positions in the alignment
+var_pos <- apply(dna_aln, 2, function(x) sum(x == x[1]) < nrow(dna_aln))
+# Only keep those labels that are in the trace matrix
+valid_labels <- dna_pt_labels[labels(dna_aln)] %in% colnames(trace_mat)
+
+dna_var <- dna_aln[valid_labels, var_pos]
+
+snp_dist <- get_snp_dist_matrix(dna_var)
+
+# parsimony tree
+phylo_tree_pars <- get_phylo_tree(dna_var, snp_dist, "pars")
+
+clusters_sv <- get_tn_clusters_sv_index(
+    dna_var, snp_dist, ip_seqs_3days, ip_seqs,
+    dna_pt_labels, dates, phylo_tree_pars
+)
+```
+
+
+# visualization functions
+```{r}
+plot_pt_trace <- function(sequence_ids, tree, dates, ip_seqs, pt_trace, seq2pt, snp_dist, prefix) { 
+     # Convert Excel-style numeric dates to R Date objects just once 
+     date_vec <- as.Date(dates, origin = "1899-12-30") 
+  
+     # Build a data frame for all sequences 
+     # Each row has: sequence ID, patient ID, and the date 
+     df <- data.frame( 
+         id = sequence_ids, 
+         pt = seq2pt[sequence_ids], 
+         date = date_vec[sequence_ids] 
+     ) 
+  
+     # Identify which sequences/patients are present in pt_trace's columns 
+     df$in_trace <- df$pt %in% colnames(pt_trace) 
+  
+     # Subset df to keep only those in pt_trace 
+     df_sub <- df[df$in_trace, ] 
+  
+     # Build the trace_sub matrix by transposing only the necessary columns 
+     trace_sub <- t(pt_trace[, as.character(df_sub$pt), drop = FALSE]) 
+     rownames(trace_sub) <- df_sub$id 
+  
+     # Mark each isolate's date with a distinct value (2.5) in trace_sub 
+     # cbind() pairs the row name (isolate ID) and the date as a character 
+     trace_sub[cbind(df_sub$id, as.character(df_sub$date))] <- 2.5 
+  
+     # Subset the tree provided to keep only the relevant sequences 
+     tree_sub <- keep.tip(tree, df_sub$id) 
+  
+     # Row coloring: white for index patient isolates, lightblue otherwise 
+     row_colors <- ifelse(df_sub$id %in% ip_seqs, "white", "lightblue") 
+  
+     # Column labeling: only label every 14th column i.e. every two weeks 
+     col_lab <- rownames(pt_trace) 
+     idx_labeled <- seq(1, length(col_lab), 14) 
+     col_lab[setdiff(seq_along(col_lab), idx_labeled)] <- "" 
+  
+     # Row labels: ID and patient ID in parentheses 
+     labels <- paste0(df_sub$id, "(", df_sub$pt, ")") 
+  
+     # Create file name, including approximate dendrogram height 
+     
+     if (is.null(tree_sub$edge.length)) { # NEW: the output from get_phylo w pars doesn't pass branch lengths
+      tree_sub$edge.length <- rep(1, nrow(tree_sub$edge))
+    }
+     
+     dend_height <- max(nodeHeights(tree_sub)) 
+     ##file <- paste0( 
+     ##    "figures/", format(Sys.time(), "%Y-%m-%d"), "_", prefix, 
+     ##    "_trace_map_by_sequence_scale_", dend_height, "snps.pdf" 
+     ##) 
+     p <- gheatmap( 
+         ggtree(tree_sub), 
+         trace_sub |> as.data.frame() |> mutate_all(as.factor), 
+         color = NULL, 
+         width = 4, 
+         offset = 1, 
+         font.size = 2, 
+         custom_column_labels = col_lab, 
+         colnames_angle = 90 
+     ) + 
+         # adjust for long vertical column labels 
+         vexpand(.1, -1) + 
+         # color the tiles 
+         scale_fill_manual( 
+             values = c("white", "lightgray", "blue", "red", "yellow"), 
+             name = "Trace" 
+         ) + ggnewscale::new_scale_fill() + #NEW: so that the old scale isn't replaced
+         # add colors to the rows 
+         ##geom_facet( 
+         ##    data = data.frame(id = df_sub$id, color = row_colors), 
+         ##    aes(x = id, y = 0, fill = color), 
+         ##    geom = "tile", inherit.aes = FALSE, panel = "tree", #NEW: a panel argument needs to be passed for it to plot (or panel = 1)
+         ##    width = 1, height = 0.5 
+         ##)
+        geom_fruit(data = data.frame(id = df_sub$id, color = row_colors),
+          geom = geom_tile,
+          inherit.aes = FALSE,
+          mapping = aes(y = id, x = 1, fill = color),
+          offset = -0.2,
+          width = 1
+        ) + scale_fill_manual(
+          name = "Isolate Origin",
+          values = c("white" = "white", "lightblue" = "lightblue"),
+          labels = c("Index Patient", "Non-Index Patient"),
+          guide = "legend"
+        )
+     ##ggsave( 
+     ##    filename = file, 
+     ##    plot = p, 
+     ##    width = 50, 
+     ##    height = 50, 
+     ##    dpi = "retina", 
+     ##    units = "cm" 
+     ##)
+     
+     return(p)
+}
+
+plot_floor_trace <- function(clusters, dates, ip_seqs, floor_trace, seq2pt, snp_dist, prefix, cluster_class = NULL) { 
+     # Convert numeric Excel-style dates to R Date objects only once 
+     date_vec <- as.Date(dates, origin = "1899-12-30") 
+  
+     # Prepare a data frame for all isolates 
+     df <- data.frame( 
+         id = names(clusters), 
+         cluster = as.character(clusters), 
+         pt = seq2pt[names(clusters)], 
+         date = date_vec[names(clusters)] 
+     ) 
+  
+     # Ensure cluster_class has correct names if provided; otherwise create a simple vector 
+     if (is.null(cluster_class)) { 
+         cluster_order <- names(table(clusters)) 
+         cluster_class <- structure(rep("NA", length(unique(clusters))), names = unique(clusters)) 
+     } else { 
+         # Only keep cluster names that actually appear in 'clusters' 
+         cluster_order <- intersect(names(cluster_class), unique(df$cluster)) 
+     } 
+  
+     # For each cluster-pt group, find earliest isolate (in time) 
+     # Then map each isolate to that earliest isolate 
+     df_earliest <- df |> 
+         group_by(.data$cluster, .data$pt) |> 
+         slice_min(.data$date, with_ties = FALSE) |> 
+         ungroup() |> 
+         rename(earliest_id = .data$id) 
+  
+     # Add earliest isolate info back to df 
+     df <- df |> 
+         left_join(df_earliest |> select(.data$cluster, .data$pt, .data$earliest_id), by = c("cluster", "pt")) 
+  
+     # Identify isolate order: cluster_order, then by earliest isolate's date 
+     df_earliest <- df_earliest |> 
+         mutate(cluster_factor = factor(.data$cluster, levels = cluster_order)) |> 
+         arrange(.data$cluster_factor, .data$date) 
+  
+     isolate_order <- df_earliest$earliest_id 
+  
+     # Identify if each earliest isolate is in the user-supplied index set 
+     df_earliest <- df_earliest |> mutate(is_index = .data$earliest_id %in% ip_seqs) 
+  
+     # Create named vector for rep_isolate: for each isolate, the earliest isolate in the same cluster & patient 
+     rep_isolate <- setNames(df$earliest_id, df$id) 
+  
+     # Helper function to get max SNP distance within cluster or within cluster–patient 
+     get_max_snp <- function(iso_id, use_entire_cluster = FALSE) { 
+         clust <- df$cluster[df$id == iso_id] 
+         ptval <- df$pt[df$id == iso_id] 
+         sub_ids <- if (!use_entire_cluster) { 
+             # same cluster, same patient 
+             df$id[df$cluster == clust & df$pt == ptval] 
+         } else { 
+             # entire cluster 
+             df$id[df$cluster == clust] 
+         } 
+         max(snp_dist[sub_ids, sub_ids]) 
+     } 
+  
+     # For each earliest isolate, compute max distances 
+     max_dist <- sapply(isolate_order, get_max_snp, use_entire_cluster = FALSE) 
+     max_clust_dist <- sapply(isolate_order, get_max_snp, use_entire_cluster = TRUE) 
+  
+     # Subset the floor_trace matrix 
+     sequence_ids <- df$id 
+     pt_in_trace <- seq2pt[sequence_ids] %in% colnames(floor_trace) 
+     trace_sub <- t(floor_trace[, as.character(seq2pt[sequence_ids[pt_in_trace]])]) 
+     rownames(trace_sub) <- sequence_ids[pt_in_trace] 
+  
+     # Mark the actual isolate day with 1.75 
+     these_ids <- sequence_ids[pt_in_trace] 
+     these_dates <- date_vec[these_ids] 
+     trace_sub[cbind(rep_isolate[these_ids], as.character(these_dates))] <- 1.75 
+  
+     # Reorder rows by earliest isolates in cluster/date order 
+     keep_rows <- intersect(isolate_order, rownames(trace_sub)) 
+     trace_sub <- trace_sub[keep_rows, , drop = FALSE] 
+  
+     # Identify convert isolates 
+     is_convert_isolate <- sapply(keep_rows, function(id) { 
+         row_vals <- trace_sub[id, ] 
+         i_exposed <- which(row_vals %in% c(1.25)) 
+         i_positive <- which(row_vals %in% c(1.5, 1.75)) 
+         if (length(i_exposed) == 0 || length(i_positive) == 0) { 
+             return(FALSE) 
+         } 
+         is_convert <- min(i_exposed) < min(i_positive) 
+         trace_date <- as.Date(colnames(trace_sub)[min(i_positive)]) 
+         iso_date <- date_vec[id] 
+         (iso_date - trace_date < 7) && is_convert && !(id %in% ip_seqs) 
+     }) 
+  
+     # Index isolates 
+     is_index_isolate <- keep_rows %in% ip_seqs 
+  
+     # Build annotation data 
+     patient_labels <- c("Secondary convert", "Index patient", "Convert patient") 
+     convert_class <- rep("Secondary convert", length(keep_rows)) 
+     convert_class[is_index_isolate] <- "Index patient" 
+     convert_class[!is_index_isolate & is_convert_isolate] <- "Convert patient" 
+  
+     annotation_row <- data.frame( 
+         Cluster          = df$cluster[match(keep_rows, df$id)], 
+         Cluster_class    = cluster_class[df$cluster[match(keep_rows, df$id)]], 
+         Convert          = convert_class, 
+         Intra_pt_dist    = max_dist[keep_rows] + 1, 
+         Intra_clust_dist = max_clust_dist[keep_rows] + 1 
+     ) 
+     row.names(annotation_row) <- keep_rows 
+  
+     # Annotation colors 
+     cluster_colors <- c(brewer.pal(9, "Set1"), brewer.pal(8, "Set2"), brewer.pal(12, "Set3")) 
+     bluescale <- colorRampPalette(c("white", "blue"))
+     greenscale <- colorRampPalette(c("white", "darkgreen"))
+  
+     n_class <- length(unique(cluster_class)) 
+     cluster_class_colors <- if (n_class > 0) { 
+         if (n_class > 3) { 
+             brewer.pal(min(n_class, 8), "Dark2") 
+         } else { 
+             colorRampPalette(c("lightgray", "darkgray"))(n_class) 
+         } 
+     } else { 
+         character(0) 
+     } 
+  
+     ann_colors <- list( 
+         Cluster          = structure(cluster_colors[seq_along(unique(df$cluster))], names = sort(unique(df$cluster))), 
+         Cluster_class    = structure(cluster_class_colors, names = unique(cluster_class)), 
+         Convert          = structure(c("gray95", "gray", "red"), names = patient_labels), 
+         Intra_pt_dist    = bluescale(max(max_dist, 1)), 
+         Intra_clust_dist = bluescale(max(max_clust_dist, 1)) 
+     ) 
+  
+     # Column labeling 
+     col_lab <- rownames(floor_trace) 
+     idx_keep_labels <- seq(1, length(col_lab), 14) 
+     col_lab[setdiff(seq_along(col_lab), idx_keep_labels)] <- "" 
+  
+     # Row labels 
+     labels <- paste(keep_rows, "(", seq2pt[keep_rows], ")", sep = "") 
+  
+     # Breaks and colors for pheatmap 
+     custom_breaks <- c(-1, 0, 1, 1.25, 1.5, 1.75, 2, 3, 4, 5, 6) 
+     custom_colors <- brewer.pal(7, "Pastel2") 
+     custom_colors <- c("white", custom_colors[1], "blue", "red", "yellow", custom_colors[c(2:5, 7)]) 
+  
+     # Gaps between clusters 
+     ctab <- table(annotation_row$Cluster) 
+     ctab <- ctab[as.character(cluster_order)] 
+     row_gaps <- cumsum(ctab) 
+     row_gaps <- row_gaps[row_gaps < nrow(annotation_row)] 
+  
+     # Font size scaling 
+     fsize_row <- 2 * (1 - (nrow(trace_sub) / ncol(floor_trace))) 
+  
+     # Output file 
+     #file <- paste0("figures/", format(Sys.time(), "%Y-%m-%d"), "_", prefix, "_floor_trace_map_w_clusters.pdf") 
+     a <- pheatmap( 
+         trace_sub, 
+         cluster_cols = FALSE, 
+         cluster_rows = FALSE, 
+         breaks = custom_breaks, 
+         color = custom_colors, 
+         scale = "none", 
+         labels_col = col_lab, 
+         labels_row = labels, 
+         legend = TRUE, 
+         gaps_row = row_gaps, 
+         fontsize_row = fsize_row, 
+         fontsize_col = 2, 
+         fontsize = 2, 
+         annotation_row = annotation_row, 
+         annotation_colors = ann_colors 
+         #filename = file 
+     ) 
+     return(a)
+ }
+```
+
+
+
+# implementation
+
+```{r}
+clusters <- clusters_sv
+seq2pt <- dna_pt_labels
+prefix <- "test"
+
+sequence_ids <- names(clusters)
+tree <- phylo_tree_pars
+pt_trace <- trace_mat
+plot_pt_trace(sequence_ids, tree, dates, ip_seqs, trace_mat, seq2pt, snp_dist, prefix)
+
+floor_trace <- floor_mat
+cluster_class <- NULL
+plot_floor_trace(clusters, dates, ip_seqs, floor_trace, seq2pt, snp_dist, prefix, cluster_class)
+```
+
+
+# combined function
+
+```{r}
+clusters <- clusters_sv
+seq2pt <- dna_pt_labels
+prefix <- "test"
+
+sequence_ids <- names(clusters)
+tree <- phylo_tree_pars
+
+trace_data <- floor_mat
+```
+
+```{r}
+plot_trace_map <- function(sequence_ids, dates, ip_seqs, seq2pt, snp_dist, trace_data, tree = NULL, 
+                           clusters = NULL,     # req for floor trace plotting
+                           prefix = "plot", cluster_class = NULL, # opt
+                           plot_type = c("pt_trace", "floor_trace")) {
+  
+  plot_type <- match.arg(plot_type)
+  
+  # Convert Excel-style numeric dates to R Date objects one time
+  date_vec <- as.Date(dates, origin = "1899-12-30")
+  
+  # Build a data frame for all sequences 
+  # Each row has: sequence ID, patient ID, and the date 
+  df <- data.frame(
+    id   = sequence_ids,
+    pt   = seq2pt[sequence_ids],
+    date = date_vec[sequence_ids],
+    stringsAsFactors = FALSE
+  )
+  
+  if (plot_type == "pt_trace") {
+    # Identify which sequences/patients are present in pt_trace's columns 
+    df$in_trace <- df$pt %in% colnames(trace_data)
+    df_sub <- df[df$in_trace, ] # Subset df to keep only those in pt_trace 
+    
+    # Build the trace_sub matrix by transposing only the necessary columns 
+    trace_sub <- t(trace_data[, as.character(df_sub$pt), drop = FALSE])
+    rownames(trace_sub) <- df_sub$id
+    
+    # Mark each isolate's date with a distinct value (2.5) in trace_sub 
+    # cbind() pairs the row name (isolate ID) and the date as a character
+    trace_sub[cbind(df_sub$id, as.character(df_sub$date))] <- 2.5
+    
+    # If tr provided, keep only the relevant tips; else, nj tree
+    if (!is.null(tree)) {
+      tree_sub <- keep.tip(tree, df_sub$id)
+      tree_plot <- ggtree(tree_sub)
+    } else {
+      tree_sub <- nj(snp_dist[df_sub$id, df_sub$id])
+      tree_plot <- ggtree(tree_sub, size = 0)
+    }
+    
+    # if no branch lengths create default lengths
+    ##if (is.null(tree_sub$edge.length)) {
+    ##  tree_sub$edge.length <- rep(1, nrow(tree_sub$edge))
+    ##}
+    
+    # Column labeling: only label every 14th column i.e. every two weeks
+    col_lab <- rownames(trace_data)
+    idx_labeled <- seq(1, length(col_lab), 14)
+    col_lab[setdiff(seq_along(col_lab), idx_labeled)] <- ""
+    
+    # Row labels: ID and patient ID in parentheses
+    labels <- paste0(df_sub$id, "(", df_sub$pt, ")")
+    
+    # Row coloring: white for index patient isolates, lightblue otherwise
+    row_colors <- ifelse(df_sub$id %in% ip_seqs, "white", "lightblue")
+    
+    
+    
+    # Create plot: tr + heatmap of trace + annote rows w the patient/origin color
+    p <- gheatmap(tree_plot, as.data.frame(trace_sub) %>% mutate_all(as.factor),
+        offset = 1, width = 4, font.size = 2,
+        custom_column_labels = col_lab, colnames_angle = 90) + vexpand(.1, -1) +   # adjust for long vertical column labels
+      scale_fill_manual(values = c("white", "lightgray", "blue", "red", "yellow"), name = "Trace") + new_scale_fill() + # color the tiles
+      geom_fruit(
+        data = data.frame(id = df_sub$id, color = row_colors),
+        geom = geom_tile,
+        mapping = aes(y = id, x = 1, fill = color),
+        offset = -0.2, width = 1) + 
+      scale_fill_manual(
+        name = "Isolate Origin",
+        values = c("white" = "white", "lightblue" = "lightblue"),
+        labels = c("Index Patient", "Non-Index Patient")
+      ) + ggtitle(paste0(prefix, " - Patient Trace Map"))
+    
+    return(p)
+    
+  } else if (plot_type == "floor_trace") {
+    if (is.null(clusters)) {
+      stop("Clusters vector must be provided for floor_trace plot type")
+    }
+    
+    # Update df to include cluster info
+    df$cluster <- as.character(clusters)
+      
+    # Ensure cluster_class has correct names if provided; otherwise create a simple vector
+    if (is.null(cluster_class)) {
+      cluster_order <- names(table(clusters))
+      cluster_class <- structure(rep("NA", length(unique(clusters))), names = unique(clusters))
+    } else {
+      # Only keep cluster names that actually appear in 'clusters' 
+      cluster_order <- intersect(names(cluster_class), unique(df$cluster))
+    }
+    
+    # For each cluster-pt group, find earliest isolate (in time) 
+    # Then map each isolate to that earliest isolate
+    df_earliest <- df %>%
+      group_by(cluster, pt) %>%
+      slice_min(date, with_ties = FALSE) %>%
+      ungroup() %>%
+      rename(earliest_id = id)
+    
+    # Add earliest isolate info back to df
+    df <- left_join(df, select(df_earliest, cluster, pt, earliest_id), by = c("cluster", "pt"))
+    
+    # Identify isolate order: cluster_order, then by earliest isolate's date 
+    df_earliest <- df_earliest %>% mutate(cluster_factor = factor(cluster, levels = cluster_order)) %>% arrange(cluster_factor, date)
+    isolate_order <- df_earliest$earliest_id
+    
+    # Identify if each earliest isolate is in the user-supplied index set 
+    df_earliest <- df_earliest %>% mutate(is_index = earliest_id %in% ip_seqs)
+    
+    # Create a named vector to map each isolate to the earliest isolate of its cluster–patient group.
+    rep_isolate <- setNames(df$earliest_id, df$id)
+    
+    # Helper function to get max SNP distance within cluster or within cluster–patient
+    get_max_snp <- function(iso_id, use_entire_cluster = FALSE) {
+      clust <- df$cluster[df$id == iso_id]
+      ptval <- df$pt[df$id == iso_id]
+      sub_ids <- if (!use_entire_cluster) {
+        df$id[df$cluster == clust & df$pt == ptval] # same cluster, same patient 
+      } else {
+        df$id[df$cluster == clust] # entire cluster
+      }
+      max(snp_dist[sub_ids, sub_ids])
+    }
+    
+    # For each earliest isolate, compute max distances
+    max_dist <- sapply(isolate_order, get_max_snp, use_entire_cluster = FALSE)
+    max_clust_dist <- sapply(isolate_order, get_max_snp, use_entire_cluster = TRUE)
+    
+    # Subset the floor_trace matrix 
+    pt_in_trace <- seq2pt[sequence_ids] %in% colnames(trace_data)
+    seq_ids_in_trace <- sequence_ids[pt_in_trace]
+    trace_sub <- t(trace_data[, as.character(seq2pt[seq_ids_in_trace]), drop = FALSE])
+    rownames(trace_sub) <- seq_ids_in_trace
+    
+    # Mark the actual isolate day with 1.75
+    these_dates <- date_vec[seq_ids_in_trace]
+    trace_sub[cbind(rep_isolate[seq_ids_in_trace], as.character(these_dates))] <- 1.75
+    
+    # Reorder rows by earliest isolates in cluster/date order 
+    keep_rows <- intersect(isolate_order, rownames(trace_sub))
+    trace_sub <- trace_sub[keep_rows, , drop = FALSE]
+    
+    # Identify convert isolates 
+    is_convert_isolate <- sapply(keep_rows, function(id) {
+      row_vals <- trace_sub[id, ]
+      i_exposed <- which(row_vals %in% c(1.25))
+      i_positive <- which(row_vals %in% c(1.5, 1.75))
+      if (length(i_exposed) == 0 || length(i_positive) == 0) {
+        return(FALSE)
+      }
+      is_convert <- min(i_exposed) < min(i_positive)
+      trace_date <- as.Date(colnames(trace_sub)[min(i_positive)])
+      iso_date <- date_vec[as.character(id)]
+      (iso_date - trace_date < 7) && is_convert && !(id %in% ip_seqs)
+    })
+    
+    # Index isolates
+    is_index_isolate <- keep_rows %in% ip_seqs
+    
+    # Build annotation data 
+    patient_labels <- c("Secondary convert", "Index patient", "Convert patient")
+    convert_class <- rep("Secondary convert", length(keep_rows))
+    convert_class[is_index_isolate] <- "Index patient"
+    convert_class[!is_index_isolate & is_convert_isolate] <- "Convert patient"
+    
+    # Construct the annotation data frame.
+    annotation_row <- data.frame(
+      Convert          = convert_class,
+      Intra_pt_dist    = max_dist[keep_rows] + 1,
+      Intra_clust_dist = max_clust_dist[keep_rows] + 1,
+      row.names        = keep_rows,
+      stringsAsFactors = FALSE
+    )
+    
+    # Annot colors 
+    bluescale <- colorRampPalette(c("white", "blue"))
+    greenscale <- colorRampPalette(c("white", "darkgreen"))
+    
+    ann_colors <- list( 
+         Convert          = structure(c("gray95", "gray", "red"), names = patient_labels), 
+         Intra_pt_dist    = bluescale(max(max_dist, 1)), 
+         Intra_clust_dist = greenscale(max(max_clust_dist, 1)) 
+     )
+    
+    annotation_row$id <- rownames(annotation_row)
+    
+    # Gaps between clusters
+    ctab <- table(annotation_row$Cluster)
+    ctab <- ctab[as.character(cluster_order)]
+    row_gaps <- cumsum(ctab)
+    row_gaps <- row_gaps[row_gaps < nrow(annotation_row)]
+    
+    # Dynamic font sizing based on the dimensions of the matrix
+    fsize_row <- 2 * (1 - (nrow(trace_sub) / ncol(trace_data)))
+    
+    # Prepare the column labels
+    col_lab <- rownames(trace_data)
+    idx_keep_labels <- seq(1, length(col_lab), 14)
+    col_lab[setdiff(seq_along(col_lab), idx_keep_labels)] <- ""
+    
+    labels <- paste(keep_rows, "(", seq2pt[keep_rows], ")", sep = "") # row labels
+    
+    # Set up pheatmap breaks and colors
+    custom_breaks <- c(0, 1, 1.25, 1.5, 1.75, 2, 3, 4, 5, 6)
+    custom_colors <- brewer.pal(7, "Pastel2")
+    custom_colors <- c("white", custom_colors[1], "blue", "red", "yellow", custom_colors[c(2:5, 7)])
+    
+    tree_sub <- keep.tip(tree, keep_rows)  
+    trace_df <- as.data.frame(trace_sub)
+    trace_df[] <- lapply(trace_df, function(x) {
+      factor(as.numeric(as.character(x)), levels = custom_breaks)
+    })
+    
+    tree_plot <- ggtree(tree_sub, branch.length = "none")
+    
+    p <- gheatmap(tree_plot, trace_df, offset = 4, width  = 4, font.size = 3, custom_column_labels = col_lab, colnames_angle = 90, colnames_offset_y = -8) + 
+        vexpand(0.1, -1) + 
+        scale_fill_manual(name = "Trace", values = custom_colors, breaks = custom_breaks, labels = custom_breaks, na.value = "white", drop = FALSE) + new_scale_fill() +
+        # Convert annot 
+        geom_fruit(data = annotation_row, geom = geom_tile, mapping = aes(y = id, x = 1, fill = Convert), offset = -0.1825, width = 1) +
+        scale_fill_manual(name = "Convert", values = ann_colors$Convert, labels = names(ann_colors$Convert), drop = FALSE) + new_scale_fill() + 
+        # Intra_clust_dist annot  
+        geom_fruit(data = annotation_row, geom = geom_tile, mapping = aes(y = id, x = 1, fill = Intra_clust_dist), offset = -0.1725, width = 1) +
+        scale_fill_gradientn(name = "Intra_clust_dist", colors = ann_colors$Intra_clust_dist) + new_scale_fill() + 
+        # Intra_pt_dist annot 
+        geom_fruit(data = annotation_row, geom = geom_tile, mapping = aes(y = id, x = 1, fill = Intra_pt_dist), offset = -0.1625, width = 1) +
+        scale_fill_gradientn(name = "Intra_pt_dist", colors = ann_colors$Intra_pt_dist) + ggtitle(paste0(prefix, " - Floor Trace Map"))
+    
+    return(p)
+  }
+}
+```
+
+```{r}
+# implementation
+plot_trace_map(sequence_ids = names(clusters), dates, ip_seqs, seq2pt = dna_pt_labels, snp_dist, trace_data = trace_mat, tree = tree, prefix = "test", plot_type = "pt_trace")
+
+plot_trace_map(sequence_ids = names(clusters), dates, ip_seqs, seq2pt = dna_pt_labels, snp_dist, trace_data = floor_mat, tree = tree, 
+                           clusters = clusters_sv, prefix = "test2", cluster_class = NULL, plot_type = "floor_trace")
+
+#ggsave(filename = "./plots/plot2.pdf", plot = plot2, dpi = "retina")
+
+```
+
+```{r}
+# without using geom_fruit
+
+p_convert <- gheatmap(tree_plot, annotation_row["Convert", drop = FALSE],
+  offset = 1, width = 4, font.size = 2,
+  custom_column_labels = col_lab, colnames_angle = 90, colnames_offset_y = -8) +
+  scale_fill_manual(name = "Convert", values = ann_colors$Convert,
+    labels = names(ann_colors$Convert), drop = FALSE) 
+p_convert <- p_convert + new_scale_fill()
+
+p_intra_clust <- gheatmap(p_convert, annotation_row["Intra_clust_dist", drop = FALSE],
+  offset = 2, width = 4, font.size = 2,
+  custom_column_labels = col_lab, colnames_angle = 90, colnames_offset_y = -8) +
+  scale_fill_gradientn(name = "Intra-clust Dist", colors = ann_colors$Intra_clust_dist)
+p_intra_clust <- p_intra_clust + new_scale_fill()
+
+p_intra_pt <- gheatmap(p_intra_clust, annotation_row["Intra_pt_dist", drop = FALSE],
+  offset = 3, width = 4, font.size = 2) +
+  scale_fill_gradientn(name = "Intra-pt Dist", colors = ann_colors$Intra_pt_dist)
+p_intra_pt <- p_intra_pt + new_scale_fill()
+
+p_trace <- gheatmap(p_intra_pt, trace_df, offset = 4, width = 4, font.size = 2,
+  custom_column_labels = col_lab, colnames_angle = 90, colnames_offset_y = -8) +
+  scale_fill_manual(name = "Trace", values = custom_colors,
+    breaks = custom_breaks, labels = custom_breaks, na.value = "white", drop = FALSE)
+
+p_trace
+```
+
