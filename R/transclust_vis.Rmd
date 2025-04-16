@@ -4,10 +4,6 @@ output: html_document
 date: "2025-04-09"
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
 ```{r}
 library(tidyverse)
 library(transclust)
@@ -54,6 +50,7 @@ tree <- phylo_tree_pars
 
 trace_data <- floor_mat
 ```
+
 # combined function
 
 ```{r}
@@ -293,43 +290,13 @@ plot_trace_map <- function(sequence_ids, dates, ip_seqs, seq2pt, snp_dist, trace
 }
 ```
 
-```{r}
 # implementation
+
+```{r}
 plot_trace_map(sequence_ids = names(clusters), dates, ip_seqs, seq2pt = dna_pt_labels, snp_dist, trace_data = trace_mat, tree = tree, prefix = "test", plot_type = "pt_trace")
 
 plot_trace_map(sequence_ids = names(clusters), dates, ip_seqs, seq2pt = dna_pt_labels, snp_dist, trace_data = floor_mat, tree = tree, 
                            clusters = clusters_sv, prefix = "test2", cluster_class = NULL, plot_type = "floor_trace")
 
 #ggsave(filename = "./plots/plot2.pdf", plot = plot2, dpi = "retina")
-
 ```
-
-```{r}
-# without using geom_fruit
-
-p_convert <- gheatmap(tree_plot, annotation_row["Convert", drop = FALSE],
-  offset = 1, width = 4, font.size = 2,
-  custom_column_labels = col_lab, colnames_angle = 90, colnames_offset_y = -8) +
-  scale_fill_manual(name = "Convert", values = ann_colors$Convert,
-    labels = names(ann_colors$Convert), drop = FALSE) 
-p_convert <- p_convert + new_scale_fill()
-
-p_intra_clust <- gheatmap(p_convert, annotation_row["Intra_clust_dist", drop = FALSE],
-  offset = 2, width = 4, font.size = 2,
-  custom_column_labels = col_lab, colnames_angle = 90, colnames_offset_y = -8) +
-  scale_fill_gradientn(name = "Intra-clust Dist", colors = ann_colors$Intra_clust_dist)
-p_intra_clust <- p_intra_clust + new_scale_fill()
-
-p_intra_pt <- gheatmap(p_intra_clust, annotation_row["Intra_pt_dist", drop = FALSE],
-  offset = 3, width = 4, font.size = 2) +
-  scale_fill_gradientn(name = "Intra-pt Dist", colors = ann_colors$Intra_pt_dist)
-p_intra_pt <- p_intra_pt + new_scale_fill()
-
-p_trace <- gheatmap(p_intra_pt, trace_df, offset = 4, width = 4, font.size = 2,
-  custom_column_labels = col_lab, colnames_angle = 90, colnames_offset_y = -8) +
-  scale_fill_manual(name = "Trace", values = custom_colors,
-    breaks = custom_breaks, labels = custom_breaks, na.value = "white", drop = FALSE)
-
-p_trace
-```
-
