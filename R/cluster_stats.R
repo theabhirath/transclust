@@ -633,8 +633,7 @@ cluster_property_perm_test <- function(clusters, pt_trace, seq2pt, ip_pt_seqs, i
 #' Permutation Test for Cluster Properties
 #'
 #' This function compares the properties of actual clusters to properties of randomly
-#' permuted clusters with the same size distribution. It computes various summary statistics,
-#' calculates permutation-based p-values, and generates histogram plots of the statistics.
+#' permuted clusters with the same size distribution. It computes various summary statistics.
 #'
 #' @param clusters A named numeric vector where names are sequence IDs and values are subtrees defining the cluster.
 #' @param pt_trace A matrix or data frame with rows representing days and columns representing patients.

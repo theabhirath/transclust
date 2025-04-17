@@ -18,6 +18,21 @@ cluster_property_perm_test(
   room_trace = NULL,
   mc.cores = detectCores() - 1
 )
+
+cluster_property_perm_test(
+  clusters,
+  pt_trace,
+  seq2pt,
+  ip_pt_seqs,
+  ip_seqs,
+  dates,
+  snp_dist,
+  prefix,
+  nperm = 1000,
+  floor_trace = NULL,
+  room_trace = NULL,
+  mc.cores = detectCores() - 1
+)
 }
 \arguments{
 \item{clusters}{A named numeric vector where names are sequence IDs and values are subtrees defining the cluster.}
@@ -49,8 +64,14 @@ set mc.cores = 1.}
 \value{
 A matrix of permutation statistics. Rows correspond to each permutation (with the last row
 containing the observed statistic) and columns correspond to the computed properties.
+
+A matrix of permutation statistics. Rows correspond to each permutation (with the last row
+containing the observed statistic) and columns correspond to the computed properties.
 }
 \description{
+This function compares the properties of actual clusters to properties of randomly
+permuted clusters with the same size distribution. It computes various summary statistics.
+
 This function compares the properties of actual clusters to properties of randomly
 permuted clusters with the same size distribution. It computes various summary statistics.
 }
