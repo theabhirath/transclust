@@ -22,12 +22,14 @@ Imports:
     phangorn,
     phytools,
     Rcpp,
-    hues,
+    parallel,
     dplyr,
-    ggalign,
     ggplot2,
+    hues,
+    ggnewscale,
     ggtree,
-    parallel
+    ggtreeExtra,
+    ggalign
 Suggests:
     tidyr,
     paletteer,
