@@ -485,7 +485,8 @@ cluster_properties <- function(cluster_seqs, pt_trace, seq2pt, ip_pt_seqs, ip_se
 #'
 #' @description
 #' This function compares the properties of actual clusters to properties of randomly
-#' permuted clusters with the same size distribution. It computes various summary statistics.
+#' permuted clusters which retain the original distribution of patient types
+#' (index start, index not start, convert) within them.
 #'
 #' @param clusters A named numeric vector where names are sequence IDs and values are subtrees defining the cluster.
 #' @param pt_trace A matrix or data frame with rows representing days and columns representing patients.
@@ -580,17 +581,6 @@ cluster_property_perm_test <- function(clusters, pt_trace, seq2pt, ip_pt_seqs, i
     index_not_start_per_cluster <- pt_per_cluster(elig_index_not_start_pts)
     convert_per_cluster <- pt_per_cluster(elig_convert_pts)
 
-    # Permute clusters and compute their properties
-    n_props <- ncol(cluster_props)
-    prop_array <- array(
-        dim = c(nrow(cluster_props), n_props, nperm + 1),
-        dimnames = list(
-            seq_len(nrow(cluster_props)),
-            colnames(cluster_props),
-            seq_len(nperm + 1)
-        )
-    )
-
     # Assign patients to clusters, starting with patients in multiple clusters
     assign_pt_clusters <- function(elig_vec, cluster_per_pt, pt_per_cluster, rand_clusters) {
         names_pt_per_cluster <- names(pt_per_cluster)
@@ -613,72 +603,7 @@ cluster_property_perm_test <- function(clusters, pt_trace, seq2pt, ip_pt_seqs, i
         rand_clusters
     }
 
-    # Sequentially assign patients to clusters from each category
-    rand_clusters <- assign_pt_clusters(
-        elig_convert_pts, cluster_per_convert,
-        convert_per_cluster, rand_clusters
-    ) # Converts
-    rand_clusters <- assign_pt_clusters(
-        elig_index_start_pts, cluster_per_index_start,
-        index_start_per_cluster, rand_clusters
-    ) # Index patients who started clusters
-    rand_clusters <- assign_pt_clusters(
-        elig_index_not_start_pts, cluster_per_index_not_start,
-        index_not_start_per_cluster, rand_clusters
-    ) # Index patients whose isolate was not an index isolate
-
-    rand_clusters
-}
-
-#' Permutation Test for Cluster Properties
-#'
-#' This function compares the properties of actual clusters to properties of randomly
-#' permuted clusters with the same size distribution. It computes various summary statistics.
-#'
-#' @param clusters A named numeric vector where names are sequence IDs and values are subtrees defining the cluster.
-#' @param pt_trace A matrix or data frame with rows representing days and columns representing patients.
-#' @param seq2pt A named vector mapping sequence IDs to patient IDs.
-#' @param ip_pt_seqs A vector of sequence IDs corresponding to intake positive patients.
-#' @param ip_seqs A vector of sequence IDs corresponding to intake patient sequences presumed to be imported.
-#' @param dates A vector of isolate dates named by sequence IDs.
-#' @param snp_dist A matrix of SNP distances between isolates.
-#' @param prefix A descriptor string (used to name output figures).
-#' @param nperm The number of permutations to perform (default is 1000).
-#' @param floor_trace An optional floor trace (rows: days, columns: patients).
-#' @param room_trace An optional room trace (rows: days, columns: patients).
-#' @param mc.cores The number of cores to use for parallel processing (default is one less than the total
-#'                 number of cores). This is only for *nix systems and does not work on Windows - for Windows,
-#'                 set mc.cores = 1.
-#'
-#' @return A matrix of permutation statistics. Rows correspond to each permutation (with the last row
-#' containing the observed statistic) and columns correspond to the computed properties.
-#'
-#' @importFrom parallel detectCores mclapply
-#' @export
-cluster_property_perm_test <- function(clusters, pt_trace, seq2pt, ip_pt_seqs, ip_seqs, dates, snp_dist,
-                                       prefix, nperm = 1000, floor_trace = NULL, room_trace = NULL,
-                                       mc.cores = detectCores() - 1) {
-    # Process clusters to set single-patient clusters to 1
-    unique_clusters <- sort(unique(clusters))
-    cluster_size <- sapply(unique_clusters, function(x) {
-        length(unique(seq2pt[names(clusters)[clusters == x]]))
-    })
-    names(cluster_size) <- unique_clusters
-    single_clusters <- names(cluster_size)[cluster_size == 1]
-    clusters[clusters %in% single_clusters] <- 1
-
-    # Compute properties of the actual (observed) clusters
-    valid_clusters <- sort(unique(clusters[clusters != 1]))
-    cluster_props <- t(sapply(valid_clusters, function(c) {
-        cluster_properties(
-            names(clusters)[clusters == c],
-            pt_trace, seq2pt, ip_pt_seqs, ip_seqs, snp_dist,
-            dates, floor_trace, room_trace
-        )
-    }))
-    row.names(cluster_props) <- valid_clusters
-
-    # Permute clusters and compute their properties
+    # Initialize an array to store cluster properties for each permutation
     n_props <- ncol(cluster_props)
     prop_array <- array(
         dim = c(nrow(cluster_props), n_props, nperm + 1),
@@ -688,8 +613,23 @@ cluster_property_perm_test <- function(clusters, pt_trace, seq2pt, ip_pt_seqs, i
             seq_len(nperm + 1)
         )
     )
+
+    # Permute the clusters in parallel
     perm_results <- mclapply(seq_len(nperm), function(n) {
-        perm_clust <- permute_clusters(clusters, seq2pt, ip_seqs, ip_pt_seqs, all = FALSE)
+        perm_clust <- setNames(rep(-1, length(clusters)), cluster_names)
+        # Sequentially assign patients to clusters from each category
+        perm_clust <- assign_pt_clusters(
+            elig_convert_pts, cluster_per_convert,
+            convert_per_cluster, perm_clust
+        ) # Converts
+        perm_clust <- assign_pt_clusters(
+            elig_index_start_pts, cluster_per_index_start,
+            index_start_per_cluster, perm_clust
+        ) # Index patients who started clusters
+        perm_clust <- assign_pt_clusters(
+            elig_index_not_start_pts, cluster_per_index_not_start,
+            index_not_start_per_cluster, perm_clust
+        ) # Index patients whose isolate was not an index isolate
         perm_valid <- sort(unique(perm_clust))
         perm_cluster_props <- t(sapply(perm_valid, function(c) {
             cluster_properties(
@@ -698,10 +638,11 @@ cluster_property_perm_test <- function(clusters, pt_trace, seq2pt, ip_pt_seqs, i
                 snp_dist, dates, floor_trace, room_trace
             )
         }))
+        # Return the permuted cluster properties
         perm_cluster_props
     }, mc.cores = mc.cores)
 
-    # Store the permuted cluster properties in the array
+    # Store the permuted cluster properties
     for (n in seq_len(nperm)) {
         prop_array[, , n] <- perm_results[[n]]
     }
