@@ -144,7 +144,7 @@ get_tn_clusters_sv_index <- function(dna_aln, snp_dist, ip_seqs, ip_pt_seqs, seq
             # If there are no other sequences, return the first one
             # Otherwise, find the sequence with the minimum shared variant distance to all other sequences
             if (length(other) > 0) {
-                min_vals <- sapply(seqs, function(seq) min(dna_shared_mat[other, seq]))
+                min_vals <- vapply(seqs, function(seq) min(dna_shared_mat[other, seq]), numeric(1))
                 seqs[which.min(min_vals)]
             } else {
                 seqs[1]
