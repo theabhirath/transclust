@@ -41,4 +41,3 @@ test_that("get_phylo_tree works", {
     # Check that the tree has the same number of tips as the input data
     expect_equal(length(tree$tip.label), nrow(dna_var))
 })
-2

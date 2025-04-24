@@ -7,8 +7,11 @@ dna_aln <- read.dna(system.file("extdata", "example.fasta", package = "transclus
 # Only keep those sequences that are in the trace matrix
 dna_aln <- dna_aln[dna_pt_labels[labels(dna_aln)] %in% colnames(trace_mat), ]
 
-# Get variable positions in the alignment
-dna_var <- dna_aln[, apply(dna_aln, 2, function(x) sum(x == x[1]) < nrow(dna_aln))]
+# Get all variable positions in the alignment
+var_pos <- apply(dna_aln, 2, function(x) sum(x == x[1]) < nrow(dna_aln))
+
+# Only keep variable positions
+dna_var <- dna_aln[, var_pos]
 
 # Get pairwise distances
 snp_dist <- get_snp_dist_matrix(dna_var)
