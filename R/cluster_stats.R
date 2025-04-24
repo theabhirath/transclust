@@ -287,9 +287,9 @@ cluster_properties <- function(cluster_seqs, pt_trace, seq2pt, ip_pt_seqs, ip_se
     # Calculate earliest positive date for each patient in the cluster
     # Then compute the cluster duration = difference between min and max
     # of those earliest positive dates.
-    earliest_pos_by_pt <- sapply(unique(seq2pt[cluster_seqs]), function(pt_id) {
+    earliest_pos_by_pt <- vapply(unique(seq2pt[cluster_seqs]), function(pt_id) {
         min(dates[cluster_seqs[seq2pt[cluster_seqs] == pt_id]])
-    })
+    }, numeric(1))
     earliest_pos_by_pt <- sort(earliest_pos_by_pt)
 
     cluster_prop["Cluster_duration"] <- max(earliest_pos_by_pt) - min(earliest_pos_by_pt)
@@ -303,8 +303,8 @@ cluster_properties <- function(cluster_seqs, pt_trace, seq2pt, ip_pt_seqs, ip_se
 
     # Median time to acquisition (the median difference from the cluster's
     # earliest overall positive to each subsequent patient's earliest positive).
-    cluster_prop["Median_time_to_acquisition"] <- median(sapply(
-        earliest_pos_by_pt[2:length(earliest_pos_by_pt)], function(x) x - earliest_pos_by_pt[1]
+    cluster_prop["Median_time_to_acquisition"] <- median(vapply(
+        earliest_pos_by_pt[2:length(earliest_pos_by_pt)], function(x) x - earliest_pos_by_pt[1], numeric(1)
     ))
 
     # 5. Detailed convert-patient calculations #####
@@ -318,12 +318,16 @@ cluster_properties <- function(cluster_seqs, pt_trace, seq2pt, ip_pt_seqs, ip_se
         # For each convert patient, find the earliest date in 'dates' for the cluster
         # and the day index from pt_trace where that patient first tested 1.5
         convert_pt_ids <- unique(seq2pt[cluster_seqs[!(cluster_seqs %in% ip_pt_seqs)]])
-        convert_pos <- sapply(convert_pt_ids, function(pt_id) min(dates[cluster_seqs[seq2pt[cluster_seqs] == pt_id]]))
+        convert_pos <- vapply(convert_pt_ids, function(pt_id) {
+            min(dates[cluster_seqs[seq2pt[cluster_seqs] == pt_id]])
+        }, numeric(1))
 
         # In pt_trace, 1.5 presumably indicates a positive test day
         # conversion_day is the row name of pt_trace for that day index
         # If NA, we set it to the last row in pt_trace
-        conversion_day_indices <- sapply(convert_pt_ids, function(pt_id) min(which(pt_trace[, pt_id] == 1.5)))
+        conversion_day_indices <- vapply(convert_pt_ids, function(pt_id) {
+            min(which(pt_trace[, pt_id] == 1.5))
+        }, numeric(1))
         conversion_day_indices[is.infinite(conversion_day_indices)] <- NA
 
         conversion_day <- trace_dates[conversion_day_indices]
@@ -379,9 +383,9 @@ cluster_properties <- function(cluster_seqs, pt_trace, seq2pt, ip_pt_seqs, ip_se
     if ((sum(cluster_seqs %in% ip_pt_seqs) > 0) && cluster_prop["Number_of_converts"] > 0) {
         # Find earliest day index in pt_trace for the intake positives
         # row.names(pt_trace) is used to get the day label
-        index_pos_indices <- sapply(unique(seq2pt[cluster_seqs[cluster_seqs %in% ip_pt_seqs]]), function(pt_id) {
+        index_pos_indices <- vapply(unique(seq2pt[cluster_seqs[cluster_seqs %in% ip_pt_seqs]]), function(pt_id) {
             min(which(pt_trace[, pt_id] == 1.5))
-        })
+        }, numeric(1))
         index_pos_indices[is.infinite(index_pos_indices)] <- NA
 
         # Convert the earliest index position to a row name date
@@ -425,8 +429,8 @@ cluster_properties <- function(cluster_seqs, pt_trace, seq2pt, ip_pt_seqs, ip_se
 
     find_source <- function(pt_convert, trace) {
         all_others <- setdiff(unique(seq2pt[cluster_seqs]), pt_convert)
-        any(sapply(all_others, pt_overlap, pt_recipient = pt_convert,
-                   first_pos_vec = earliest_pos_by_pt, trace = trace))
+        any(vapply(all_others, pt_overlap, pt_recipient = pt_convert,
+                   first_pos_vec = earliest_pos_by_pt, trace = trace, logical(1)))
     }
 
     # Count how many converts can be assigned a source patient in the cluster
@@ -437,16 +441,16 @@ cluster_properties <- function(cluster_seqs, pt_trace, seq2pt, ip_pt_seqs, ip_se
         # convert_pts was captured above as all convert patient IDs
         # for each convert, see if any other patient in the cluster can be a source
         cluster_prop["Number_of_converts_with_source"] <-
-            sum(sapply(convert_pts, find_source, trace = pt_trace))
+            sum(vapply(convert_pts, find_source, trace = pt_trace, logical(1)))
         # If we have floor_trace, do the same overlap check
         if (!is.null(floor_trace)) {
             cluster_prop["Number_of_converts_with_floor_source"] <-
-                sum(sapply(convert_pts, find_source, trace = floor_trace))
+                sum(vapply(convert_pts, find_source, trace = floor_trace, logical(1)))
         }
         # If we have room_trace, do the same overlap check
         if (!is.null(room_trace)) {
             cluster_prop["Number_of_converts_with_room_source"] <-
-                sum(sapply(convert_pts, find_source, trace = room_trace))
+                sum(vapply(convert_pts, find_source, trace = room_trace, logical(1)))
         }
     } else {
         cluster_prop["Number_of_converts_with_source"] <- 0
@@ -459,14 +463,14 @@ cluster_properties <- function(cluster_seqs, pt_trace, seq2pt, ip_pt_seqs, ip_se
             cluster_prop["Number_of_patients"] > 1 &&
             !any(is.infinite(earliest_pos_by_pt))) {
         cluster_prop["Number_of_initial_converts_with_source"] <-
-            sum(sapply(initial_convert_pts, find_source, trace = pt_trace))
+            sum(vapply(initial_convert_pts, find_source, trace = pt_trace, logical(1)))
         if (!is.null(floor_trace)) {
             cluster_prop["Number_of_initial_converts_with_floor_source"] <-
-                sum(sapply(initial_convert_pts, find_source, trace = floor_trace))
+                sum(vapply(initial_convert_pts, find_source, trace = floor_trace, logical(1)))
         }
         if (!is.null(room_trace)) {
             cluster_prop["Number_of_initial_converts_with_room_source"] <-
-                sum(sapply(initial_convert_pts, find_source, trace = room_trace))
+                sum(vapply(initial_convert_pts, find_source, trace = room_trace, logical(1)))
         }
     } else {
         cluster_prop["Number_of_initial_converts_with_source"] <- 0
@@ -514,9 +518,9 @@ cluster_property_perm_test <- function(clusters, pt_trace, seq2pt, ip_pt_seqs, i
                                        mc.cores = detectCores() - 1) {
     # Process clusters to set single-patient clusters to 1
     unique_clusters <- sort(unique(clusters))
-    cluster_size <- sapply(unique_clusters, function(x) {
+    cluster_size <- vapply(unique_clusters, function(x) {
         length(unique(seq2pt[names(clusters)[clusters == x]]))
-    })
+    }, integer(1))
     single_clusters <- unique_clusters[cluster_size == 1]
     clusters[clusters %in% single_clusters] <- 1
 
@@ -685,19 +689,19 @@ cluster_property_perm_test <- function(clusters, pt_trace, seq2pt, ip_pt_seqs, i
         perm_props[i, median_stat_names] <- apply(prop_array[, , i], 2, median, na.rm = TRUE)
 
         # Per-convert statistics (as a fraction of the total converts in observed clusters)
-        perm_props[i, per_conv_stat_names] <- sapply(per_conv_cols, function(col) {
+        perm_props[i, per_conv_stat_names] <- vapply(per_conv_cols, function(col) {
             round(sum(prop_array[, col, i]) / sum(cluster_props[, "Number_of_converts"]), 2)
-        })
+        }, numeric(1))
 
         # Per-initial-convert statistics
-        perm_props[i, per_init_conv_stat_names] <- sapply(per_init_conv_cols, function(col) {
+        perm_props[i, per_init_conv_stat_names] <- vapply(per_init_conv_cols, function(col) {
             round(sum(prop_array[, col, i]) / sum(cluster_props[, "Number_of_initial_converts"]), 2)
-        })
+        }, numeric(1))
 
         # Fraction of clusters statistic
-        perm_props[i, cluster_stat_names] <- sapply(cluster_cols, function(col) {
+        perm_props[i, cluster_stat_names] <- vapply(cluster_cols, function(col) {
             round(sum(prop_array[, col, i] == cluster_props[, "Number_of_converts"]) / nrow(cluster_props), 2)
-        })
+        }, numeric(1))
     }
 
     perm_props
