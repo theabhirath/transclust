@@ -16,7 +16,7 @@ cluster_property_perm_test(
   nperm = 1000,
   floor_trace = NULL,
   room_trace = NULL,
-  mc.cores = detectCores() - 1
+  num_cores = detectCores() - 1
 )
 }
 \arguments{
@@ -42,9 +42,9 @@ cluster_property_perm_test(
 
 \item{room_trace}{An optional room trace (rows: days, columns: patients).}
 
-\item{mc.cores}{The number of cores to use for parallel processing (default is one less than the total
+\item{num_cores}{The number of cores to use for parallel processing (default is one less than the total
 number of cores). This is only for *nix systems and does not work on Windows - for Windows,
-set mc.cores = 1.}
+set \code{num_cores} = 1.}
 }
 \value{
 A matrix of permutation statistics. Rows correspond to each permutation (with the last row

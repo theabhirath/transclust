@@ -503,9 +503,9 @@ cluster_properties <- function(cluster_seqs, pt_trace, seq2pt, ip_pt_seqs, ip_se
 #' @param nperm The number of permutations to perform (default is 1000).
 #' @param floor_trace An optional floor trace (rows: days, columns: patients).
 #' @param room_trace An optional room trace (rows: days, columns: patients).
-#' @param mc.cores The number of cores to use for parallel processing (default is one less than the total
+#' @param num_cores The number of cores to use for parallel processing (default is one less than the total
 #'                 number of cores). This is only for *nix systems and does not work on Windows - for Windows,
-#'                 set mc.cores = 1.
+#'                 set `num_cores` = 1.
 #'
 #' @return A matrix of permutation statistics. Rows correspond to each permutation (with the last row
 #' containing the observed statistic) and columns correspond to the computed properties.
@@ -515,7 +515,7 @@ cluster_properties <- function(cluster_seqs, pt_trace, seq2pt, ip_pt_seqs, ip_se
 #' @export
 cluster_property_perm_test <- function(clusters, pt_trace, seq2pt, ip_pt_seqs, ip_seqs, dates, snp_dist,
                                        prefix, nperm = 1000, floor_trace = NULL, room_trace = NULL,
-                                       mc.cores = detectCores() - 1) {
+                                       num_cores = detectCores() - 1) {
     # Process clusters to set single-patient clusters to 1
     unique_clusters <- sort(unique(clusters))
     cluster_size <- vapply(unique_clusters, function(x) {
@@ -644,7 +644,7 @@ cluster_property_perm_test <- function(clusters, pt_trace, seq2pt, ip_pt_seqs, i
         }))
         # Return the permuted cluster properties
         perm_cluster_props
-    }, mc.cores = mc.cores)
+    }, mc.cores = num_cores)
 
     # Store the permuted cluster properties
     for (n in seq_len(nperm)) {
