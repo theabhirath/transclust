@@ -11,27 +11,27 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // computeSharedMatrix
-NumericMatrix computeSharedMatrix(CharacterMatrix dna_aln, int out_group);
-RcppExport SEXP _transclust_computeSharedMatrix(SEXP dna_alnSEXP, SEXP out_groupSEXP) {
+NumericMatrix computeSharedMatrix(CharacterMatrix dna_character_matrix, int out_group);
+RcppExport SEXP _transclust_computeSharedMatrix(SEXP dna_character_matrixSEXP, SEXP out_groupSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< CharacterMatrix >::type dna_aln(dna_alnSEXP);
+    Rcpp::traits::input_parameter< CharacterMatrix >::type dna_character_matrix(dna_character_matrixSEXP);
     Rcpp::traits::input_parameter< int >::type out_group(out_groupSEXP);
-    rcpp_result_gen = Rcpp::wrap(computeSharedMatrix(dna_aln, out_group));
+    rcpp_result_gen = Rcpp::wrap(computeSharedMatrix(dna_character_matrix, out_group));
     return rcpp_result_gen;
 END_RCPP
 }
 // computeDefiningVariants
-std::vector<int> computeDefiningVariants(CharacterMatrix dna_aln, CharacterVector isolate_names, List subtrees);
-RcppExport SEXP _transclust_computeDefiningVariants(SEXP dna_alnSEXP, SEXP isolate_namesSEXP, SEXP subtreesSEXP) {
+std::vector<int> computeDefiningVariants(CharacterMatrix dna_character_matrix, CharacterVector isolate_names, List subtrees);
+RcppExport SEXP _transclust_computeDefiningVariants(SEXP dna_character_matrixSEXP, SEXP isolate_namesSEXP, SEXP subtreesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< CharacterMatrix >::type dna_aln(dna_alnSEXP);
+    Rcpp::traits::input_parameter< CharacterMatrix >::type dna_character_matrix(dna_character_matrixSEXP);
     Rcpp::traits::input_parameter< CharacterVector >::type isolate_names(isolate_namesSEXP);
     Rcpp::traits::input_parameter< List >::type subtrees(subtreesSEXP);
-    rcpp_result_gen = Rcpp::wrap(computeDefiningVariants(dna_aln, isolate_names, subtrees));
+    rcpp_result_gen = Rcpp::wrap(computeDefiningVariants(dna_character_matrix, isolate_names, subtrees));
     return rcpp_result_gen;
 END_RCPP
 }

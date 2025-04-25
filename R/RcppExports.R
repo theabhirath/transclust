@@ -3,24 +3,24 @@
 
 #' Compute the shared variant matrix
 #'
-#' @param dna_aln A matrix of DNA sequences (`CharacterMatrix`).
+#' @param dna_character_matrix A matrix of DNA sequences (`CharacterMatrix`).
 #' @param out_group The index of the outgroup isolate (1-based).
 #'
 #' @return A `NumericMatrix` of shared variants, where each element represents the
 #'         number of shared variants between two isolates, with the diagonal set to Inf.
-computeSharedMatrix <- function(dna_aln, out_group) {
-    .Call(`_transclust_computeSharedMatrix`, dna_aln, out_group)
+computeSharedMatrix <- function(dna_character_matrix, out_group) {
+    .Call(`_transclust_computeSharedMatrix`, dna_character_matrix, out_group)
 }
 
 #' Compute the defining variants for each subtree
 #'
-#' @param dna_aln A matrix of DNA sequences (`CharacterMatrix`).
+#' @param dna_character_matrix A matrix of DNA sequences (`CharacterMatrix`).
 #' @param isolate_names A vector of isolate names (`CharacterVector`).
 #' @param subtrees A list of subtrees (`phylo` objects).
 #'
 #' @return An `IntegerVector` of integers representing the number of defining
 #'         variants for each subtree.
-computeDefiningVariants <- function(dna_aln, isolate_names, subtrees) {
-    .Call(`_transclust_computeDefiningVariants`, dna_aln, isolate_names, subtrees)
+computeDefiningVariants <- function(dna_character_matrix, isolate_names, subtrees) {
+    .Call(`_transclust_computeDefiningVariants`, dna_character_matrix, isolate_names, subtrees)
 }
 

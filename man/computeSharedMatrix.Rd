@@ -4,10 +4,10 @@
 \alias{computeSharedMatrix}
 \title{Compute the shared variant matrix}
 \usage{
-computeSharedMatrix(dna_aln, out_group)
+computeSharedMatrix(dna_character_matrix, out_group)
 }
 \arguments{
-\item{dna_aln}{A matrix of DNA sequences (\code{CharacterMatrix}).}
+\item{dna_character_matrix}{A matrix of DNA sequences (\code{CharacterMatrix}).}
 
 \item{out_group}{The index of the outgroup isolate (1-based).}
 }

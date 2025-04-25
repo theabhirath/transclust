@@ -10,24 +10,24 @@ typedef unsigned __int128 uint128_t;
 
 //' Compute the shared variant matrix
 //'
-//' @param dna_aln A matrix of DNA sequences (`CharacterMatrix`).
+//' @param dna_character_matrix A matrix of DNA sequences (`CharacterMatrix`).
 //' @param out_group The index of the outgroup isolate (1-based).
 //'
 //' @return A `NumericMatrix` of shared variants, where each element represents the
 //'         number of shared variants between two isolates, with the diagonal set to Inf.
 // [[Rcpp::export]]
-NumericMatrix computeSharedMatrix(CharacterMatrix dna_aln, int out_group) {
-    int n_isolates = dna_aln.nrow();
-    int n_cols = dna_aln.ncol();
+NumericMatrix computeSharedMatrix(CharacterMatrix dna_character_matrix, int out_group) {
+    int n_isolates = dna_character_matrix.nrow();
+    int n_cols = dna_character_matrix.ncol();
     out_group = out_group - 1; // Convert to 0-based index
 
-    // Pre-convert the dna_aln matrix into a vector of strings (one per isolate)
+    // Pre-convert the dna_character_matrix matrix into a vector of strings (one per isolate)
     std::vector<std::string> aln(n_isolates);
     for (int i = 0; i < n_isolates; i++) {
         std::string row_str = "";
         for (int j = 0; j < n_cols; j++) {
             // Assume each element is a single-character string.
-            std::string cell = as<std::string>(dna_aln(i, j));
+            std::string cell = as<std::string>(dna_character_matrix(i, j));
             row_str.push_back(cell[0]);
         }
         aln[i] = row_str;
@@ -102,25 +102,25 @@ NumericMatrix computeSharedMatrix(CharacterMatrix dna_aln, int out_group) {
 
 //' Compute the defining variants for each subtree
 //'
-//' @param dna_aln A matrix of DNA sequences (`CharacterMatrix`).
+//' @param dna_character_matrix A matrix of DNA sequences (`CharacterMatrix`).
 //' @param isolate_names A vector of isolate names (`CharacterVector`).
 //' @param subtrees A list of subtrees (`phylo` objects).
 //'
 //' @return An `IntegerVector` of integers representing the number of defining
 //'         variants for each subtree.
 // [[Rcpp::export]]
-std::vector<int> computeDefiningVariants(CharacterMatrix dna_aln, CharacterVector isolate_names, List subtrees) {
-    int n_isolates = dna_aln.nrow();
-    int n_cols = dna_aln.ncol();
+std::vector<int> computeDefiningVariants(CharacterMatrix dna_character_matrix, CharacterVector isolate_names, List subtrees) {
+    int n_isolates = dna_character_matrix.nrow();
+    int n_cols = dna_character_matrix.ncol();
     int n_subtrees = subtrees.size();
 
-    // Pre-convert the dna_aln matrix into a vector of strings (one per isolate)
+    // Pre-convert the dna_character_matrix matrix into a vector of strings (one per isolate)
     std::vector<std::string> aln(n_isolates);
     for (int i = 0; i < n_isolates; i++) {
         std::string row_str = "";
         for (int j = 0; j < n_cols; j++) {
             // Assume each element is a single-character string
-            std::string cell = as<std::string>(dna_aln(i, j));
+            std::string cell = as<std::string>(dna_character_matrix(i, j));
             row_str.push_back(cell[0]);
         }
         aln[i] = row_str;

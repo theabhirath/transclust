@@ -4,10 +4,10 @@
 \alias{computeDefiningVariants}
 \title{Compute the defining variants for each subtree}
 \usage{
-computeDefiningVariants(dna_aln, isolate_names, subtrees)
+computeDefiningVariants(dna_character_matrix, isolate_names, subtrees)
 }
 \arguments{
-\item{dna_aln}{A matrix of DNA sequences (\code{CharacterMatrix}).}
+\item{dna_character_matrix}{A matrix of DNA sequences (\code{CharacterMatrix}).}
 
 \item{isolate_names}{A vector of isolate names (\code{CharacterVector}).}
 

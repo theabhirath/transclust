@@ -87,8 +87,10 @@ get_tn_clusters_sv_index <- function(dna_aln, snp_dist, ip_seqs, ip_pt_seqs, seq
     ####################################################################################
     # Compute out-group: the isolate with the maximum average SNP distance
     out_group <- which.max(rowMeans(snp_dist))
+    # Convert the DNA alignment object to a character matrix
+    dna_char <- as.character(dna_aln)
     # Call the Rcpp function to compute the shared variant matrix
-    dna_shared_mat <- computeSharedMatrix(dna_aln, out_group)
+    dna_shared_mat <- computeSharedMatrix(dna_char, out_group)
 
     isolate_names <- row.names(dna_aln)
     rownames(dna_shared_mat) <- isolate_names
@@ -108,7 +110,7 @@ get_tn_clusters_sv_index <- function(dna_aln, snp_dist, ip_seqs, ip_pt_seqs, seq
     # Get subtrees from the provided phylogenetic tree
     sub_trees <- subtrees(tree)
     # Call the Rcpp function to compute defining variants
-    sub_trees_dv <- computeDefiningVariants(dna_aln, isolate_names, sub_trees)
+    sub_trees_dv <- computeDefiningVariants(dna_char, isolate_names, sub_trees)
 
     # Log completion of phase to standard output
     message("Phase 2 complete: Defining variant identification.")
