@@ -8,3 +8,5 @@
 ^codecov\.yml$
 .vscode/
 ^LICENSE\.md$
+^doc$
+^Meta$

@@ -12,7 +12,6 @@ cluster_property_perm_test(
   ip_seqs,
   dates,
   snp_dist,
-  prefix,
   nperm = 1000,
   floor_trace = NULL,
   room_trace = NULL,
@@ -33,8 +32,6 @@ cluster_property_perm_test(
 \item{dates}{A vector of isolate dates named by sequence IDs.}
 
 \item{snp_dist}{A matrix of SNP distances between isolates.}
-
-\item{prefix}{A descriptor string (used to name output figures).}
 
 \item{nperm}{The number of permutations to perform (default is 1000).}
 

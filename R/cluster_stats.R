@@ -161,20 +161,24 @@ intra_cluster_genetic_var_analysis <- function(clusters, dna_aln, var_pos) {
 #'
 #' @param cluster_seqs A character vector of sequence IDs belonging to the cluster.
 #' @param pt_trace A data frame or matrix of patient-level trace data (rows are days,
-#'   columns are patient IDs).
+#'                 columns are patient IDs).
 #' @param seq2pt A named character vector mapping sequence IDs to patient IDs
-#'   (names must be sequence IDs, values must be patient IDs).
+#'               (names must be sequence IDs, values must be patient IDs).
 #' @param ip_pt_seqs A character vector of sequence IDs corresponding to patients
-#'   who tested positive on admission (\"intake positive\").
-#' @param ip_seqs A character vector of sequence IDs presumed to be imported
-#'   from outside (a subset of \code{ip_pt_seqs} or similar).
+#'                   who tested positive on admission (\"intake positive\").
+#' @param ip_seqs A character vector of sequence IDs presumed to be imported from
+#'                outside (a subset of \code{ip_pt_seqs} or similar).
 #' @param snp_dist A matrix of SNP distances between isolates (row and column
-#'   names should match sequence IDs).
+#'                 names should match sequence IDs).
 #' @param dates A named numeric vector of isolate dates by sequence ID.
 #' @param floor_trace (Optional) A data frame or matrix for floor-level tracing.
 #' @param room_trace (Optional) A data frame or matrix for room-level tracing.
 #'
-#' @return A named numeric vector containing various cluster-level properties:
+#' @return A named numeric vector containing various cluster-level properties. The list
+#' of the properties computed are given in the details section.
+#'
+#' @details
+#' This function computes the following properties for the given cluster:
 #'   \itemize{
 #'     \item Number_of_patients
 #'     \item Number_of_start_indexes
@@ -203,9 +207,10 @@ intra_cluster_genetic_var_analysis <- function(clusters, dna_aln, var_pos) {
 #'     \item Time_from_index_to_first_convert
 #'     \item Time_from_index_to_last_convert
 #'   }
+#' These can be used for further analysis or visualization, including for example in
+#' the permutation tests to assess the significance of the observed cluster properties.
 #'
 #' @importFrom stats median
-#' @keywords internal
 cluster_properties <- function(cluster_seqs, pt_trace, seq2pt, ip_pt_seqs, ip_seqs, snp_dist,
                                dates, floor_trace = NULL, room_trace = NULL) {
     # Define names for all output properties
@@ -499,7 +504,6 @@ cluster_properties <- function(cluster_seqs, pt_trace, seq2pt, ip_pt_seqs, ip_se
 #' @param ip_seqs A vector of sequence IDs corresponding to intake patient sequences presumed to be imported.
 #' @param dates A vector of isolate dates named by sequence IDs.
 #' @param snp_dist A matrix of SNP distances between isolates.
-#' @param prefix A descriptor string (used to name output figures).
 #' @param nperm The number of permutations to perform (default is 1000).
 #' @param floor_trace An optional floor trace (rows: days, columns: patients).
 #' @param room_trace An optional room trace (rows: days, columns: patients).
@@ -514,7 +518,7 @@ cluster_properties <- function(cluster_seqs, pt_trace, seq2pt, ip_pt_seqs, ip_se
 #' @importFrom parallel detectCores mclapply
 #' @export
 cluster_property_perm_test <- function(clusters, pt_trace, seq2pt, ip_pt_seqs, ip_seqs, dates, snp_dist,
-                                       prefix, nperm = 1000, floor_trace = NULL, room_trace = NULL,
+                                       nperm = 1000, floor_trace = NULL, room_trace = NULL,
                                        num_cores = detectCores() - 1) {
     # Process clusters to set single-patient clusters to 1
     unique_clusters <- sort(unique(clusters))

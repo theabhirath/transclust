@@ -34,3 +34,16 @@ test_that("intra_cluster_genetic_var_analysis works", {
     expect_equal(nrow(var_df), length(unique(clusters)))
     expect_equal(ncol(var_df), 7)
 })
+
+# test cluster_property_perm_test
+test_that("cluster_property_perm_test works", {
+    nperm <- 10 # 10 permutations is enough for unit tests
+    perm_props <- cluster_property_perm_test(
+        clusters, trace_mat, dna_pt_labels, ip_seqs, ip_seqs_3days, dates, snp_dist,
+        nperm = nperm, floor_trace = floor_mat, room_trace = room_mat, num_cores = 1
+    ) # num_cores = 1 for unit tests, because this has to run on CI (and CRAN)
+    # perm_props should be an array
+    expect_true(is.array(perm_props))
+    # nrows should be nperm + 1
+    expect_equal(nrow(perm_props), nperm + 1)
+})

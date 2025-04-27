@@ -50,3 +50,6 @@ figures/
 
 # Local website build files
 docs/
+inst/doc
+/doc/
+/Meta/

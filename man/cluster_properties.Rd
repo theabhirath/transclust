@@ -28,8 +28,8 @@ columns are patient IDs).}
 \item{ip_pt_seqs}{A character vector of sequence IDs corresponding to patients
 who tested positive on admission (\"intake positive\").}
 
-\item{ip_seqs}{A character vector of sequence IDs presumed to be imported
-from outside (a subset of \code{ip_pt_seqs} or similar).}
+\item{ip_seqs}{A character vector of sequence IDs presumed to be imported from
+outside (a subset of \code{ip_pt_seqs} or similar).}
 
 \item{snp_dist}{A matrix of SNP distances between isolates (row and column
 names should match sequence IDs).}
@@ -41,7 +41,17 @@ names should match sequence IDs).}
 \item{room_trace}{(Optional) A data frame or matrix for room-level tracing.}
 }
 \value{
-A named numeric vector containing various cluster-level properties:
+A named numeric vector containing various cluster-level properties. The list
+of the properties computed are given in the details section.
+}
+\description{
+Calculates various epidemiological and genetic characteristics for a given
+set of sequence IDs in a single cluster. This includes counts of patients,
+convert vs. index statuses, genetic distances, cluster duration, and
+timing-based metrics such as time to first/last acquisition.
+}
+\details{
+This function computes the following properties for the given cluster:
 \itemize{
 \item Number_of_patients
 \item Number_of_start_indexes
@@ -70,11 +80,6 @@ A named numeric vector containing various cluster-level properties:
 \item Time_from_index_to_first_convert
 \item Time_from_index_to_last_convert
 }
+These can be used for further analysis or visualization, including for example in
+the permutation tests to assess the significance of the observed cluster properties.
 }
-\description{
-Calculates various epidemiological and genetic characteristics for a given
-set of sequence IDs in a single cluster. This includes counts of patients,
-convert vs. index statuses, genetic distances, cluster duration, and
-timing-based metrics such as time to first/last acquisition.
-}
-\keyword{internal}
