@@ -115,7 +115,7 @@ ggplot(data = data.frame(x = perm_vals), aes(x = x)) +
     geom_point(aes(x = observed_val, y = 0), shape = 23, size = 5, fill = "red") +
     annotate("text", x = observed_val, y = 0.5, label = "Observed", vjust = -1) +
     labs(
-        title = paste0("Permutation tests for ", prop_name, ". p-value: ", round(prop_pval, 3)),
+        title = paste0("Permutation tests for ", prop_name, "\n p-value: ", round(prop_pval, 3)),
         x = prop_name,
         y = "Count"
     ) +
@@ -144,7 +144,7 @@ ggplot(data = data.frame(x = perm_vals), aes(x = x)) +
     geom_point(aes(x = observed_val, y = 0), shape = 23, size = 5, fill = "red") +
     annotate("text", x = observed_val, y = 0.5, label = "Observed", vjust = -1) +
     labs(
-        title = paste0("Permutation tests for ", prop_name, ". p-value: ", round(prop_pval, 3)),
+        title = paste0("Permutation tests for ", prop_name, "\n p-value: ", round(prop_pval, 3)),
         x = prop_name,
         y = "Count"
     ) +
