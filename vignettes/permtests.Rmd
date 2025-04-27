@@ -82,13 +82,13 @@ The `transclust` package includes a function that performs permutation tests to 
 
 For the tests to be informative, the clusters have to be permuted with certain constraints. We can divide our patients into two "classes": index and convert. Index patients are those who are the first in a cluster, and convert patients are those who are infected by an index patient. The permutation tests are performed by randomly permuting the labels of the isolates while not changing the proportions of index and convert patients in the clusters. This is done to ensure that the permutation tests are meaningful and take into account the structure of the data.
 
-Because the permutation tests are computationally intensive and can take time, for better performance they can be run in parallel on multiple cores. GitHub Actions runners are limited to 2 cores, so we will set the number of cores to 2. The `cluster_property_perm_test()` function takes the following arguments:
+Because the permutation tests are computationally intensive and can take time, for better performance they can be run in parallel on multiple cores on *nix systems (Windows does not support parallel execution in this manner). However, since this is a vignette that has to on all platforms, we will only run the test on a single core. The `cluster_property_perm_test()` function takes the following arguments:
 
 ```{r perm_test, warning = FALSE}
 nperm <- 500
 perm_props <- cluster_property_perm_test(
     clusters, trace_mat, dna_pt_labels, ip_seqs, ip_seqs_3days, dates, snp_dist,
-    nperm = nperm, floor_trace = floor_mat, room_trace = room_mat, num_cores = 2
+    nperm = nperm, floor_trace = floor_mat, room_trace = room_mat, num_cores = 1
 )
 ```
 

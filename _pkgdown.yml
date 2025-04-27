@@ -37,6 +37,11 @@ reference:
     contents:
       - intra_cluster_genetic_var_analysis
       - cluster_property_perm_test
+  - subtitle: Helper functions
+    desc: >
+      A collection of helper functions used internally for statistical analysis.
+    contents:
+      - cluster_properties
 
   - title: Utilities
     desc: >
