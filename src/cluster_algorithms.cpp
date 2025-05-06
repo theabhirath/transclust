@@ -5,8 +5,36 @@
 
 using namespace Rcpp;
 
-// unsigned 128-bit integer
+// unsigned 128-bit integer type
 typedef unsigned __int128 uint128_t;
+
+// A simple 2D array class
+template <typename T>
+class Array2D {
+    public:
+        std::vector<T> data;
+        int ncols;
+        Array2D(int nrow, int ncol) : data(nrow * ncol), ncols(ncol) {}
+        T* operator[](int row) {
+            return &data[row * ncols];
+        }
+};
+
+// A simple upper triangular matrix class
+template <typename T>
+class UpperTriangularMatrix {
+    public:
+        std::vector<T> data;
+        int size;
+        UpperTriangularMatrix(int n) : data((n * (n - 1)) / 2), size(n) {}
+        T* operator[](int row) {
+            if (row < size - 1) {
+                return &data[(row * (size - 1)) - ((row * (row + 1)) / 2)];
+            } else {
+                return nullptr; // The last row has no i<j pairs
+            }
+        }
+};
 
 //' Compute the shared variant matrix
 //'
@@ -22,9 +50,8 @@ NumericMatrix computeSharedMatrix(CharacterMatrix dna_character_matrix, int out_
     out_group = out_group - 1; // Convert to 0-based index
 
     // Pre-convert the dna_character_matrix matrix into a 2D array of chars
-    char **aln = new char*[n_isolates];
+    Array2D<char> aln(n_isolates, n_cols);
     for (int i = 0; i < n_isolates; i++) {
-        aln[i] = new char[n_cols];
         for (int j = 0; j < n_cols; j++) {
             aln[i][j] = (dna_character_matrix(i, j))[0];
         }
@@ -38,17 +65,8 @@ NumericMatrix computeSharedMatrix(CharacterMatrix dna_character_matrix, int out_
         if (is_valid) out_valid.push_back(k);
     }
 
-    // Matrix to store intermediate shared counts. Use double pointers and
-    // only allocate upper triangle to save space
-    int **temp = new int*[n_isolates];
-    for (int i = 0; i < n_isolates; i++) {
-        if (i < n_isolates - 1) {
-            temp[i] = new int[n_isolates - i - 1];
-        } else {
-            // The last row has no i<j pairs
-            temp[i] = nullptr;
-        }
-    }
+    // Matrix to store intermediate shared counts – upper triangular
+    UpperTriangularMatrix<int> temp(n_isolates);
     // Initialize the max shared count
     int max_shared = 0;
 
@@ -88,16 +106,6 @@ NumericMatrix computeSharedMatrix(CharacterMatrix dna_character_matrix, int out_
         }
     }
 
-    // Clean up the aln array
-    for (int i = 0; i < n_isolates; i++) {
-        delete[] aln[i];
-    }
-    delete[] aln;
-    // Clean up the temporary array
-    for (int i = 0; i < n_isolates; i++) {
-        delete[] temp[i];
-    }
-    delete[] temp;
     // Return the shared variant matrix
     return shared_mat;
 }
@@ -117,9 +125,8 @@ std::vector<int> computeDefiningVariants(CharacterMatrix dna_character_matrix, C
     int n_subtrees = subtrees.size();
 
     // Pre-convert the dna_character_matrix matrix into a 2D array of chars
-    char **aln = new char*[n_isolates];
+    Array2D<char> aln(n_isolates, n_cols);
     for (int i = 0; i < n_isolates; i++) {
-        aln[i] = new char[n_cols];
         for (int j = 0; j < n_cols; j++) {
             aln[i][j] = (dna_character_matrix(i, j))[0];
         }
@@ -210,12 +217,6 @@ std::vector<int> computeDefiningVariants(CharacterMatrix dna_character_matrix, C
         // Store the count of defining variants for this subtree
         defining_variants[s] = dvcount;
     }
-
-    // Clean up the aln array
-    for (int i = 0; i < n_isolates; i++) {
-        delete[] aln[i];
-    }
-    delete[] aln;
 
     // Return the vector of defining variant counts
     return defining_variants;
