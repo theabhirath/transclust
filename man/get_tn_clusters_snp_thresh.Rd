@@ -4,16 +4,16 @@
 \alias{get_tn_clusters_snp_thresh}
 \title{Perform clustering of isolates using a hard SNP distance cutoff.}
 \usage{
-get_tn_clusters_snp_thresh(snp_hclust, tree, snp_thresh)
+get_tn_clusters_snp_thresh(tree, snp_hclust, snp_thresh)
 }
 \arguments{
+\item{tree}{A phylogenetic tree object of class \code{phylo} constructed from the DNA alignment.}
+
 \item{snp_hclust}{An object of class \code{hclust} constructed from the SNP distance matrix.
 The SNP distance matrix can be generated using the \code{\link{get_snp_dist_matrix}} function.
 Then this object can be generated as: \code{hclust(as.dist(snp_dist))}.}
 
-\item{tree}{A phylogenetic tree object of class \code{phylo} constructed from the DNA alignment.}
-
-\item{snp_thresh}{A threshold for defining clusters.}
+\item{snp_thresh}{An integer SNP threshold for defining clusters.}
 }
 \value{
 A numeric vector indicating the cluster that each isolate belongs to.

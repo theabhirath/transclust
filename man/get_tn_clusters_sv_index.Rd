@@ -5,16 +5,19 @@
 \title{Identify transmission clusters based on the number of shared variants.}
 \usage{
 get_tn_clusters_sv_index(
+  tree,
   dna_aln,
   snp_dist,
   ip_seqs,
   ip_pt_seqs,
   seq2pt,
-  dates,
-  tree
+  dates
 )
 }
 \arguments{
+\item{tree}{A phylogenetic tree object of class \code{phylo} constructed from the DNA alignment. This can be constructed
+using the \code{\link{get_phylo_tree}} or can be any other tree object constructed from the same isolates.}
+
 \item{dna_aln}{A DNA alignment object of class \code{DNAbin}.}
 
 \item{snp_dist}{A matrix of SNP distances between isolates constructed using a model of DNA evolution.
@@ -27,9 +30,6 @@ See \code{\link{get_snp_dist_matrix}} for a useful function to generate this.}
 \item{seq2pt}{A named vector mapping sequence IDs to patient IDs.}
 
 \item{dates}{A vector of isolate dates named by sequence IDs.}
-
-\item{tree}{A phylogenetic tree object of class \code{phylo} constructed from the DNA alignment. This can be constructed
-using the \code{\link{get_phylo_tree}} or can be any other tree object constructed from the same isolates.}
 }
 \value{
 A numeric vector indicating the cluster that each isolate belongs to.
