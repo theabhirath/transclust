@@ -6,18 +6,18 @@
 #' counting how many sequences in the cluster are in each subtree. If a cluster has more than one sequence, it is
 #' assigned to the smallest matching subtree. See `vignette("transclust")` for more details.
 #'
-#' @param tree A phylogenetic tree object of class `phylo` constructed from the DNA alignment.
 #' @param snp_hclust An object of class `hclust` constructed from the SNP distance matrix.
 #'                   The SNP distance matrix can be generated using the [`get_snp_dist_matrix`] function.
 #'                   Then this object can be generated as: `hclust(as.dist(snp_dist))`.
-#' @param snp_thresh An integer SNP threshold for defining clusters.
+#' @param tree A phylogenetic tree object of class `phylo` constructed from the DNA alignment.
+#' @param snp_thresh A threshold for defining clusters.
 #'
 #' @return A numeric vector indicating the cluster that each isolate belongs to.
 #'
 #' @importFrom ape subtrees
 #' @importFrom stats cutree setNames
 #' @export
-get_tn_clusters_snp_thresh <- function(tree, snp_hclust, snp_thresh) {
+get_tn_clusters_snp_thresh <- function(snp_hclust, tree, snp_thresh) {
     # h is the height at which to cut the tree, which is the SNP threshold in this case
     hclusters <- cutree(snp_hclust, h = snp_thresh)
     # Extract all subtrees from the phylogenetic tree
@@ -57,8 +57,6 @@ get_tn_clusters_snp_thresh <- function(tree, snp_hclust, snp_thresh) {
 #' patients occur after converts. This clustering also requires that clusters be defined by at least one shared variant
 #' that other isolates don't have. See `vignette("transclust")` for more details.
 #'
-#' @param tree A phylogenetic tree object of class `phylo` constructed from the DNA alignment. This can be constructed
-#'             using the [`get_phylo_tree`] or can be any other tree object constructed from the same isolates.
 #' @param dna_aln A DNA alignment object of class `DNAbin`.
 #' @param snp_dist A matrix of SNP distances between isolates constructed using a model of DNA evolution.
 #'                 See [`get_snp_dist_matrix`] for a useful function to generate this.
@@ -66,6 +64,8 @@ get_tn_clusters_snp_thresh <- function(tree, snp_hclust, snp_thresh) {
 #' @param ip_pt_seqs A vector of sequence IDs which correspond to intake-positive patients.
 #' @param seq2pt A named vector mapping sequence IDs to patient IDs.
 #' @param dates A vector of isolate dates named by sequence IDs.
+#' @param tree A phylogenetic tree object of class `phylo` constructed from the DNA alignment. This can be constructed
+#'             using the [`get_phylo_tree`] or can be any other tree object constructed from the same isolates.
 #'
 #' @return A numeric vector indicating the cluster that each isolate belongs to.
 #'
@@ -76,7 +76,7 @@ get_tn_clusters_snp_thresh <- function(tree, snp_hclust, snp_thresh) {
 #'
 #' @importFrom ape subtrees
 #' @export
-get_tn_clusters_sv_index <- function(tree, dna_aln, snp_dist, ip_seqs, ip_pt_seqs, seq2pt, dates) {
+get_tn_clusters_sv_index <- function(dna_aln, snp_dist, ip_seqs, ip_pt_seqs, seq2pt, dates, tree) {
     #####################################################################################
     # 1. Compute the shared variant matrix #####
     # For each pair of isolates, we compute the number of positions where:
