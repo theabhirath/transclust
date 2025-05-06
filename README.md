@@ -5,8 +5,7 @@
 [![R-CMD-check](https://github.com/theabhirath/transclust/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/theabhirath/transclust/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-The project will involve the implementation and evaluation of algorithms for detecting
-transmission clusters in healthcare settings using genomic data.
+The project will involve the implementation and evaluation of algorithms for detecting transmission clusters in healthcare settings using genomic data.
 
 ## Installation
 
@@ -16,8 +15,5 @@ transmission clusters in healthcare settings using genomic data.
 devtools::install_github("theabhirath/transclust")
 ```
 
-> [!WARNING] 
+> [!WARNING]
 > This project is still in the early stages of development and the API may change without notice.
-
-> [!NOTE]
-> This package was developed as part of the BIOINF 576 – Tool Development for Bioinformatics course at the University of Michigan. Documents pertaining to the course can be found in the `course` directory. Note, however, that these may not necessarily be up to date with the latest version of the package. The course materials are not intended for public distribution and are provided here for reference only.

@@ -1,5 +1,4 @@
 ^figures$
-^course$
 ^docs$
 ^pkgdown$
 ^.*\.Rproj$
