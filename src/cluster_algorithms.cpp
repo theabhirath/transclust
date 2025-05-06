@@ -21,21 +21,17 @@ NumericMatrix computeSharedMatrix(CharacterMatrix dna_character_matrix, int out_
     int n_cols = dna_character_matrix.ncol();
     out_group = out_group - 1; // Convert to 0-based index
 
-    // Pre-convert the dna_character_matrix matrix into a vector of strings (one per isolate)
-    std::vector<std::string> aln(n_isolates);
+    // Pre-convert the dna_character_matrix matrix into a 2D array of chars
+    char **aln = new char*[n_isolates];
     for (int i = 0; i < n_isolates; i++) {
-        std::string row_str = "";
+        aln[i] = new char[n_cols];
         for (int j = 0; j < n_cols; j++) {
-            // Assume each element is a single-character string.
-            std::string cell = as<std::string>(dna_character_matrix(i, j));
-            row_str.push_back(cell[0]);
+            aln[i][j] = (dna_character_matrix(i, j))[0];
         }
-        aln[i] = row_str;
     }
 
     // Precompute valid columns for the outgroup
     std::vector<int> out_valid;
-    out_valid.reserve(n_cols);
     for (int k = 0; k < n_cols; k++) {
         char base_out = aln[out_group][k];
         bool is_valid = (base_out != '-' && base_out != 'n');
@@ -44,7 +40,7 @@ NumericMatrix computeSharedMatrix(CharacterMatrix dna_character_matrix, int out_
 
     // Matrix to store intermediate shared counts. Use double pointers and
     // only allocate upper triangle to save space
-    std::vector<int*> temp(n_isolates);
+    int **temp = new int*[n_isolates];
     for (int i = 0; i < n_isolates; i++) {
         if (i < n_isolates - 1) {
             temp[i] = new int[n_isolates - i - 1];
@@ -92,10 +88,16 @@ NumericMatrix computeSharedMatrix(CharacterMatrix dna_character_matrix, int out_
         }
     }
 
+    // Clean up the aln array
+    for (int i = 0; i < n_isolates; i++) {
+        delete[] aln[i];
+    }
+    delete[] aln;
     // Clean up the temporary array
     for (int i = 0; i < n_isolates; i++) {
         delete[] temp[i];
     }
+    delete[] temp;
     // Return the shared variant matrix
     return shared_mat;
 }
@@ -114,16 +116,13 @@ std::vector<int> computeDefiningVariants(CharacterMatrix dna_character_matrix, C
     int n_cols = dna_character_matrix.ncol();
     int n_subtrees = subtrees.size();
 
-    // Pre-convert the dna_character_matrix matrix into a vector of strings (one per isolate)
-    std::vector<std::string> aln(n_isolates);
+    // Pre-convert the dna_character_matrix matrix into a 2D array of chars
+    char **aln = new char*[n_isolates];
     for (int i = 0; i < n_isolates; i++) {
-        std::string row_str = "";
+        aln[i] = new char[n_cols];
         for (int j = 0; j < n_cols; j++) {
-            // Assume each element is a single-character string
-            std::string cell = as<std::string>(dna_character_matrix(i, j));
-            row_str.push_back(cell[0]);
+            aln[i][j] = (dna_character_matrix(i, j))[0];
         }
-        aln[i] = row_str;
     }
 
     // Precompute mapping from isolate names to indices (0-based)
@@ -211,6 +210,12 @@ std::vector<int> computeDefiningVariants(CharacterMatrix dna_character_matrix, C
         // Store the count of defining variants for this subtree
         defining_variants[s] = dvcount;
     }
+
+    // Clean up the aln array
+    for (int i = 0; i < n_isolates; i++) {
+        delete[] aln[i];
+    }
+    delete[] aln;
 
     // Return the vector of defining variant counts
     return defining_variants;
