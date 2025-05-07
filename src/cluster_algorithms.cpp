@@ -51,14 +51,15 @@ NumericMatrix computeSharedMatrix(CharacterMatrix dna_character_matrix, int out_
 
     // Pre-convert the dna_character_matrix matrix into a 2D array of chars
     Array2D<char> aln(n_isolates, n_cols);
-    for (int i = 0; i < n_isolates; i++) {
-        for (int j = 0; j < n_cols; j++) {
+    for (int j = 0; j < n_cols; j++) {
+        for (int i = 0; i < n_isolates; i++) {
             aln[i][j] = (dna_character_matrix(i, j))[0];
         }
     }
 
     // Precompute valid columns for the outgroup
     std::vector<int> out_valid;
+    out_valid.reserve(n_cols);  // Pre-allocate space
     for (int k = 0; k < n_cols; k++) {
         char base_out = aln[out_group][k];
         bool is_valid = (base_out != '-' && base_out != 'n');
@@ -126,8 +127,8 @@ std::vector<int> computeDefiningVariants(CharacterMatrix dna_character_matrix, C
 
     // Pre-convert the dna_character_matrix matrix into a 2D array of chars
     Array2D<char> aln(n_isolates, n_cols);
-    for (int i = 0; i < n_isolates; i++) {
-        for (int j = 0; j < n_cols; j++) {
+    for (int j = 0; j < n_cols; j++) {
+        for (int i = 0; i < n_isolates; i++) {
             aln[i][j] = (dna_character_matrix(i, j))[0];
         }
     }
@@ -183,7 +184,7 @@ std::vector<int> computeDefiningVariants(CharacterMatrix dna_character_matrix, C
         for (int j = 0; j < n_cols; j++) {
             // Check that all subtree isolates have the same base at this column
             char first_base = aln[subtree_indices[0]][j];
-            if (first_base == 'n') continue; // early continue if ambiguous base
+            if (first_base == '-' || first_base == 'n') continue;  // Early exit for invalid bases
             bool same_in_subtree = true;
             for (int idx: subtree_indices) {
                 if (aln[idx][j] != first_base) {
