@@ -41,3 +41,4 @@ cluster_context(
 \description{
 Plots the patient and floor trace heatmaps for each cluster separately.
 }
+\keyword{internal}

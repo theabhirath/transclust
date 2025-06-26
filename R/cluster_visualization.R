@@ -13,6 +13,7 @@
 #' @importFrom dplyr .data left_join
 #' @importFrom ggplot2 aes scale_color_manual ggtitle theme element_text unit guides guide_legend
 #' @importFrom stats setNames
+#'
 #' @export
 plot_clusters_phylo <- function(tree, clusters) {
     # Convert phylo object to ggtree object
@@ -63,23 +64,22 @@ plot_clusters_phylo <- function(tree, clusters) {
 #' @importFrom ggplot2 theme element_text scale_fill_gradient
 #' @export
 compare_clusters <- function(clusters1, clusters2, width = 10, height = 10) {
-    # Unique cluster labels excluding 1 ("default" cluster)
-    clusters1_unique <- setdiff(sort(unique(clusters1)), 1)
-    clusters2_unique <- setdiff(sort(unique(clusters2)), 1)
+    # Unique cluster labels
+    clusters1_unique_labels <- as.character(sort(unique(clusters1)))
+    clusters2_unique_labels <- as.character(sort(unique(clusters2)))
 
     # Create a matrix to store the overlap between clusters
     cluster_overlap <- matrix(
         nrow = length(clusters1_unique),
         ncol = length(clusters2_unique),
         dimnames = list(clusters1_unique, clusters2_unique)
+        nrow = length(clusters1_unique_labels), ncol = length(clusters2_unique_labels),
+        dimnames = list(clusters1_unique_labels, clusters2_unique_labels)
     )
 
-    clusters1_char <- as.character(clusters1_unique)
-    clusters2_char <- as.character(clusters2_unique)
-
     # Compute cluster overlap
-    for (cluster1 in clusters1_char) {
-        for (cluster2 in clusters2_char) {
+    for (cluster1 in clusters1_unique_labels) {
+        for (cluster2 in clusters2_unique_labels) {
             cluster_overlap[cluster1, cluster2] <- length(intersect(
                 names(clusters1)[clusters1 == cluster1],
                 names(clusters2)[clusters2 == cluster2]
@@ -91,8 +91,16 @@ compare_clusters <- function(clusters1, clusters2, width = 10, height = 10) {
         }
     }
 
+    # get clusters that map exactly 1-1
+    one_to_one_mapping <- rowSums(cluster_overlap == 1) == 1
+    # get isolates that are in one-to-one mapping
+    isolates_in_one_to_one_mapping <- names(clusters1)[one_to_one_mapping]
+    # percentage of isolates that are in one-to-one mapping
+    overlap_percentage <- length(isolates_in_one_to_one_mapping) / length(clusters1)
+
     # Return the ggheatmap plot
-    ggheatmap(cluster_overlap, width = width, height = height)
+    ggheatmap(cluster_overlap, width = width, height = height) +
+        ggtitle(paste0("Comparison of clusters. Isolate overlap: ", round(overlap_percentage * 100, 2), "%"))
 }
 
 #' Produces summary plots regarding genetic distances within and between transmission clusters.
@@ -202,7 +210,16 @@ cluster_genetic_context <- function(clusters, seq2pt, ip_seqs, snp_dist, prefix)
 #' @importFrom ggtreeExtra geom_fruit
 #' @importFrom paletteer paletteer_d
 #' @importFrom ggplot2 geom_tile scale_fill_manual scale_fill_gradientn ggtitle
-plot_trace <- function(tree, clusters, dates, ip_seqs, trace_data, seq2pt, prefix, cluster_class = NULL) {
+plot_trace <- function(
+    tree,
+    clusters,
+    dates,
+    ip_seqs,
+    trace_data,
+    seq2pt,
+    prefix,
+    cluster_class = NULL
+) {
     # Prepare a data frame for all isolates
     df <- data.frame(
         id = names(clusters),
@@ -297,10 +314,10 @@ plot_trace <- function(tree, clusters, dates, ip_seqs, trace_data, seq2pt, prefi
 
     # Construct the annotation data frame.
     annotation_row <- data.frame(
-        id               = keep_rows,
-        Cluster          = df$cluster[match(keep_rows, df$id)],
-        Convert          = convert_class,
-        Intra_pt_dist    = max_dist[keep_rows] + 1,
+        id = keep_rows,
+        Cluster = df$cluster[match(keep_rows, df$id)],
+        Convert = convert_class,
+        Intra_pt_dist = max_dist[keep_rows] + 1,
         Intra_clust_dist = max_clust_dist[keep_rows] + 1
     )
 
@@ -310,9 +327,12 @@ plot_trace <- function(tree, clusters, dates, ip_seqs, trace_data, seq2pt, prefi
     greenscale <- colorRampPalette(c("white", "darkgreen"))
 
     ann_colors <- list(
-        Cluster          = structure(cluster_colors[seq_along(unique(df$cluster))], names = sort(unique(df$cluster))),
-        Convert          = structure(c("gray95", "gray", "red"), names = patient_labels),
-        Intra_pt_dist    = bluescale(max(max_dist, 1)),
+        Cluster = structure(
+            cluster_colors[seq_along(unique(df$cluster))],
+            names = sort(unique(df$cluster))
+        ),
+        Convert = structure(c("gray95", "gray", "red"), names = patient_labels),
+        Intra_pt_dist = bluescale(max(max_dist, 1)),
         Intra_clust_dist = greenscale(max(max_clust_dist, 1))
     )
 
@@ -349,41 +369,73 @@ plot_trace <- function(tree, clusters, dates, ip_seqs, trace_data, seq2pt, prefi
 
     tree_plot <- ggtree(tree_sub, branch.length = "none")
 
-    gheatmap(tree_plot, trace_df,
-        offset = 4, width = 4, font.size = 3,
-        custom_column_labels = col_lab, colnames_angle = 90, colnames_offset_y = -8
+    gheatmap(
+        tree_plot,
+        trace_df,
+        offset = 4,
+        width = 4,
+        font.size = 3,
+        custom_column_labels = col_lab,
+        colnames_angle = 90,
+        colnames_offset_y = -8
     ) +
         vexpand(0.1, -1) +
         scale_fill_manual(
-            name = "Trace", values = custom_colors, breaks = custom_breaks, labels = custom_breaks,
-            na.value = "white", drop = FALSE
-        ) + new_scale_fill() +
+            name = "Trace",
+            values = custom_colors,
+            breaks = custom_breaks,
+            labels = custom_breaks,
+            na.value = "white",
+            drop = FALSE
+        ) +
+        new_scale_fill() +
         # Cluster annot
         geom_fruit(
-            data = annotation_row, geom = geom_tile, mapping = aes(y = id, x = 1, fill = Cluster),
-            offset = -0.2, width = 1
+            data = annotation_row,
+            geom = geom_tile,
+            mapping = aes(y = id, x = 1, fill = Cluster),
+            offset = -0.2,
+            width = 1
         ) +
         scale_fill_manual(
-            name = "Cluster", values = ann_colors$Cluster, drop = FALSE, guide = "none"
-        ) + new_scale_fill() +
+            name = "Cluster",
+            values = ann_colors$Cluster,
+            drop = FALSE,
+            guide = "none"
+        ) +
+        new_scale_fill() +
         # Convert annot
         geom_fruit(
-            data = annotation_row, geom = geom_tile, mapping = aes(y = id, x = 1, fill = Convert),
-            offset = -0.1825, width = 1
+            data = annotation_row,
+            geom = geom_tile,
+            mapping = aes(y = id, x = 1, fill = Convert),
+            offset = -0.1825,
+            width = 1
         ) +
         scale_fill_manual(
-            name = "Convert", values = ann_colors$Convert, labels = names(ann_colors$Convert), drop = FALSE
-        ) + new_scale_fill() +
+            name = "Convert",
+            values = ann_colors$Convert,
+            labels = names(ann_colors$Convert),
+            drop = FALSE
+        ) +
+        new_scale_fill() +
         # Intra_clust_dist annot
         geom_fruit(
-            data = annotation_row, geom = geom_tile, mapping = aes(y = id, x = 1, fill = Intra_clust_dist),
-            offset = -0.1725, width = 1
+            data = annotation_row,
+            geom = geom_tile,
+            mapping = aes(y = id, x = 1, fill = Intra_clust_dist),
+            offset = -0.1725,
+            width = 1
         ) +
-        scale_fill_gradientn(name = "Intra_clust_dist", colors = ann_colors$Intra_clust_dist) + new_scale_fill() +
+        scale_fill_gradientn(name = "Intra_clust_dist", colors = ann_colors$Intra_clust_dist) +
+        new_scale_fill() +
         # Intra_pt_dist annot
         geom_fruit(
-            data = annotation_row, geom = geom_tile, mapping = aes(y = id, x = 1, fill = Intra_pt_dist),
-            offset = -0.1625, width = 1
+            data = annotation_row,
+            geom = geom_tile,
+            mapping = aes(y = id, x = 1, fill = Intra_pt_dist),
+            offset = -0.1625,
+            width = 1
         ) +
         scale_fill_gradientn(name = "Intra_pt_dist", colors = ann_colors$Intra_pt_dist)
 }
@@ -403,6 +455,7 @@ plot_trace <- function(tree, clusters, dates, ip_seqs, trace_data, seq2pt, prefi
 #'
 #' @importFrom ggplot2 ggsave
 #' @export
+#' @keywords internal
 cluster_context <- function(clusters, snp_dist, ip_seqs, ip_pt_seqs, seq2pt,
                             dates, tree, pt_trace, floor_trace = NULL, prefix = "plot") {
     # Iterate over each cluster
@@ -414,7 +467,12 @@ cluster_context <- function(clusters, snp_dist, ip_seqs, ip_pt_seqs, seq2pt,
         ggsave(
             paste0("figures/", prefix, "_pt_trace_", cluster, ".pdf"),
             plot_trace(
-                tree, clusters[clusters == cluster], dates, ip_seqs, pt_trace, seq2pt,
+                tree,
+                clusters[clusters == cluster],
+                dates,
+                ip_seqs,
+                pt_trace,
+                seq2pt,
                 prefix = paste0(prefix, "_pt_trace_", cluster)
             )
         )
@@ -423,7 +481,12 @@ cluster_context <- function(clusters, snp_dist, ip_seqs, ip_pt_seqs, seq2pt,
             ggsave(
                 paste0("figures/", prefix, "_floor_trace_", cluster, ".pdf"),
                 plot_trace(
-                    tree, clusters[clusters == cluster], dates, ip_seqs, floor_trace, seq2pt,
+                    tree,
+                    clusters[clusters == cluster],
+                    dates,
+                    ip_seqs,
+                    floor_trace,
+                    seq2pt,
                     prefix = paste0(prefix, "_floor_trace_", cluster)
                 )
             )
