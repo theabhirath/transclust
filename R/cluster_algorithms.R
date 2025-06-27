@@ -4,20 +4,20 @@
 #' This function uses a hard SNP distance cutoff to define clusters. It first cuts the tree at the specified
 #' threshold and then assigns each cluster to the best matching subtree. The best matching subtree is determined by
 #' counting how many sequences in the cluster are in each subtree. If a cluster has more than one sequence, it is
-#' assigned to the smallest matching subtree. See `vignette("transclust")` for more details.
+#' assigned to the smallest matching subtree.
 #'
-#' @param snp_hclust An object of class `hclust` constructed from the SNP distance matrix.
-#'                   The SNP distance matrix can be generated using the [`get_snp_dist_matrix`] function.
-#'                   Then this object can be generated as: `hclust(as.dist(snp_dist))`.
 #' @param tree A phylogenetic tree object of class `phylo` constructed from the DNA alignment.
+#' @param snp_dist A matrix of SNP distances between isolates constructed using a model of DNA evolution.
+#'                 See [`get_snp_dist_matrix`] for a useful function to generate this.
 #' @param snp_thresh A threshold for defining clusters.
 #'
 #' @return A numeric vector indicating the cluster that each isolate belongs to.
 #'
-#' @importFrom ape subtrees
-#' @importFrom stats cutree setNames
+#' @importFrom stats hclust as.dist cutree setNames
 #' @export
-get_tn_clusters_snp_thresh <- function(snp_hclust, tree, snp_thresh) {
+get_tn_clusters_snp_thresh_tree <- function(tree, snp_dist, snp_thresh) {
+    # Perform hierarchical clustering based on SNP distance matrix
+    snp_hclust <- hclust(as.dist(snp_dist))
     # h is the height at which to cut the tree, which is the SNP threshold in this case
     hclusters <- cutree(snp_hclust, h = snp_thresh)
     # Extract all subtrees from the phylogenetic tree
@@ -48,6 +48,29 @@ get_tn_clusters_snp_thresh <- function(snp_hclust, tree, snp_thresh) {
     setNames(st_clusters[match(hclusters, unique(hclusters))], names(hclusters))
 }
 
+#' Perform clustering of isolates using a hard SNP distance cutoff.
+#'
+#' @description
+#' This function uses a hard SNP distance cutoff to define clusters naïvely, without using
+#' the phylogenetic tree.
+#'
+#' @param snp_dist A matrix of SNP distances between isolates constructed using a model of DNA evolution.
+#'                 See [`get_snp_dist_matrix`] for a useful function to generate this.
+#' @param snp_thresh A threshold for defining clusters.
+#'
+#' @return A numeric vector indicating the cluster that each isolate belongs to.
+#'
+#' @importFrom stats hclust as.dist cutree setNames
+#' @export
+get_tn_clusters_snp_thresh <- function(snp_dist, snp_thresh) {
+    # Convert distance matrix to hclust object
+    snp_hclust <- hclust(as.dist(snp_dist))
+    # Cut at the specified threshold to create clusters
+    clusters <- cutree(snp_hclust, h = snp_thresh)
+    # Return named vector of clusters
+    setNames(clusters, rownames(snp_dist))
+}
+
 #' Identify transmission clusters based on the number of shared variants.
 #'
 #' @description
@@ -55,13 +78,14 @@ get_tn_clusters_snp_thresh <- function(snp_hclust, tree, snp_thresh) {
 #' before all cluster converts. The clustering metric is the number of shared variants, and clusters can have multiple
 #' intake-positive patients if they share an identical number of variants with other cluster members or intake-positive
 #' patients occur after converts. This clustering also requires that clusters be defined by at least one shared variant
-#' that other isolates don't have. See `vignette("transclust")` for more details.
+#' that other isolates don't have.
 #'
 #' @param dna_aln A DNA alignment object of class `DNAbin`.
 #' @param snp_dist A matrix of SNP distances between isolates constructed using a model of DNA evolution.
 #'                 See [`get_snp_dist_matrix`] for a useful function to generate this.
 #' @param ip_seqs A vector of sequence IDs which correspond to intake patient sequences presumed to be imported.
-#' @param ip_pt_seqs A vector of sequence IDs which correspond to intake-positive patients.
+#' @param ip_pt_seqs A vector of all sequence IDs which correspond to intake-positive patients, imported or
+#'                   collected later. This will be a superset of `ip_seqs` by definition.
 #' @param seq2pt A named vector mapping sequence IDs to patient IDs.
 #' @param dates A vector of isolate dates named by sequence IDs.
 #' @param tree A phylogenetic tree object of class `phylo` constructed from the DNA alignment. This can be constructed

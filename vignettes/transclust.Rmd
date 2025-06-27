@@ -66,19 +66,17 @@ The `snp_dist` variable contains the SNP distance matrix, which is a square matr
 
 ## Clustering isolates using a hard SNP threshold
 
-Now that we've loaded our data, we can start clustering the isolates. First, we want to use a hard SNP threshold to cluster the isolates. We first convert the SNP distance matrix into a phylogenetic tree. For the purposes of this analysis, we are going to construct a phylogenetic tree using the complete linkage method. The `hclust()` function from the `stats` package can be used to perform hierarchical clustering on the SNP distance matrix, which can then be converted into a phylogenetic tree using the `as.phylo()` function from the `ape` package.
+Now that we've loaded our data, we can start clustering the isolates. First, we want to use a hard SNP threshold to cluster the isolates. We convert the SNP distance matrix into a phylogenetic tree. The `get_phylo_tree()` function from the `transclust` package can be used to construct a phylogenetic tree. We use the maximum parsimony method for this example:
 
 ```{r phylo_tree}
-# Perform hierarchical clustering based on SNP distance matrix
-snp_hclust <- hclust(as.dist(snp_dist))
-# Convert hierarchical clustering into a phylogenetic tree using the complete linkage method
-phylo_tree <- as.phylo(snp_hclust)
+# Get a phylogenetic tree using the complete linkage method
+phylo_tree <- get_phylo_tree(dna_var, snp_dist, "pars")
 ```
 
-The `get_tn_clusters_snp_thresh()` function takes the SNP distance matrix and a threshold value as input and returns a list of clusters. We use a threshold of 10 SNPs for this example:
+The `get_tn_clusters_snp_thresh_tree()` function takes the SNP distance matrix and a threshold value as input and returns a list of clusters. We use a threshold of 10 SNPs for this example:
 
 ```{r snp_clusters}
-clusters_snp <- get_tn_clusters_snp_thresh(snp_hclust, phylo_tree, 10)
+clusters_snp <- get_tn_clusters_snp_thresh(snp_dist, 10)
 ```
 
 We can then visualize the clusters using the `plot_clusters_phylo()` function:
@@ -87,7 +85,7 @@ We can then visualize the clusters using the `plot_clusters_phylo()` function:
 plot_clusters_phylo(clusters_snp, phylo_tree)
 ```
 
-The plot shows the phylogenetic tree with the clusters highlighted.
+But this isn't the only SNP threshold approach. This method tries to preserve clusters to be within the phylogenetic tree structure, but we can also cluster the isolates just based on the SNP distance matrix with no regard for the 
 
 ## Clustering isolates using a threshold-free approach
 
