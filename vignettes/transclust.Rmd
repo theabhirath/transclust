@@ -82,7 +82,7 @@ clusters_snp <- get_tn_clusters_snp_thresh(snp_dist, 10)
 We can then visualize the clusters using the `plot_clusters_phylo()` function:
 
 ```{r plot_snp_clusters, fig.width=6, fig.height=10}
-plot_clusters_phylo(clusters_snp, phylo_tree)
+plot_clusters_phylo(phylo_tree, clusters_snp)
 ```
 
 But this isn't the only SNP threshold approach. This method tries to preserve clusters to be within the phylogenetic tree structure, but we can also cluster the isolates just based on the SNP distance matrix with no regard for the 
@@ -108,7 +108,7 @@ clusters_sv <- get_tn_clusters_sv_index(
 The `clusters_sv` object contains the clusters identified using the threshold-free approach. The plot shows the phylogenetic tree with the clusters highlighted.
 
 ```{r plot_sv_clusters, fig.width=6, fig.height=10}
-plot_clusters_phylo(clusters_sv, phylo_tree_pars)
+plot_clusters_phylo(phylo_tree_pars, clusters_sv)
 ```
 
 ## Comparing clusters

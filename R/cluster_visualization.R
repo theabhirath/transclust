@@ -3,8 +3,8 @@
 #' @author [Aryan Singh](mailto:aryansin@umich.edu) -
 #'         ORCID ID: [0000-0002-1850-5598](https://orcid.org/0000-0002-1850-5598)
 #'
-#' @param clusters A vector named by sequence IDs with values indicating the cluster (subtree) each sequence belongs to.
 #' @param tree A phylogenetic tree object of class `phylo`.
+#' @param clusters A vector named by sequence IDs with values indicating the cluster (subtree) each sequence belongs to.
 #'
 #' @return A `ggtree` object with clusters visualized on the tree.
 #'
@@ -14,7 +14,7 @@
 #' @importFrom ggplot2 aes scale_color_manual ggtitle theme element_text unit guides guide_legend
 #' @importFrom stats setNames
 #' @export
-plot_clusters_phylo <- function(clusters, tree) {
+plot_clusters_phylo <- function(tree, clusters) {
     # Convert phylo object to ggtree object
     tree <- ggtree(tree)
 
@@ -50,9 +50,9 @@ plot_clusters_phylo <- function(clusters, tree) {
 #' @param height The height of the heatmap plot.
 #'
 #' @return A ggplot plot object showing the overlap between clusters.
+#'
 #' @importFrom ggalign ggheatmap
 #' @importFrom ggplot2 theme element_text scale_fill_gradient
-#'
 #' @export
 compare_clusters <- function(clusters1, clusters2, width = 10, height = 10) {
     # Unique cluster labels excluding 1 ("default" cluster)
