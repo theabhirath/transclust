@@ -22,7 +22,8 @@ See \code{\link{get_snp_dist_matrix}} for a useful function to generate this.}
 
 \item{ip_seqs}{A vector of sequence IDs which correspond to intake patient sequences presumed to be imported.}
 
-\item{ip_pt_seqs}{A vector of sequence IDs which correspond to intake-positive patients.}
+\item{ip_pt_seqs}{A vector of all sequence IDs which correspond to intake-positive patients, imported or
+collected later. This will be a superset of \code{ip_seqs} by definition.}
 
 \item{seq2pt}{A named vector mapping sequence IDs to patient IDs.}
 
@@ -39,7 +40,7 @@ Clustering is performed to identify the maximal clusters containing a single int
 before all cluster converts. The clustering metric is the number of shared variants, and clusters can have multiple
 intake-positive patients if they share an identical number of variants with other cluster members or intake-positive
 patients occur after converts. This clustering also requires that clusters be defined by at least one shared variant
-that other isolates don't have. See \code{vignette("transclust")} for more details.
+that other isolates don't have.
 }
 \references{
 Hawken, S. E., Yelin, R. D., Lolans, K., Pirani, A., Weinstein, R. A., Lin, M. Y., Hayden, M. K., &

@@ -14,6 +14,7 @@ reference:
     desc: >
       A collection of algorithms for detecting transmission clusters in epidemiological data.
     contents:
+      - get_tn_clusters_snp_thresh_tree
       - get_tn_clusters_snp_thresh
       - get_tn_clusters_sv_index
   - subtitle: Rcpp helper functions
