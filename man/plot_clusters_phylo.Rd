@@ -4,12 +4,12 @@
 \alias{plot_clusters_phylo}
 \title{Maps clusters onto a phylogenetic tree and visualizes them}
 \usage{
-plot_clusters_phylo(clusters, tree)
+plot_clusters_phylo(tree, clusters)
 }
 \arguments{
-\item{clusters}{A vector named by sequence IDs with values indicating the cluster (subtree) each sequence belongs to.}
-
 \item{tree}{A phylogenetic tree object of class \code{phylo}.}
+
+\item{clusters}{A vector named by sequence IDs with values indicating the cluster (subtree) each sequence belongs to.}
 }
 \value{
 A \code{ggtree} object with clusters visualized on the tree.
