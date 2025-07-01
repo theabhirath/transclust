@@ -1,10 +1,10 @@
 pandoc: 3.1.11
-pkgdown: 2.1.2
+pkgdown: 2.1.3
 pkgdown_sha: ~
 articles:
   permtests: permtests.html
   transclust: transclust.html
-last_built: 2025-05-08T16:15Z
+last_built: 2025-07-01T21:30Z
 urls:
   reference: https://theabhirath.github.io/transclust/reference
   article: https://theabhirath.github.io/transclust/articles
