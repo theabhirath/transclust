@@ -49,3 +49,4 @@ reference:
     contents:
       - get_snp_dist_matrix
       - get_phylo_tree
+      - remove_singleton_clusters

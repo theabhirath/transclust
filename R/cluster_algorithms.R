@@ -166,7 +166,7 @@ get_tn_clusters_sv_index <- function(dna_aln, snp_dist, ip_seqs, ip_pt_seqs, seq
     #    has an earlier index (i.e. a lower index_count).
     #  - Assign the cluster based on the subtree with the highest score.
     #  - If no valid subtree is found, default to cluster 1.
-    #  - Return a vector of clusters for each isolate.
+    #  - Remap cluster values: non-1 values are mapped to 1:n, each 1 is treated as separate.
     #####################################################################################
     clusters <- vapply(isolate_names, function(x) {
         valid_indices <- which(sub_trees_valid > 0)
@@ -191,6 +191,6 @@ get_tn_clusters_sv_index <- function(dna_aln, snp_dist, ip_seqs, ip_pt_seqs, seq
     # Log completion of phase to standard output
     message("Phase 4 complete: Cluster assignment.")
 
-    # Return the clusters
-    clusters
+    # Remap cluster values to ensure that clusters are numbered sequentially starting from 1
+    remap_cluster_values(clusters)
 }
