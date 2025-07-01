@@ -66,20 +66,20 @@ The `snp_dist` variable contains the SNP distance matrix, which is a square matr
 
 ## Clustering isolates using a hard SNP threshold
 
-Now that we've loaded our data, we can start clustering the isolates. First, we want to use a hard SNP threshold to cluster the isolates. We convert the SNP distance matrix into a phylogenetic tree. The `get_phylo_tree()` function from the `transclust` package can be used to construct a phylogenetic tree. We use the maximum parsimony method for this example:
+Now that we've loaded our data, we can start clustering the isolates. First, we want to use a hard SNP threshold to cluster the isolates.
 
-```{r phylo_tree}
-# Get a phylogenetic tree using the complete linkage method
-phylo_tree <- get_phylo_tree(dna_var, snp_dist, "pars")
-```
-
-The `get_tn_clusters_snp_thresh_tree()` function takes the SNP distance matrix and a threshold value as input and returns a list of clusters. We use a threshold of 10 SNPs for this example:
+The `get_tn_clusters_snp_thresh()` function takes the SNP distance matrix and a threshold value as input and returns a list of clusters. We use a threshold of 10 SNPs for this example:
 
 ```{r snp_clusters}
 clusters_snp <- get_tn_clusters_snp_thresh(snp_dist, 10)
 ```
 
-We can then visualize the clusters using the `plot_clusters_phylo()` function:
+We can then visualize the clusters on a phylogenetic tree using the `plot_clusters_phylo()` function. But for this, we first need to generate a phylogenetic tree. We can do this using the `get_phylo_tree()` function. We use the maximum parsimony method for this example:
+
+```{r phylo_tree_pars, results = "hide"}
+# Generate a parsimony tree
+phylo_tree <- get_phylo_tree(dna_var, snp_dist, "pars")
+```
 
 ```{r plot_snp_clusters, fig.width=6, fig.height=10}
 plot_clusters_phylo(phylo_tree, clusters_snp)
@@ -89,26 +89,19 @@ But this isn't the only SNP threshold approach. This method tries to preserve cl
 
 ## Clustering isolates using a threshold-free approach
 
-In addition to the hard SNP threshold approach, we can also use a threshold-free approach to cluster the isolates. The package implements the method described in @Hawken2022 in the `get_tn_clusters_sv_index()` function. The method uses a threshold-free approach to identify clusters based on the structure of the phylogenetic tree. For this function, we first need to generate a parsimony tree using the `get_phylo_tree()` function:
-
-```{r phylo_tree_pars, results = "hide"}
-# Generate a parsimony tree
-phylo_tree_pars <- get_phylo_tree(dna_var, snp_dist, "pars")
-```
-
-We can now use the `get_tn_clusters_sv_index()` function to identify clusters based on the parsimony tree. This function takes in a few more inputs than the SNP threshold function:
+In addition to the hard SNP threshold approach, we can also use a threshold-free approach to cluster the isolates. The package implements the method described in @Hawken2022 in the `get_tn_clusters_sv_index()` function. The method uses a threshold-free approach to identify clusters based on the structure of the phylogenetic tree. We use the same parsimony tree as before for this example. This function takes in a few more inputs than the SNP threshold method:
 
 ```{r sv_clusters, message = FALSE}
 clusters_sv <- get_tn_clusters_sv_index(
     dna_var, snp_dist, ip_seqs_3days, ip_seqs,
-    dna_pt_labels, dates, phylo_tree_pars
+    dna_pt_labels, dates, phylo_tree
 )
 ```
 
 The `clusters_sv` object contains the clusters identified using the threshold-free approach. The plot shows the phylogenetic tree with the clusters highlighted.
 
 ```{r plot_sv_clusters, fig.width=6, fig.height=10}
-plot_clusters_phylo(phylo_tree_pars, clusters_sv)
+plot_clusters_phylo(phylo_tree, clusters_sv)
 ```
 
 ## Comparing clusters
