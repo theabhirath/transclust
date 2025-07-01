@@ -18,11 +18,7 @@ snp_dist <- get_snp_dist_matrix(dna_var)
 
 # test get_tn_clusters_snp_thresh
 test_that("get_tn_clusters_snp_thresh works", {
-    # Create a hclust object from the distance matrix
-    snp_hclust <- hclust(as.dist(snp_dist))
-    # Create a phylogenetic tree from the hclust object
-    tree <- as.phylo(snp_hclust)
-    clusters <- get_tn_clusters_snp_thresh(snp_hclust, tree, 10)
+    clusters <- get_tn_clusters_snp_thresh(snp_dist, 10)
     # clusters should be a vector
     expect_true(is.vector(clusters))
     # clusters should be numeric
