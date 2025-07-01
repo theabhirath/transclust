@@ -47,3 +47,56 @@ get_phylo_tree <- function(dna_aln, snp_dist, method = c("nj", "pars")) {
     # If method is "pars", return the maximum parsimony tree
     if (method == "pars") optim.parsimony(nj_tree, as.phyDat(dna_aln), all = TRUE) else nj_tree
 }
+
+#' Remove singleton clusters from a vector of cluster assignments.
+#'
+#' @description
+#' This function removes clusters with only one sequence from a vector of cluster assignments.
+#'
+#' @param clusters A numeric vector of cluster assignments.
+#' @export
+remove_singleton_clusters <- function(clusters) {
+    # every cluster with only one sequence is a singleton
+    singleton_clusters <- which(table(clusters) == 1)
+    # remove the singleton clusters
+    clusters[!(clusters %in% singleton_clusters)]
+}
+
+#' Remap cluster values: each unique value (including each special value) gets its own number
+#' in order of appearance.
+#'
+#' @description
+#' This function remaps cluster values so that each unique value (including each special value)
+#' gets its own number in order of appearance.
+#'
+#' @param x A numeric vector of cluster assignments.
+#' @param special_val A value to treat as special i.e. it will get its own number in order of appearance.
+#'                    This is useful for values that are not part of the cluster assignment, such as
+#'                    singleton clusters.
+#'
+#' @returns A numeric vector of remapped cluster assignments.
+#'
+#' @keywords internal
+remap_cluster_values <- function(x, special_val = 1) {
+    lookup <- new.env(hash = TRUE, parent = emptyenv())
+    next_id <- 1
+    out <- integer(length(x))
+    for (i in seq_along(x)) {
+        val <- x[i]
+        if (isTRUE(val == special_val)) { # isTRUE used for NA handling
+            out[i] <- next_id       # every 'special' gets its own ID
+            next_id <- next_id + 1
+        } else {
+            key <- paste0(val) # NA becomes the string "NA"
+            if (exists(key, envir = lookup, inherits = FALSE)) {
+                out[i] <- lookup[[key]]
+            } else {
+                lookup[[key]] <- next_id
+                out[i] <- next_id
+                next_id <- next_id + 1
+            }
+        }
+    }
+    names(out) <- names(x) # keep original names (if any)
+    out
+}
