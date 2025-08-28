@@ -29,23 +29,29 @@ get_snp_dist_matrix <- function(dna_aln, core = TRUE) {
 #'
 #' @returns An object of class `phylo` representing the phylogenetic tree.
 #'
-#' @importFrom phangorn NJ optim.parsimony as.phyDat
-#' @importFrom phytools reroot
+#' @importFrom phangorn NJ optim.parsimony as.phyDat midpoint
+#' @importFrom ape root
 #' @export
 get_phylo_tree <- function(dna_aln, snp_dist, method = c("nj", "pars")) {
-    # Check if the method is valid
+    # check if the method is valid
     method <- match.arg(method)
 
-    # If method is "nj" or "pars", we need to calculate the out-group: the isolate with the maximum average SNP distance
+    # the out-group is the isolate with the maximum average SNP distance
     out_group <- which.max(rowMeans(snp_dist))
 
-    # For both "nj" and "pars", we need to construct the neighbor-joining tree first
-    # and then reroot it to the out-group
+    # for both "nj" and "pars", construct the neighbor-joining tree first and then reroot it to the out-group
     nj_tree <- NJ(snp_dist)
-    nj_tree <- reroot(nj_tree, which(nj_tree$tip.label == row.names(snp_dist)[out_group]))
+    nj_tree <- root(nj_tree, which(nj_tree$tip.label == row.names(snp_dist)[out_group]), resolve.root = TRUE)
 
-    # If method is "pars", return the maximum parsimony tree
-    if (method == "pars") optim.parsimony(nj_tree, as.phyDat(dna_aln), all = TRUE) else nj_tree
+    # if method is "pars", construct the maximum parsimony tree
+    tree <- if (method == "pars") {
+        optim.parsimony(midpoint(nj_tree, node.labels = "support"), as.phyDat(dna_aln), all = TRUE)
+    } else {
+        nj_tree
+    }
+
+    # Return the tree
+    tree
 }
 
 #' Remove singleton clusters from a vector of cluster assignments.
@@ -84,7 +90,7 @@ remap_cluster_values <- function(x, special_val = 1) {
     for (i in seq_along(x)) {
         val <- x[i]
         if (isTRUE(val == special_val)) { # isTRUE used for NA handling
-            out[i] <- next_id       # every 'special' gets its own ID
+            out[i] <- next_id # every 'special' gets its own ID
             next_id <- next_id + 1
         } else {
             key <- paste0(val) # NA becomes the string "NA"
