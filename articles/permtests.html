@@ -138,6 +138,7 @@ phylogenetic tree using the SNP distance matrix and use that along with
 the epidemiological data to get the transmission clusters:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">phylo_tree_pars</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_phylo_tree.html">get_phylo_tree</a></span><span class="op">(</span><span class="va">dna_var</span>, <span class="va">snp_dist</span>, <span class="st">"pars"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 1</span></span>
 <span><span class="co">#&gt; Final p-score 2122 after  8 nni operations</span></span>
 <span><span class="va">clusters</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_tn_clusters_sv_index.html">get_tn_clusters_sv_index</a></span><span class="op">(</span></span>
 <span>    <span class="va">dna_var</span>, <span class="va">snp_dist</span>, <span class="va">ip_seqs_3days</span>, <span class="va">ip_seqs</span>,</span>
