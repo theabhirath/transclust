@@ -62,6 +62,7 @@ plot_clusters_phylo <- function(tree, clusters) {
 #'
 #' @importFrom ggalign ggheatmap
 #' @importFrom ggplot2 theme element_text scale_fill_gradient
+#'
 #' @export
 compare_clusters <- function(clusters1, clusters2, width = 10, height = 10) {
     # Unique cluster labels
@@ -70,10 +71,8 @@ compare_clusters <- function(clusters1, clusters2, width = 10, height = 10) {
 
     # Create a matrix to store the overlap between clusters
     cluster_overlap <- matrix(
-        nrow = length(clusters1_unique),
-        ncol = length(clusters2_unique),
-        dimnames = list(clusters1_unique, clusters2_unique)
-        nrow = length(clusters1_unique_labels), ncol = length(clusters2_unique_labels),
+        nrow = length(clusters1_unique_labels),
+        ncol = length(clusters2_unique_labels),
         dimnames = list(clusters1_unique_labels, clusters2_unique_labels)
     )
 
@@ -100,7 +99,11 @@ compare_clusters <- function(clusters1, clusters2, width = 10, height = 10) {
 
     # Return the ggheatmap plot
     ggheatmap(cluster_overlap, width = width, height = height) +
-        ggtitle(paste0("Comparison of clusters. Isolate overlap: ", round(overlap_percentage * 100, 2), "%"))
+        ggtitle(paste0(
+            "Comparison of clusters. Isolate overlap: ",
+            round(overlap_percentage * 100, 2),
+            "%"
+        ))
 }
 
 #' Produces summary plots regarding genetic distances within and between transmission clusters.
