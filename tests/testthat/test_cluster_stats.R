@@ -2,7 +2,10 @@ library(ape)
 load(system.file("extdata", "example.Rdata", package = "transclust"))
 
 # Read in sequence file
-dna_aln <- read.dna(system.file("extdata", "example.fasta", package = "transclust"), format = "fasta")
+dna_aln <- read.dna(
+    system.file("extdata", "example.fasta", package = "transclust"),
+    format = "fasta"
+)
 
 # Only keep those sequences that are in the trace matrix
 dna_aln <- dna_aln[dna_pt_labels[labels(dna_aln)] %in% colnames(trace_mat), ]
@@ -34,8 +37,17 @@ test_that("intra_cluster_genetic_var_analysis works", {
 test_that("cluster_property_perm_test works", {
     nperm <- 10 # 10 permutations is enough for unit tests
     perm_props <- cluster_property_perm_test(
-        clusters, trace_mat, dna_pt_labels, ip_seqs, ip_seqs_3days, dates, snp_dist,
-        nperm = nperm, floor_trace = floor_mat, room_trace = room_mat, num_cores = 1
+        clusters,
+        trace_mat,
+        dna_pt_labels,
+        ip_seqs,
+        ip_seqs_3days,
+        dates,
+        snp_dist,
+        nperm = nperm,
+        floor_trace = floor_mat,
+        room_trace = room_mat,
+        num_cores = 1
     ) # num_cores = 1 for unit tests, because this has to run on CI (and CRAN)
     # perm_props should be an array
     expect_true(is.array(perm_props))
