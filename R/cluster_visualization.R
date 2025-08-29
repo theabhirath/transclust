@@ -22,7 +22,10 @@ plot_clusters_phylo <- function(tree, clusters) {
     cluster_df <- data.frame(isolate = names(clusters), clust_id = factor(clusters))
 
     # Use iwanthue to generate colors for clusters
-    cluster_colors <- setNames(iwanthue(length(unique(cluster_df$clust_id))), levels(cluster_df$clust_id))
+    cluster_colors <- setNames(
+        iwanthue(length(unique(cluster_df$clust_id))),
+        levels(cluster_df$clust_id)
+    )
 
     # Add cluster information to the tree
     tree$data <- tree$data |> left_join(cluster_df, by = c("label" = "isolate"))
@@ -31,7 +34,12 @@ plot_clusters_phylo <- function(tree, clusters) {
     tree +
         geom_tippoint(aes(color = .data$clust_id), size = 1.5) +
         scale_color_manual(values = cluster_colors) +
-        guides(color = guide_legend(title = "Cluster ID", override.aes = list(size = 5, shape = "square"))) +
+        guides(
+            color = guide_legend(
+                title = "Cluster ID",
+                override.aes = list(size = 5, shape = "square")
+            )
+        ) +
         theme(
             plot.title.position = "plot",
             plot.title = element_text(hjust = 0.5),
@@ -61,7 +69,8 @@ compare_clusters <- function(clusters1, clusters2, width = 10, height = 10) {
 
     # Create a matrix to store the overlap between clusters
     cluster_overlap <- matrix(
-        nrow = length(clusters1_unique), ncol = length(clusters2_unique),
+        nrow = length(clusters1_unique),
+        ncol = length(clusters2_unique),
         dimnames = list(clusters1_unique, clusters2_unique)
     )
 
@@ -74,10 +83,11 @@ compare_clusters <- function(clusters1, clusters2, width = 10, height = 10) {
             cluster_overlap[cluster1, cluster2] <- length(intersect(
                 names(clusters1)[clusters1 == cluster1],
                 names(clusters2)[clusters2 == cluster2]
-            )) / length(union(
-                names(clusters1)[clusters1 == cluster1],
-                names(clusters2)[clusters2 == cluster2]
-            ))
+            )) /
+                length(union(
+                    names(clusters1)[clusters1 == cluster1],
+                    names(clusters2)[clusters2 == cluster2]
+                ))
         }
     }
 
@@ -103,32 +113,54 @@ cluster_genetic_context <- function(clusters, seq2pt, ip_seqs, snp_dist, prefix)
 
     # Compute maximum genetic distance within cluster, minimum genetic distance to another cluster,
     # and minimum genetic distance to an isolate not in the same cluster
-    cluster_distances <- vapply(unique_clusters, function(c) {
-        cluster_seqs <- names(clusters[clusters == c])
-        non_cluster_seqs <- names(clusters[clusters != c])
+    cluster_distances <- vapply(
+        unique_clusters,
+        function(c) {
+            cluster_seqs <- names(clusters[clusters == c])
+            non_cluster_seqs <- names(clusters[clusters != c])
 
-        max_intra <- max(snp_dist[cluster_seqs, cluster_seqs], na.rm = TRUE)
-        min_inter_cluster <- min(snp_dist[cluster_seqs, names(clusters_subset[clusters_subset != c])], na.rm = TRUE)
-        min_inter_isolate <- min(snp_dist[cluster_seqs, non_cluster_seqs], na.rm = TRUE)
+            max_intra <- max(snp_dist[cluster_seqs, cluster_seqs], na.rm = TRUE)
+            min_inter_cluster <- min(
+                snp_dist[cluster_seqs, names(clusters_subset[clusters_subset != c])],
+                na.rm = TRUE
+            )
+            min_inter_isolate <- min(snp_dist[cluster_seqs, non_cluster_seqs], na.rm = TRUE)
 
-        c(max_intra, min_inter_cluster, min_inter_isolate)
-    }, numeric(3))
+            c(max_intra, min_inter_cluster, min_inter_isolate)
+        },
+        numeric(3)
+    )
 
     # Define function for generating plots
     generate_plot <- function(x, y, xlab, ylab, file_name) {
         # Create directory if it doesn't exist
         dir.create("figures", showWarnings = FALSE)
-        file_path <- paste0("figures/", format(Sys.time(), "%Y-%m-%d"), "_", prefix, "_", file_name, ".pdf")
+        file_path <- paste0(
+            "figures/",
+            format(Sys.time(), "%Y-%m-%d"),
+            "_",
+            prefix,
+            "_",
+            file_name,
+            ".pdf"
+        )
         pdf(file_path)
-        plot(jitter(x), jitter(y),
-            xlab = xlab, ylab = ylab,
+        plot(
+            jitter(x),
+            jitter(y),
+            xlab = xlab,
+            ylab = ylab,
             xlim = c(0, max(x, na.rm = TRUE) + 1),
             ylim = c(0, max(y, na.rm = TRUE) + 1)
         )
         par(new = TRUE)
         upper_right <- c(0, min(max(x, na.rm = TRUE), max(y, na.rm = TRUE)))
-        plot(upper_right, upper_right,
-            xlab = "", ylab = "", type = "l",
+        plot(
+            upper_right,
+            upper_right,
+            xlab = "",
+            ylab = "",
+            type = "l",
             xlim = c(0, max(x, na.rm = TRUE) + 1),
             ylim = c(0, max(y, na.rm = TRUE) + 1)
         )
@@ -137,13 +169,15 @@ cluster_genetic_context <- function(clusters, seq2pt, ip_seqs, snp_dist, prefix)
 
     # Generate plots
     generate_plot(
-        cluster_distances[1, ], cluster_distances[2, ],
+        cluster_distances[1, ],
+        cluster_distances[2, ],
         "Max genetic distance within cluster",
         "Min genetic distance to another cluster",
         "intra_vs_inter_cluster_gen_dist"
     )
     generate_plot(
-        cluster_distances[1, ], cluster_distances[3, ],
+        cluster_distances[1, ],
+        cluster_distances[3, ],
         "Max genetic distance within cluster",
         "Min genetic distance to another isolate",
         "intra_vs_inter_isolate_gen_dist"
@@ -152,7 +186,11 @@ cluster_genetic_context <- function(clusters, seq2pt, ip_seqs, snp_dist, prefix)
     # Create and return result matrix
     intra_inter_cluster_dist_mat <- t(cluster_distances)
     rownames(intra_inter_cluster_dist_mat) <- unique_clusters
-    colnames(intra_inter_cluster_dist_mat) <- c("Max intra-clust", "Min inter-clust", "Min inter-isolate")
+    colnames(intra_inter_cluster_dist_mat) <- c(
+        "Max intra-clust",
+        "Min inter-clust",
+        "Min inter-isolate"
+    )
 
     intra_inter_cluster_dist_mat
 }

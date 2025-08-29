@@ -112,22 +112,34 @@ get_tn_clusters_sv_index <- function(dna_aln, snp_dist, ip_seqs, ip_pt_seqs, seq
         valid_ip <- ip_in_sub[dates[ip_in_sub] <= min_convert_date]
         # Select one representative sequence per unique patient among valid intake-positives
         ip_patients <- unique(seq2pt[valid_ip])
-        ip_rep <- vapply(ip_patients, function(pt) {
-            seqs <- intersect(patient_seq_map[[pt]], tip_labels)
-            other <- setdiff(tip_labels, seqs)
-            # If there are no other sequences, return the first one
-            # Otherwise, find the sequence with the minimum shared variant distance to all other sequences
-            if (length(other) > 0) {
-                min_vals <- vapply(seqs, function(seq) min(dna_shared_mat[other, seq]), numeric(1))
-                seqs[which.min(min_vals)]
-            } else {
-                seqs[1]
-            }
-        }, character(1))
+        ip_rep <- vapply(
+            ip_patients,
+            function(pt) {
+                seqs <- intersect(patient_seq_map[[toString(pt)]], tip_labels)
+                other <- setdiff(tip_labels, seqs)
+                # If there are no other sequences, return the first one
+                # Otherwise, find the sequence with the minimum shared variant distance to all other sequences
+                if (length(other) > 0) {
+                    min_vals <- vapply(
+                        seqs,
+                        function(seq) min(dna_shared_mat[other, seq]),
+                        numeric(1)
+                    )
+                    seqs[which.min(min_vals)]
+                } else {
+                    seqs[1]
+                }
+            },
+            character(1)
+        )
         # Get the distance from the representative to all other isolates in the subtree
-        shared_counts_rep <- vapply(ip_rep, function(ip) {
-            min(dna_shared_mat[setdiff(tip_labels, ip), ip])
-        }, numeric(1))
+        shared_counts_rep <- vapply(
+            ip_rep,
+            function(ip) {
+                min(dna_shared_mat[setdiff(tip_labels, ip), ip])
+            },
+            numeric(1)
+        )
         # Compute cluster score if there are defining variants and index isolates are not overly
         # distant from the representative sequence (i.e. their shared variant counts are nearly identical)
         score <- if (sub_trees_dv[st_i] > 0 && length(unique(shared_counts_rep)) <= 1) {
@@ -168,25 +180,45 @@ get_tn_clusters_sv_index <- function(dna_aln, snp_dist, ip_seqs, ip_pt_seqs, seq
     #  - If no valid subtree is found, default to cluster 1.
     #  - Remap cluster values: non-1 values are mapped to 1:n, each 1 is treated as separate.
     #####################################################################################
-    clusters <- vapply(isolate_names, function(x) {
-        valid_indices <- which(sub_trees_valid > 0)
-        st_scores <- vapply(valid_indices, function(st_i) {
-            st <- sub_trees[[st_i]]
-            # Skip and early return if the isolate is not in the subtree
-            if (!(x %in% st$tip.label)) return(0)
-            # Check for nested clusters
-            nested <- vapply(setdiff(valid_indices, st_i), function(sub_i) {
-                as.integer(all(sub_trees[[sub_i]]$tip.label %in% st$tip.label) &&
-                               sub_trees_index_first[sub_i] < sub_trees_index_first[st_i] &&
-                               sub_trees_index_first[sub_i] > 0)
-            }, integer(1))
-            # If not nested, return score
-            if (sum(nested) == 0) sub_trees_valid[[st_i]] else 0
-        }, numeric(1))
-        # If no valid subtrees are found, default to cluster 1
-        # Otherwise, assign the cluster based on the subtree with the highest score
-        if (length(st_scores) == 0 || max(st_scores) <= 0) 1 else valid_indices[which.max(st_scores)]
-    }, numeric(1))
+    clusters <- vapply(
+        isolate_names,
+        function(x) {
+            valid_indices <- which(sub_trees_valid > 0)
+            st_scores <- vapply(
+                valid_indices,
+                function(st_i) {
+                    st <- sub_trees[[st_i]]
+                    # Skip and early return if the isolate is not in the subtree
+                    if (!(x %in% st$tip.label)) {
+                        return(0)
+                    }
+                    # Check for nested clusters
+                    nested <- vapply(
+                        setdiff(valid_indices, st_i),
+                        function(sub_i) {
+                            as.integer(
+                                all(sub_trees[[sub_i]]$tip.label %in% st$tip.label) &&
+                                    sub_trees_index_first[sub_i] < sub_trees_index_first[st_i] &&
+                                    sub_trees_index_first[sub_i] > 0
+                            )
+                        },
+                        integer(1)
+                    )
+                    # If not nested, return score
+                    if (sum(nested) == 0) sub_trees_valid[[st_i]] else 0
+                },
+                numeric(1)
+            )
+            # If no valid subtrees are found, default to cluster 1
+            # Otherwise, assign the cluster based on the subtree with the highest score
+            if (length(st_scores) == 0 || max(st_scores) <= 0) {
+                1
+            } else {
+                valid_indices[which.max(st_scores)]
+            }
+        },
+        numeric(1)
+    )
 
     # Log completion of phase to standard output
     message("Phase 4 complete: Cluster assignment.")

@@ -39,9 +39,14 @@ get_phylo_tree <- function(dna_aln, snp_dist, method = c("nj", "pars")) {
     # the out-group is the isolate with the maximum average SNP distance
     out_group <- which.max(rowMeans(snp_dist))
 
-    # for both "nj" and "pars", construct the neighbor-joining tree first and then reroot it to the out-group
+    # construct the neighbor-joining tree
     nj_tree <- NJ(snp_dist)
-    nj_tree <- root(nj_tree, which(nj_tree$tip.label == row.names(snp_dist)[out_group]), resolve.root = TRUE)
+    # reroot the tree to the out-group
+    nj_tree <- root(
+        nj_tree,
+        which(nj_tree$tip.label == row.names(snp_dist)[out_group]),
+        resolve.root = TRUE
+    )
 
     # if method is "pars", construct the maximum parsimony tree
     tree <- if (method == "pars") {
@@ -89,7 +94,8 @@ remap_cluster_values <- function(x, special_val = 1) {
     out <- integer(length(x))
     for (i in seq_along(x)) {
         val <- x[i]
-        if (isTRUE(val == special_val)) { # isTRUE used for NA handling
+        # isTRUE used for NA handling
+        if (isTRUE(val == special_val)) {
             out[i] <- next_id # every 'special' gets its own ID
             next_id <- next_id + 1
         } else {

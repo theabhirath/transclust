@@ -2,7 +2,10 @@ library(ape)
 load(system.file("extdata", "example.Rdata", package = "transclust"))
 
 # Read in sequence file
-dna_aln <- read.dna(system.file("extdata", "example.fasta", package = "transclust"), format = "fasta")
+dna_aln <- read.dna(
+    system.file("extdata", "example.fasta", package = "transclust"),
+    format = "fasta"
+)
 
 # Only keep those sequences that are in the trace matrix
 dna_aln <- dna_aln[dna_pt_labels[labels(dna_aln)] %in% colnames(trace_mat), ]
