@@ -318,12 +318,15 @@ analyze_convert_patients <- function(seqs, seq2pt, ip_pt_seqs, dates, pt_trace) 
     # Number of converts: patients who are not in ip_pt_seqs
     num_converts <- length(unique(seq2pt[seqs[!(seqs %in% ip_pt_seqs)]]))
 
+    # Initialize convert_data with default values
     convert_data <- list(
         num_converts = num_converts,
         convert_pos = numeric(0),
         conversion_day = character(0),
         initial_convert_pts = character(0),
-        convert_pts = character(0)
+        convert_pts = character(0),
+        num_initial_converts = 0,
+        num_later_converts = 0
     )
 
     # If we have at least one convert in the cluster:
@@ -361,15 +364,13 @@ analyze_convert_patients <- function(seqs, seq2pt, ip_pt_seqs, dates, pt_trace) 
         # Mark those that fail the 7-day threshold as Inf
         convert_pos[day_diff > 7] <- Inf
 
-        convert_data <- list(
-            num_converts = num_converts,
-            convert_pos = convert_pos,
-            conversion_day = conversion_day,
-            initial_convert_pts = initial_convert_pts,
-            convert_pts = convert_pts,
-            num_initial_converts = sum(initial_mask),
-            num_later_converts = sum(!initial_mask)
-        )
+        # Update convert_data with calculated values
+        convert_data$convert_pos <- convert_pos
+        convert_data$conversion_day <- conversion_day
+        convert_data$initial_convert_pts <- initial_convert_pts
+        convert_data$convert_pts <- convert_pts
+        convert_data$num_initial_converts <- sum(initial_mask)
+        convert_data$num_later_converts <- sum(!initial_mask)
     }
 
     convert_data
@@ -608,6 +609,64 @@ analyze_location_overlaps <- function(
     overlap_stats
 }
 
+#' Compute various cluster-level properties
+#'
+#' @description
+#' Calculates various epidemiological and genetic characteristics for a given
+#' set of sequence IDs in a single cluster. This includes counts of patients,
+#' convert vs. index statuses, genetic distances, cluster duration, and
+#' timing-based metrics such as time to first/last acquisition.
+#'
+#' @param cluster_seqs A character vector of sequence IDs belonging to the cluster.
+#' @param pt_trace A data frame or matrix of patient-level trace data (rows are days,
+#'                 columns are patient IDs).
+#' @param seq2pt A named character vector mapping sequence IDs to patient IDs
+#'               (names must be sequence IDs, values must be patient IDs).
+#' @param ip_pt_seqs A character vector of sequence IDs corresponding to patients
+#'                   who tested positive on admission (\"intake positive\").
+#' @param ip_seqs A character vector of sequence IDs presumed to be imported from
+#'                outside (a subset of \code{ip_pt_seqs} or similar).
+#' @param snp_dist A matrix of SNP distances between isolates (row and column
+#'                 names should match sequence IDs).
+#' @param dates A named numeric vector of isolate dates by sequence ID.
+#' @param floor_trace (Optional) A data frame or matrix for floor-level tracing.
+#' @param room_trace (Optional) A data frame or matrix for room-level tracing.
+#'
+#' @return A named numeric vector containing various cluster-level properties. The list
+#' of the properties computed are given in the details section.
+#'
+#' @details
+#' This function computes the following properties for the given cluster:
+#'   \itemize{
+#'     \item Number_of_patients
+#'     \item Number_of_start_indexes
+#'     \item Number_of_non-start_indexes
+#'     \item Number_of_study_start_indexes
+#'     \item Number_of_converts
+#'     \item Number_of_initial_converts
+#'     \item Number_of_later_converts
+#'     \item Cluster_duration
+#'     \item Mean_genetic_distance
+#'     \item Median_genetic_distance
+#'     \item Max_genetic_distance
+#'     \item Number_of_converts_after_index
+#'     \item Number_of_initial_converts_after_index
+#'     \item Number_of_converts_after_index_seq
+#'     \item Number_of_initial_converts_after_index_seq
+#'     \item Number_of_converts_with_source
+#'     \item Number_of_initial_converts_with_source
+#'     \item Number_of_converts_with_floor_source
+#'     \item Number_of_initial_converts_with_floor_source
+#'     \item Number_of_converts_with_room_source
+#'     \item Number_of_initial_converts_with_room_source
+#'     \item Time_to_first_acquisition
+#'     \item Time_to_last_acquisition
+#'     \item Median_time_to_acquisition
+#'     \item Time_from_index_to_first_convert
+#'     \item Time_from_index_to_last_convert
+#'   }
+#' These can be used for further analysis or visualization, including for example in
+#' the permutation tests to assess the significance of the observed cluster properties.
 cluster_properties <- function(
     seqs,
     pt_trace,
@@ -742,20 +801,17 @@ cluster_property_perm_test <- function(
     room_trace = NULL,
     num_cores = detectCores() - 1
 ) {
-    # Process clusters to set single-patient clusters to 1
+    # Remove singleton clusters
+    clusters <- remove_singleton_clusters(clusters)
+    # Remove single-patient clusters
     unique_clusters <- sort(unique(clusters))
     cluster_size <- vapply(
         unique_clusters,
-        function(x) {
-            length(unique(seq2pt[names(clusters)[clusters == x]]))
-        },
+        function(x) length(unique(seq2pt[names(clusters)[clusters == x]])),
         integer(1)
     )
-    single_clusters <- unique_clusters[cluster_size == 1]
-    clusters[clusters %in% single_clusters] <- 1
-
-    # Exclude patients in default cluster 1
-    clusters <- clusters[clusters != 1]
+    single_pt_clusters <- unique_clusters[cluster_size == 1]
+    clusters <- clusters[!(clusters %in% single_pt_clusters)]
     cluster_names <- names(clusters)
 
     # Compute properties of the actual (observed) clusters
