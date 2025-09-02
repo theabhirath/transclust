@@ -213,6 +213,7 @@ cluster_genetic_context <- function(clusters, seq2pt, ip_seqs, snp_dist, prefix)
 #' @importFrom ggtreeExtra geom_fruit
 #' @importFrom paletteer paletteer_d
 #' @importFrom ggplot2 geom_tile scale_fill_manual scale_fill_gradientn ggtitle
+#' @importFrom ggtree geom_tiplab
 plot_trace <- function(
     tree,
     clusters,
@@ -344,8 +345,6 @@ plot_trace <- function(
     idx_keep_labels <- seq(1, length(col_lab), 14)
     col_lab[setdiff(seq_along(col_lab), idx_keep_labels)] <- ""
 
-    labels <- paste0(keep_rows, "(", seq2pt[keep_rows], ")") # row labels
-
     # Set up breaks and colors
     # Get unique values from trace_sub and sort them
     custom_breaks <- sort(unique(as.numeric(as.matrix(trace_sub))))
@@ -356,26 +355,36 @@ plot_trace <- function(
     # Generate colors. All colors must be distinct.
     # If n_colors > 9, recycle colors.
     base_colors <- paletteer_d("ggthemes::Classic_Cyclic")
-    if (n_colors > 9) {
+    if (n_colors > 13) {
         base_colors <- rep(base_colors, length.out = n_colors)
-        warning("More than 9 colors needed for trace. Recycled colors.")
+        warning("More than 13 colors needed for trace. Recycled colors.")
     }
+    # three high-contrast colors which clash with the color scheme. Cannot be white as that is the base color.
+    high_contrast_colors <- c("#000000", "#999999", "#CCCCCC")
 
     # Create final color vector with white for 0 value
-    custom_colors <- c("white", base_colors)
+    custom_colors <- c(
+        "white",
+        base_colors[1],
+        high_contrast_colors,
+        base_colors[2:length(base_colors)]
+    )
 
     tree_sub <- keep.tip(tree, keep_rows)
+    # tree_sub$tip.label <- paste0(tree_sub$tip.label, "(", seq2pt[tree_sub$tip.label], ")")
     trace_df <- as.data.frame(trace_sub)
     trace_df[] <- lapply(trace_df, function(x) {
         factor(as.numeric(as.character(x)), levels = custom_breaks)
     })
 
-    tree_plot <- ggtree(tree_sub, branch.length = "none")
+    tree_plot <- ggtree(tree_sub, branch.length = "none") +
+        # add labels for each tip
+        geom_tiplab(size = 0.75, align = TRUE, offset = 3, linetype = NULL)
 
     gheatmap(
         tree_plot,
         trace_df,
-        offset = 4,
+        offset = 8,
         width = 4,
         font.size = 3,
         custom_column_labels = col_lab,
@@ -459,8 +468,22 @@ plot_trace <- function(
 #' @importFrom ggplot2 ggsave
 #' @export
 #' @keywords internal
-cluster_context <- function(clusters, snp_dist, ip_seqs, ip_pt_seqs, seq2pt,
-                            dates, tree, pt_trace, floor_trace = NULL, prefix = "plot") {
+cluster_context <- function(
+    clusters,
+    snp_dist,
+    ip_seqs,
+    ip_pt_seqs,
+    seq2pt,
+    dates,
+    tree,
+    pt_trace,
+    floor_trace = NULL,
+    by = c("isolate", "patient"),
+    prefix = "plot"
+) {
+    by <- match.arg(by)
+    # remove singleton clusters
+    clusters <- remove_singleton_clusters(clusters)
     # Iterate over each cluster
     for (cluster in setdiff(unique(clusters), 1)) {
         # Get patients corresponding to cluster members
