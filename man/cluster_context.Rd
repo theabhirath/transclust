@@ -14,7 +14,6 @@ cluster_context(
   tree,
   pt_trace,
   floor_trace = NULL,
-  by = c("isolate", "patient"),
   prefix = "plot"
 )
 }

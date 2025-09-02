@@ -217,16 +217,13 @@ cluster_genetic_context <- function(clusters, seq2pt, ip_seqs, snp_dist, prefix)
 plot_trace <- function(
     tree,
     clusters,
-    snp_dist,
     dates,
     ip_seqs,
     trace_data,
     seq2pt,
-    cluster_class = NULL,
-    by = c("isolate", "patient"),
-    prefix = "plot"
+    prefix,
+    cluster_class = NULL
 ) {
-    by <- match.arg(by)
     # Prepare a data frame for all isolates
     df <- data.frame(
         id = names(clusters),
@@ -279,20 +276,9 @@ plot_trace <- function(
         max(snp_dist[sub_ids, sub_ids])
     }
 
-    # Decide row ids based on granularity
-    if (by == "patient") {
-        row_ids <- isolate_order
-    } else {
-        # all isolates ordered by cluster then date
-        df_all <- df |>
-            mutate(cluster_factor = factor(cluster, levels = cluster_order)) |>
-            arrange(cluster_factor, date)
-        row_ids <- df_all$id
-    }
-
-    # Compute max distances for the chosen rows
-    max_dist <- sapply(row_ids, get_max_snp, use_entire_cluster = FALSE)
-    max_clust_dist <- sapply(row_ids, get_max_snp, use_entire_cluster = TRUE)
+    # For each earliest isolate, compute max distances
+    max_dist <- sapply(isolate_order, get_max_snp, use_entire_cluster = FALSE)
+    max_clust_dist <- sapply(isolate_order, get_max_snp, use_entire_cluster = TRUE)
 
     # Subset the trace_data matrix
     pt_in_trace <- df$pt %in% colnames(trace_data)
@@ -301,14 +287,10 @@ plot_trace <- function(
     rownames(trace_sub) <- seq_ids_in_trace
 
     # Mark the actual isolate day with 1.75
-    if (by == "patient") {
-        trace_sub[cbind(rep_isolate[seq_ids_in_trace], as.character(df$date[pt_in_trace]))] <- 1.75
-    } else {
-        trace_sub[cbind(seq_ids_in_trace, as.character(df$date[pt_in_trace]))] <- 1.75
-    }
+    trace_sub[cbind(rep_isolate[seq_ids_in_trace], as.character(df$date[pt_in_trace]))] <- 1.75
 
-    # Reorder rows by selected granularity and cluster/date order
-    keep_rows <- intersect(row_ids, rownames(trace_sub))
+    # Reorder rows by earliest isolates in cluster/date order
+    keep_rows <- intersect(isolate_order, rownames(trace_sub))
     trace_sub <- trace_sub[keep_rows, , drop = FALSE]
 
     # Identify convert isolates
@@ -371,7 +353,7 @@ plot_trace <- function(
     n_colors <- length(custom_breaks) - 1
 
     # Generate colors. All colors must be distinct.
-    # If n_colors > 13, recycle colors.
+    # If n_colors > 9, recycle colors.
     base_colors <- paletteer_d("ggthemes::Classic_Cyclic")
     if (n_colors > 13) {
         base_colors <- rep(base_colors, length.out = n_colors)
@@ -503,103 +485,37 @@ cluster_context <- function(
     # remove singleton clusters
     clusters <- remove_singleton_clusters(clusters)
     # Iterate over each cluster
-    for (cluster in clusters) {
+    for (cluster in setdiff(unique(clusters), 1)) {
         # Get patients corresponding to cluster members
         cluster_members <- names(clusters)[clusters == cluster]
         cluster_pts <- seq2pt[as.character(cluster_members)]
-        if (length(unique(cluster_pts)) > 1) {
-            # Plot trace
+        # Plot trace
+        ggsave(
+            paste0("figures/", prefix, "_pt_trace_", cluster, ".pdf"),
+            plot_trace(
+                tree,
+                clusters[clusters == cluster],
+                dates,
+                ip_seqs,
+                pt_trace,
+                seq2pt,
+                prefix = paste0(prefix, "_pt_trace_", cluster)
+            )
+        )
+        # Plot floor trace if given
+        if (!is.null(floor_trace) && length(unique(cluster_pts)) > 1) {
             ggsave(
-                paste0("figures/", prefix, "_pt_trace_", cluster, ".pdf"),
+                paste0("figures/", prefix, "_floor_trace_", cluster, ".pdf"),
                 plot_trace(
                     tree,
                     clusters[clusters == cluster],
-                    snp_dist,
                     dates,
                     ip_seqs,
-                    pt_trace,
+                    floor_trace,
                     seq2pt,
-                    by = by
+                    prefix = paste0(prefix, "_floor_trace_", cluster)
                 )
             )
-            # Plot floor trace if given
-            if (!is.null(floor_trace)) {
-                ggsave(
-                    paste0("figures/", prefix, "_floor_trace_", cluster, ".pdf"),
-                    plot_trace(
-                        tree,
-                        clusters[clusters == cluster],
-                        snp_dist,
-                        dates,
-                        ip_seqs,
-                        floor_trace,
-                        seq2pt,
-                        by = by
-                    )
-                )
-            }
         }
-    }
-}
-
-#' Plots the patient and floor trace heatmaps for all clusters belonging to a single sequence type.
-#'
-#' @param clusters A vector named by sequence IDs with values indicating the cluster (subtree) each sequence belongs to.
-#' @param snp_dist A matrix of SNP distances between isolates
-#' @param ip_seqs Vector of sequence IDs presumed to be imported
-#' @param ip_pt_seqs Vector of sequence IDs for intake positive patients
-#' @param seq2pt A named vector mapping sequence IDs to patient IDs
-#' @param dates A named vector of isolate dates by sequence ID
-#' @param tree A phylogenetic tree object of class `phylo`.
-#' @param pt_trace A data frame or matrix representing daily patient trace (rows) by patient ID (columns)
-#' @param floor_trace Optional data for floor-level tracing.
-#' @param prefix A string descriptor used for naming figure outputs.
-#'
-#' @importFrom ggplot2 ggsave
-#' @export
-st_context <- function(
-    clusters,
-    snp_dist,
-    ip_seqs,
-    ip_pt_seqs,
-    seq2pt,
-    dates,
-    tree,
-    pt_trace,
-    floor_trace = NULL,
-    by = c("isolate", "patient"),
-    prefix = "plot"
-) {
-    by <- match.arg(by)
-    # TODO: handle this so that only one patient is plotted per cluster
-    # plot trace for entire cluster
-    ggsave(
-        paste0("figures/", prefix, "_pt_trace_", "all", ".pdf"),
-        plot_trace(
-            tree,
-            clusters,
-            snp_dist,
-            dates,
-            ip_seqs,
-            pt_trace,
-            seq2pt,
-            by = by
-        )
-    )
-    # plot floor trace if given
-    if (!is.null(floor_trace)) {
-        ggsave(
-            paste0("figures/", prefix, "_floor_trace_", "all", ".pdf"),
-            plot_trace(
-                tree,
-                clusters,
-                snp_dist,
-                dates,
-                ip_seqs,
-                floor_trace,
-                seq2pt,
-                by = by
-            )
-        )
     }
 }
