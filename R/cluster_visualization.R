@@ -5,17 +5,21 @@
 #'
 #' @param tree A phylogenetic tree object of class `phylo`.
 #' @param clusters A vector named by sequence IDs with values indicating the cluster (subtree) each sequence belongs to.
+#' @param seq2pt OPTIONAL. A named vector mapping sequence IDs to patient IDs. Default is NULL – no patient labels will
+#'               be added to the tree.
+#' @param patient_label OPTIONAL. A logical value indicating whether to add patient labels to the tree. Default is FALSE
+#'                      – no patient labels will be added to the tree.
 #'
 #' @return A `ggtree` object with clusters visualized on the tree.
 #'
-#' @importFrom ggtree ggtree geom_tippoint
+#' @importFrom ggtree ggtree geom_tippoint geom_tiplab
 #' @importFrom hues iwanthue
 #' @importFrom dplyr .data left_join
-#' @importFrom ggplot2 aes scale_color_manual ggtitle theme element_text unit guides guide_legend
+#' @importFrom ggplot2 aes scale_color_manual theme element_text unit guides guide_legend
 #' @importFrom stats setNames
 #'
 #' @export
-plot_clusters_phylo <- function(tree, clusters) {
+plot_clusters_phylo <- function(tree, clusters, seq2pt = NULL, patient_label = FALSE) {
     # Convert phylo object to ggtree object
     tree <- ggtree(tree)
 
@@ -31,9 +35,21 @@ plot_clusters_phylo <- function(tree, clusters) {
     # Add cluster information to the tree
     tree$data <- tree$data |> left_join(cluster_df, by = c("label" = "isolate"))
 
-    # Return the tree labelled with clusters
-    tree +
-        geom_tippoint(aes(color = .data$clust_id), size = 1.5) +
+    # Build the plot
+    p <- tree + geom_tippoint(aes(color = .data$clust_id), size = 2, alpha = 0.8)
+
+    # Add patient labels if requested
+    if (!is.null(seq2pt) && patient_label) {
+        p <- p +
+            geom_tiplab(
+                aes(label = paste0(label, " (", seq2pt[label], ")")),
+                size = 2,
+                offset = 0.5
+            )
+    }
+
+    # Return the final plot
+    p +
         scale_color_manual(values = cluster_colors) +
         guides(
             color = guide_legend(
