@@ -214,86 +214,75 @@ cluster_genetic_context <- function(clusters, seq2pt, ip_seqs, snp_dist, prefix)
 #' @importFrom paletteer paletteer_d
 #' @importFrom ggplot2 geom_tile scale_fill_manual scale_fill_gradientn ggtitle
 #' @importFrom ggtree geom_tiplab
-plot_trace <- function(
-    tree,
-    clusters,
-    dates,
-    ip_seqs,
-    trace_data,
-    seq2pt,
-    prefix,
-    cluster_class = NULL
-) {
-    # Prepare a data frame for all isolates
+plot_trace <- function(tree, clusters, snp_dist, dates, ip_seqs, seq2pt, trace_data) {
+    # prepare a data frame for all isolates
     df <- data.frame(
         id = names(clusters),
         cluster = as.character(clusters),
-        pt = seq2pt[names(clusters)],
+        patient = seq2pt[names(clusters)],
         date = dates[names(clusters)]
     )
 
-    # Ensure cluster_class has correct names if provided; otherwise create a simple vector
-    if (is.null(cluster_class)) {
-        cluster_order <- names(table(clusters))
-        cluster_class <- structure(rep("NA", length(unique(clusters))), names = unique(clusters))
-    } else {
-        # Only keep cluster names that actually appear in cluster_class
-        cluster_order <- intersect(names(cluster_class), unique(df$cluster))
-    }
+    # get cluster order
+    cluster_order <- names(table(clusters))
 
-    # For each cluster-pt group, find earliest isolate (in time)
-    # Then map each isolate to that earliest isolate
+    # for each cluster-patient group, find earliest isolate in time
+    # then map each isolate to that earliest isolate
     df_earliest <- df |>
-        group_by(cluster, pt) |>
+        group_by(cluster, patient) |>
         slice_min(date, with_ties = FALSE) |>
         ungroup() |>
         rename(earliest_id = id)
 
-    # Add earliest isolate info back to df
-    df <- left_join(df, select(df_earliest, cluster, pt, earliest_id), by = c("cluster", "pt"))
+    # add earliest isolate info back to df
+    df <- left_join(
+        df,
+        select(df_earliest, cluster, patient, earliest_id),
+        by = c("cluster", "patient")
+    )
 
-    # Identify isolate order: cluster_order, then by earliest isolate's date
+    # identify isolate order: cluster_order, then by earliest isolate's date
     df_earliest <- df_earliest |>
         mutate(cluster_factor = factor(cluster, levels = cluster_order)) |>
         arrange(cluster_factor, date)
     isolate_order <- df_earliest$earliest_id
 
-    # Identify if each earliest isolate is in the user-supplied index set
+    # identify if each earliest isolate is in the user-supplied index set
     df_earliest <- df_earliest |> mutate(is_index = earliest_id %in% ip_seqs)
 
-    # Create a named vector to map each isolate to the earliest isolate of its cluster–patient group.
+    # create a named vector to map each isolate to the earliest isolate of its cluster–patient group
     rep_isolate <- setNames(df$earliest_id, df$id)
 
-    # Helper function to get max SNP distance within cluster or within cluster–patient
-    get_max_snp <- function(iso_id, use_entire_cluster = FALSE) {
+    # get max SNP distance for all isolates for a single patient or for an entire cluster
+    get_max_snp <- function(iso_id, patient_only = TRUE) {
         clust <- df$cluster[df$id == iso_id]
-        ptval <- df$pt[df$id == iso_id]
-        sub_ids <- if (!use_entire_cluster) {
-            df$id[df$cluster == clust & df$pt == ptval] # same cluster, same patient
+        ptval <- df$patient[df$id == iso_id]
+        sub_ids <- if (patient_only) {
+            df$id[df$cluster == clust & df$patient == ptval] # same cluster, same patient
         } else {
             df$id[df$cluster == clust] # entire cluster
         }
         max(snp_dist[sub_ids, sub_ids])
     }
 
-    # For each earliest isolate, compute max distances
-    max_dist <- sapply(isolate_order, get_max_snp, use_entire_cluster = FALSE)
-    max_clust_dist <- sapply(isolate_order, get_max_snp, use_entire_cluster = TRUE)
+    # for each earliest isolate, compute max distances
+    max_dist <- sapply(isolate_order, get_max_snp, patient_only = TRUE)
+    max_clust_dist <- sapply(isolate_order, get_max_snp, patient_only = FALSE)
 
-    # Subset the trace_data matrix
-    pt_in_trace <- df$pt %in% colnames(trace_data)
+    # subset the trace_data matrix
+    pt_in_trace <- df$patient %in% colnames(trace_data)
     seq_ids_in_trace <- df$id[pt_in_trace]
-    trace_sub <- t(trace_data[, as.character(df$pt[pt_in_trace]), drop = FALSE])
+    trace_sub <- t(trace_data[, as.character(df$patient[pt_in_trace]), drop = FALSE])
     rownames(trace_sub) <- seq_ids_in_trace
 
-    # Mark the actual isolate day with 1.75
+    # mark the actual isolate day with 1.75
     trace_sub[cbind(rep_isolate[seq_ids_in_trace], as.character(df$date[pt_in_trace]))] <- 1.75
 
-    # Reorder rows by earliest isolates in cluster/date order
+    # reorder rows by earliest isolates in cluster/date order
     keep_rows <- intersect(isolate_order, rownames(trace_sub))
     trace_sub <- trace_sub[keep_rows, , drop = FALSE]
 
-    # Identify convert isolates
+    # identify convert isolates
     is_convert_isolate <- sapply(keep_rows, function(id) {
         row_vals <- trace_sub[id, ]
         i_exposed <- which(row_vals %in% c(1.25))
@@ -307,16 +296,16 @@ plot_trace <- function(
         (iso_date - trace_date < 7) && is_convert && !(id %in% ip_seqs)
     })
 
-    # Index isolates
+    # index isolates
     is_index_isolate <- keep_rows %in% ip_seqs
 
-    # Build annotation data
+    # build annotation data
     patient_labels <- c("Secondary convert", "Index patient", "Convert patient")
     convert_class <- rep("Secondary convert", length(keep_rows))
     convert_class[is_index_isolate] <- "Index patient"
     convert_class[!is_index_isolate & is_convert_isolate] <- "Convert patient"
 
-    # Construct the annotation data frame.
+    # construct the annotation data frame
     annotation_row <- data.frame(
         id = keep_rows,
         Cluster = df$cluster[match(keep_rows, df$id)],
@@ -325,11 +314,10 @@ plot_trace <- function(
         Intra_clust_dist = max_clust_dist[keep_rows] + 1
     )
 
-    # Annot colors
+    # annotation colors
     cluster_colors <- setNames(iwanthue(length(unique(df$cluster))), levels(df$cluster))
     bluescale <- colorRampPalette(c("white", "blue"))
     greenscale <- colorRampPalette(c("white", "darkgreen"))
-
     ann_colors <- list(
         Cluster = structure(
             cluster_colors[seq_along(unique(df$cluster))],
@@ -340,16 +328,16 @@ plot_trace <- function(
         Intra_clust_dist = greenscale(max(max_clust_dist, 1))
     )
 
-    # Prepare the column labels
+    # prepare the column labels
     col_lab <- colnames(trace_sub)
     idx_keep_labels <- seq(1, length(col_lab), 14)
     col_lab[setdiff(seq_along(col_lab), idx_keep_labels)] <- ""
 
-    # Set up breaks and colors
-    # Get unique values from trace_sub and sort them
+    # set up breaks and colors
+    # get unique values from trace_sub and sort them
     custom_breaks <- sort(unique(as.numeric(as.matrix(trace_sub))))
 
-    # Calculate number of colors needed (excluding white for 0)
+    # calculate number of colors needed (excluding white for 0)
     n_colors <- length(custom_breaks) - 1
 
     # Generate colors. All colors must be distinct.
@@ -359,10 +347,10 @@ plot_trace <- function(
         base_colors <- rep(base_colors, length.out = n_colors)
         warning("More than 13 colors needed for trace. Recycled colors.")
     }
-    # three high-contrast colors which clash with the color scheme. Cannot be white as that is the base color.
-    high_contrast_colors <- c("#000000", "#999999", "#CCCCCC")
+    # three high-contrast colors which clash with the color scheme, cannot be white as that is the base color
+    high_contrast_colors <- c("#000000", "red", "darkgray")
 
-    # Create final color vector with white for 0 value
+    # create final color vector with white for 0 value
     custom_colors <- c(
         "white",
         base_colors[1],
@@ -384,9 +372,9 @@ plot_trace <- function(
     gheatmap(
         tree_plot,
         trace_df,
-        offset = 8,
+        offset = 6,
         width = 4,
-        font.size = 3,
+        font.size = 1,
         custom_column_labels = col_lab,
         colnames_angle = 90,
         colnames_offset_y = -8
@@ -469,13 +457,13 @@ plot_trace <- function(
 #' @export
 #' @keywords internal
 cluster_context <- function(
+    tree,
     clusters,
     snp_dist,
     ip_seqs,
     ip_pt_seqs,
     seq2pt,
     dates,
-    tree,
     pt_trace,
     floor_trace = NULL,
     by = c("isolate", "patient"),
@@ -495,11 +483,11 @@ cluster_context <- function(
             plot_trace(
                 tree,
                 clusters[clusters == cluster],
+                snp_dist,
                 dates,
                 ip_seqs,
-                pt_trace,
                 seq2pt,
-                prefix = paste0(prefix, "_pt_trace_", cluster)
+                pt_trace
             )
         )
         # Plot floor trace if given
@@ -509,13 +497,54 @@ cluster_context <- function(
                 plot_trace(
                     tree,
                     clusters[clusters == cluster],
+                    snp_dist,
                     dates,
                     ip_seqs,
-                    floor_trace,
                     seq2pt,
-                    prefix = paste0(prefix, "_floor_trace_", cluster)
+                    floor_trace
                 )
             )
         }
+    }
+}
+
+#' Plots the patient and floor trace heatmaps for all clusters belonging to a single sequence type.
+#'
+#' @param clusters A vector named by sequence IDs with values indicating the cluster (subtree) each sequence belongs to.
+#' @param snp_dist A matrix of SNP distances between isolates
+#' @param ip_seqs Vector of sequence IDs presumed to be imported
+#' @param ip_pt_seqs Vector of sequence IDs for intake positive patients
+#' @param seq2pt A named vector mapping sequence IDs to patient IDs
+#' @param dates A named vector of isolate dates by sequence ID
+#' @param tree A phylogenetic tree object of class `phylo`.
+#' @param pt_trace A data frame or matrix representing daily patient trace (rows) by patient ID (columns)
+#' @param floor_trace Optional data for floor-level tracing.
+#' @param prefix A string descriptor used for naming figure outputs.
+#'
+#' @importFrom ggplot2 ggsave
+#' @export
+st_context <- function(
+    tree,
+    clusters,
+    snp_dist,
+    ip_seqs,
+    seq2pt,
+    dates,
+    pt_trace,
+    floor_trace = NULL,
+    prefix = "plot"
+) {
+    # TODO: handle this so that only one patient is plotted per cluster
+    # plot trace for entire cluster
+    ggsave(
+        paste0("figures/", prefix, "_pt_trace_", "all", ".pdf"),
+        plot_trace(tree, clusters, snp_dist, dates, ip_seqs, seq2pt, pt_trace)
+    )
+    # plot floor trace if given
+    if (!is.null(floor_trace)) {
+        ggsave(
+            paste0("figures/", prefix, "_floor_trace_", "all", ".pdf"),
+            plot_trace(tree, clusters, snp_dist, dates, ip_seqs, seq2pt, floor_trace)
+        )
     }
 }
