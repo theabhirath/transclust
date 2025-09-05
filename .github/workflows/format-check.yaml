@@ -14,7 +14,8 @@ jobs:
     name: format-check
     runs-on: ubuntu-latest
     concurrency:
-      group: format-check-${{ github.event_name != 'pull_request' || github.run_id }}
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v5
 

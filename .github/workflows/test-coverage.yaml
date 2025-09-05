@@ -13,7 +13,8 @@ jobs:
   test-coverage:
     runs-on: ubuntu-latest
     concurrency:
-      group: test-coverage-${{ github.event_name != 'pull_request' || github.run_id }}
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
 

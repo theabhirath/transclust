@@ -15,6 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     concurrency:
       group: pr-document-${{ github.event.issue.number }}
+      cancel-in-progress: true
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
     permissions:
@@ -56,6 +57,7 @@ jobs:
     runs-on: ubuntu-latest
     concurrency:
       group: pr-style-${{ github.event.issue.number }}
+      cancel-in-progress: true
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
     permissions:
