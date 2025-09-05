@@ -49,7 +49,7 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">plot_clusters_phylo</span><span class="op">(</span><span class="va">tree</span>, <span class="va">clusters</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">plot_clusters_phylo</span><span class="op">(</span><span class="va">tree</span>, <span class="va">clusters</span>, seq2pt <span class="op">=</span> <span class="cn">NULL</span>, patient_label <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -62,6 +62,16 @@
 
 <dt id="arg-clusters">clusters<a class="anchor" aria-label="anchor" href="#arg-clusters"></a></dt>
 <dd><p>A vector named by sequence IDs with values indicating the cluster (subtree) each sequence belongs to.</p></dd>
+
+
+<dt id="arg-seq-pt">seq2pt<a class="anchor" aria-label="anchor" href="#arg-seq-pt"></a></dt>
+<dd><p>OPTIONAL. A named vector mapping sequence IDs to patient IDs. Default is NULL – no patient labels will
+be added to the tree.</p></dd>
+
+
+<dt id="arg-patient-label">patient_label<a class="anchor" aria-label="anchor" href="#arg-patient-label"></a></dt>
+<dd><p>OPTIONAL. A logical value indicating whether to add patient labels to the tree. Default is FALSE
+– no patient labels will be added to the tree.</p></dd>
 
 </dl></div>
     <div class="section level2">
