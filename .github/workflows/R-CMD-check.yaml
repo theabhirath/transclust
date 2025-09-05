@@ -12,6 +12,8 @@ permissions: read-all
 jobs:
   R-CMD-check:
     runs-on: ${{ matrix.config.os }}
+    concurrency:
+      group: r-cmd-check-${{ github.event_name != 'pull_request' || github.run_id }}
 
     name: ${{ matrix.config.os }} (${{ matrix.config.r }})
 

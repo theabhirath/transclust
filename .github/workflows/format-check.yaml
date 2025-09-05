@@ -13,6 +13,8 @@ jobs:
   format-check:
     name: format-check
     runs-on: ubuntu-latest
+    concurrency:
+      group: format-check-${{ github.event_name != 'pull_request' || github.run_id }}
     steps:
       - uses: actions/checkout@v5
 
