@@ -26,10 +26,13 @@ Imports:
     ggalign,
     ggplot2,
     ggtree,
-    parallel
+    parallel,
+    paletteer,
+    ggnewscale,
+    ggtreeExtra,
+    rlang
 Suggests:
     tidyr,
-    paletteer,
     knitr,
     rmarkdown,
     testthat (>= 3.0.0)

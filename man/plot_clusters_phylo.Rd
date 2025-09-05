@@ -4,12 +4,18 @@
 \alias{plot_clusters_phylo}
 \title{Maps clusters onto a phylogenetic tree and visualizes them}
 \usage{
-plot_clusters_phylo(tree, clusters)
+plot_clusters_phylo(tree, clusters, seq2pt = NULL, patient_label = FALSE)
 }
 \arguments{
 \item{tree}{A phylogenetic tree object of class \code{phylo}.}
 
 \item{clusters}{A vector named by sequence IDs with values indicating the cluster (subtree) each sequence belongs to.}
+
+\item{seq2pt}{OPTIONAL. A named vector mapping sequence IDs to patient IDs. Default is NULL – no patient labels will
+be added to the tree.}
+
+\item{patient_label}{OPTIONAL. A logical value indicating whether to add patient labels to the tree. Default is FALSE
+– no patient labels will be added to the tree.}
 }
 \value{
 A \code{ggtree} object with clusters visualized on the tree.
