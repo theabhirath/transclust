@@ -29,7 +29,8 @@ Imports:
     parallel,
     paletteer,
     ggnewscale,
-    ggtreeExtra
+    ggtreeExtra,
+    rlang
 Suggests:
     tidyr,
     knitr,
