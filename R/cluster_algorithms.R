@@ -65,7 +65,7 @@ get_tn_clusters_sv_index <- function(dna_aln, snp_dist, ip_seqs, ip_pt_seqs, seq
     dna_shared_mat <- computeSharedMatrix(dna_char, out_group)
 
     isolate_names <- row.names(dna_aln)
-    rownames(dna_shared_mat) <- isolate_names
+    row.names(dna_shared_mat) <- isolate_names
     colnames(dna_shared_mat) <- isolate_names
 
     # Log completion of phase to standard output

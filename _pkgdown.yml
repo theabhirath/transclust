@@ -30,7 +30,8 @@ reference:
       - plot_clusters_phylo
       - compare_clusters
       - cluster_genetic_context
-      - plot_patient_trace
+      - plot_st_patient_trace
+      - plot_cluster_patient_trace
 
   - title: Statistics
     desc: >
