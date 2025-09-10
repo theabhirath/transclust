@@ -318,22 +318,18 @@ plot_st_patient_trace <- function(
     convert_class[!is_index_isolate & is_convert_isolate] <- "Convert patient"
 
     # construct the annotation data frame
+    cluster_levels <- sort(unique(df$cluster))
     annotation_row <- data.frame(
         id = keep_rows,
-        Cluster = df$cluster[match(keep_rows, df$id)],
-        Convert = convert_class,
+        Cluster = factor(df$cluster[match(keep_rows, df$id)], levels = cluster_levels),
+        Convert = factor(convert_class, levels = patient_labels),
         Intra_pt_dist = max_dist[keep_rows] + 1
     )
 
-    # annotation colors
-    cluster_colors <- setNames(iwanthue(length(unique(df$cluster))), levels(df$cluster))
     bluescale <- colorRampPalette(c("white", "blue"))
     ann_colors <- list(
-        Cluster = structure(
-            cluster_colors[seq_along(unique(df$cluster))],
-            names = sort(unique(df$cluster))
-        ),
-        Convert = structure(c("gray95", "red", "gray"), names = patient_labels),
+        Cluster = setNames(iwanthue(length(cluster_levels)), cluster_levels),
+        Convert = setNames(c("gray95", "red", "gray"), patient_labels),
         Intra_pt_dist = bluescale(max(max_dist, 1))
     )
 
@@ -349,11 +345,13 @@ plot_st_patient_trace <- function(
     n_colors <- length(custom_breaks) - 1
 
     # if n_colors > 13, recycle colors
-    if (n_colors > 13) {
+    if (n_colors > length(trace_colors)) {
         trace_colors <- rep(trace_colors, length.out = n_colors)
         warning(
             paste0(
-                "More than 13 colors needed for trace. Recycled colors – consider increasing the ",
+                "More than ",
+                length(trace_colors),
+                " colors needed for trace. Consider increasing the ",
                 "number of colors in the palette."
             )
         )
@@ -390,6 +388,19 @@ plot_st_patient_trace <- function(
     annotation_row$id <- tip_label_map[annotation_row$id]
     row.names(trace_df) <- tip_label_map[row.names(trace_df)]
 
+    # validate mappings and anchor y-order to tree tips
+    if (any(is.na(annotation_row$id))) {
+        stop(
+            "Some annotation IDs could not be mapped to tree tip labels. Check seq2pt and input IDs."
+        )
+    }
+    if (!all(row.names(trace_df) %in% tree_sub$tip.label)) {
+        stop("Trace row names are not all present in tree tip labels after relabeling.")
+    }
+    annotation_row$id <- factor(annotation_row$id, levels = tree_sub$tip.label)
+    # align heatmap rows to tree tip order to lock row positions
+    trace_df <- trace_df[tree_sub$tip.label, , drop = FALSE]
+
     tree_plot <- ggtree(tree_sub) +
         geom_tiplab(size = 0.75, align = TRUE, offset = 1.5, linetype = NULL)
 
@@ -425,8 +436,9 @@ plot_st_patient_trace <- function(
         scale_fill_manual(
             name = "Cluster",
             values = ann_colors$Cluster,
-            drop = FALSE,
-            guide = "none"
+            limits = levels(annotation_row$Cluster),
+            guide = "none",
+            drop = FALSE
         ) +
         new_scale_fill() +
         # Convert annotation
@@ -441,6 +453,7 @@ plot_st_patient_trace <- function(
             name = "Convert",
             values = ann_colors$Convert,
             labels = names(ann_colors$Convert),
+            limits = levels(annotation_row$Convert),
             drop = FALSE
         ) +
         new_scale_fill() +
@@ -552,10 +565,13 @@ plot_cluster_patient_trace <- function(
     convert_class[!is_index_isolate & is_convert_isolate] <- "Convert patient"
 
     # construct the annotation data frame
-    annotation_row <- data.frame(id = keep_rows, Convert = convert_class)
+    annotation_row <- data.frame(
+        id = keep_rows,
+        Convert = factor(convert_class, levels = patient_labels)
+    )
 
     # annotation colors
-    ann_colors <- list(Convert = structure(c("gray95", "red", "gray"), names = patient_labels))
+    ann_colors <- list(Convert = setNames(c("gray95", "red", "gray"), patient_labels))
 
     # prepare the column labels
     col_lab <- colnames(trace_sub)
@@ -568,12 +584,13 @@ plot_cluster_patient_trace <- function(
     # calculate number of colors needed (excluding white for 0)
     n_colors <- length(custom_breaks) - 1
 
-    # if n_colors > 13, recycle colors
-    if (n_colors > 13) {
-        trace_colors <- rep(trace_colors, length.out = n_colors)
+    # if n_colors > length(trace_colors), error out
+    if (n_colors > length(trace_colors)) {
         warning(
             paste0(
-                "More than 13 colors needed for trace. Recycled colors – consider increasing the ",
+                "More than ",
+                length(trace_colors),
+                " colors needed for trace. Consider increasing the ",
                 "number of colors in the palette."
             )
         )
@@ -610,18 +627,28 @@ plot_cluster_patient_trace <- function(
     annotation_row$id <- tip_label_map[annotation_row$id]
     row.names(trace_df) <- tip_label_map[row.names(trace_df)]
 
+    # validate mappings and anchor y-order to tree tips
+    if (any(is.na(annotation_row$id))) {
+        stop(
+            "Some annotation IDs could not be mapped to tree tip labels. Check seq2pt and input IDs."
+        )
+    }
+    if (!all(row.names(trace_df) %in% tree_sub$tip.label)) {
+        stop("Trace row names are not all present in tree tip labels after relabeling.")
+    }
+    annotation_row$id <- factor(annotation_row$id, levels = tree_sub$tip.label)
+
     tree_plot <- ggtree(tree_sub) +
         geom_tiplab(size = 0.75, align = TRUE, offset = 1.5, linetype = NULL)
 
     gheatmap(
         tree_plot,
         trace_df,
-        offset = 4,
+        offset = 2,
         width = 4,
         font.size = 1,
         custom_column_labels = col_lab,
-        colnames_angle = 90,
-        colnames_offset_y = -2
+        colnames_angle = 90
     ) +
         vexpand(0.1, -1) +
         # Trace annotation
@@ -646,6 +673,7 @@ plot_cluster_patient_trace <- function(
             name = "Convert",
             values = ann_colors$Convert,
             labels = names(ann_colors$Convert),
+            limits = levels(annotation_row$Convert),
             drop = FALSE
         ) +
         theme(
