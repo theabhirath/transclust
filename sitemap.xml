@@ -19,8 +19,9 @@
 <url><loc>https://theabhirath.github.io/transclust/reference/get_tn_clusters_sv_index.html</loc></url>
 <url><loc>https://theabhirath.github.io/transclust/reference/index.html</loc></url>
 <url><loc>https://theabhirath.github.io/transclust/reference/intra_cluster_genetic_var_analysis.html</loc></url>
+<url><loc>https://theabhirath.github.io/transclust/reference/plot_cluster_patient_trace.html</loc></url>
 <url><loc>https://theabhirath.github.io/transclust/reference/plot_clusters_phylo.html</loc></url>
-<url><loc>https://theabhirath.github.io/transclust/reference/plot_patient_trace.html</loc></url>
+<url><loc>https://theabhirath.github.io/transclust/reference/plot_st_patient_trace.html</loc></url>
 <url><loc>https://theabhirath.github.io/transclust/reference/remap_cluster_values.html</loc></url>
 <url><loc>https://theabhirath.github.io/transclust/reference/remove_singleton_clusters.html</loc></url>
 <url><loc>https://theabhirath.github.io/transclust/reference/transclust-package.html</loc></url>
