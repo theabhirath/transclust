@@ -211,7 +211,7 @@ cluster_genetic_context <- function(clusters, seq2pt, ip_seqs, snp_dist, prefix)
 
     # Create and return result matrix
     intra_inter_cluster_dist_mat <- t(cluster_distances)
-    rownames(intra_inter_cluster_dist_mat) <- unique_clusters
+    row.names(intra_inter_cluster_dist_mat) <- unique_clusters
     colnames(intra_inter_cluster_dist_mat) <- c(
         "Max intra-clust",
         "Min inter-clust",
@@ -221,7 +221,7 @@ cluster_genetic_context <- function(clusters, seq2pt, ip_seqs, snp_dist, prefix)
     intra_inter_cluster_dist_mat
 }
 
-#' Plots a trace heatmap for all given clusters.
+#' Plots a trace heatmap for all patients for a sequence type.
 #'
 #' @param tree A phylogenetic tree object of class `phylo`.
 #' @param clusters A vector named by sequence IDs with values indicating the cluster (subtree) each sequence belongs to.
@@ -233,17 +233,17 @@ cluster_genetic_context <- function(clusters, seq2pt, ip_seqs, snp_dist, prefix)
 #' @param trace_colors A vector of colors for the trace, one for each trace value.
 #' @param surv_colors A vector of two colors for the surveillance, negative and positive.
 #'
-#' @return A `ggplot` object with the trace heatmap for all given clusters.
+#' @return A `ggplot` object with the trace heatmap for all patients for a sequence type.
 #'
 #' @importFrom ape keep.tip
-#' @importFrom dplyr group_by slice_min ungroup rename left_join select mutate arrange mutate_all pull
+#' @importFrom dplyr group_by slice_min ungroup select mutate arrange pull
 #' @importFrom paletteer paletteer_d
 #' @importFrom ggplot2 geom_tile scale_fill_manual scale_fill_gradientn theme unit
 #' @importFrom ggnewscale new_scale_fill
 #' @importFrom ggtree ggtree geom_tiplab gheatmap vexpand
 #' @importFrom ggtreeExtra geom_fruit
 #' @export
-plot_patient_trace <- function(
+plot_st_patient_trace <- function(
     tree,
     clusters,
     snp_dist,
@@ -285,10 +285,10 @@ plot_patient_trace <- function(
     max_dist <- vapply(isolate_order, get_max_snp, numeric(1))
 
     # subset the trace_data matrix
-    pt_in_trace <- df$patient %in% colnames(trace_data)
+    pt_in_trace <- df$patient %in% row.names(trace_data)
     seq_ids_in_trace <- df$id[pt_in_trace]
-    trace_sub <- t(trace_data[, as.character(df$patient[pt_in_trace]), drop = FALSE])
-    rownames(trace_sub) <- seq_ids_in_trace
+    trace_sub <- trace_data[as.character(df$patient[pt_in_trace]), , drop = FALSE]
+    row.names(trace_sub) <- seq_ids_in_trace
 
     # reorder rows by earliest isolates in cluster/date order
     keep_rows <- intersect(isolate_order, seq_ids_in_trace)
@@ -318,22 +318,18 @@ plot_patient_trace <- function(
     convert_class[!is_index_isolate & is_convert_isolate] <- "Convert patient"
 
     # construct the annotation data frame
+    cluster_levels <- sort(unique(df$cluster))
     annotation_row <- data.frame(
         id = keep_rows,
-        Cluster = df$cluster[match(keep_rows, df$id)],
-        Convert = convert_class,
+        Cluster = factor(df$cluster[match(keep_rows, df$id)], levels = cluster_levels),
+        Convert = factor(convert_class, levels = patient_labels),
         Intra_pt_dist = max_dist[keep_rows] + 1
     )
 
-    # annotation colors
-    cluster_colors <- setNames(iwanthue(length(unique(df$cluster))), levels(df$cluster))
     bluescale <- colorRampPalette(c("white", "blue"))
     ann_colors <- list(
-        Cluster = structure(
-            cluster_colors[seq_along(unique(df$cluster))],
-            names = sort(unique(df$cluster))
-        ),
-        Convert = structure(c("gray95", "red", "gray"), names = patient_labels),
+        Cluster = setNames(iwanthue(length(cluster_levels)), cluster_levels),
+        Convert = setNames(c("gray95", "red", "gray"), patient_labels),
         Intra_pt_dist = bluescale(max(max_dist, 1))
     )
 
@@ -349,11 +345,13 @@ plot_patient_trace <- function(
     n_colors <- length(custom_breaks) - 1
 
     # if n_colors > 13, recycle colors
-    if (n_colors > 13) {
+    if (n_colors > length(trace_colors)) {
         trace_colors <- rep(trace_colors, length.out = n_colors)
         warning(
             paste0(
-                "More than 13 colors needed for trace. Recycled colors – consider increasing the ",
+                "More than ",
+                length(trace_colors),
+                " colors needed for trace. Consider increasing the ",
                 "number of colors in the palette."
             )
         )
@@ -388,7 +386,20 @@ plot_patient_trace <- function(
     # Update all relevant objects with new tip labels
     tree_sub$tip.label <- tip_label_map
     annotation_row$id <- tip_label_map[annotation_row$id]
-    rownames(trace_df) <- tip_label_map[rownames(trace_df)]
+    row.names(trace_df) <- tip_label_map[row.names(trace_df)]
+
+    # validate mappings and anchor y-order to tree tips
+    if (any(is.na(annotation_row$id))) {
+        stop(
+            "Some annotation IDs could not be mapped to tree tip labels. Check seq2pt and input IDs."
+        )
+    }
+    if (!all(row.names(trace_df) %in% tree_sub$tip.label)) {
+        stop("Trace row names are not all present in tree tip labels after relabeling.")
+    }
+    annotation_row$id <- factor(annotation_row$id, levels = tree_sub$tip.label)
+    # align heatmap rows to tree tip order to lock row positions
+    trace_df <- trace_df[tree_sub$tip.label, , drop = FALSE]
 
     tree_plot <- ggtree(tree_sub) +
         geom_tiplab(size = 0.75, align = TRUE, offset = 1.5, linetype = NULL)
@@ -425,8 +436,9 @@ plot_patient_trace <- function(
         scale_fill_manual(
             name = "Cluster",
             values = ann_colors$Cluster,
-            drop = FALSE,
-            guide = "none"
+            limits = levels(annotation_row$Cluster),
+            guide = "none",
+            drop = FALSE
         ) +
         new_scale_fill() +
         # Convert annotation
@@ -441,6 +453,7 @@ plot_patient_trace <- function(
             name = "Convert",
             values = ann_colors$Convert,
             labels = names(ann_colors$Convert),
+            limits = levels(annotation_row$Convert),
             drop = FALSE
         ) +
         new_scale_fill() +
@@ -453,6 +466,216 @@ plot_patient_trace <- function(
             width = 1
         ) +
         scale_fill_gradientn(name = "Intra_pt_dist", colors = ann_colors$Intra_pt_dist) +
+        theme(
+            legend.title = element_text(size = 8),
+            legend.text = element_text(size = 6),
+            legend.position = "right",
+            legend.key.height = unit(0.5, "cm"),
+            legend.key.width = unit(0.2, "cm")
+        )
+}
+
+#' Plots a trace heatmap for all patients for a cluster.
+#'
+#' @param tree A phylogenetic tree object of class `phylo`.
+#' @param cluster_seqs A vector of sequence IDs which correspond to the cluster.
+#' @param dates A named vector of isolate dates by sequence ID.
+#' @param ip_seqs A vector of sequence IDs which correspond to intake patient sequences presumed to be imported.
+#' @param seq2pt A named vector mapping sequence IDs to patient IDs.
+#' @param trace_data A data frame or matrix representing daily patient trace (rows) by patient ID (columns).
+#' @param trace_colors A vector of colors for the trace, one for each trace value.
+#' @param surv_colors A vector of two colors for the surveillance, negative and positive.
+#'
+#' @return A `ggplot` object with the trace heatmap for all patients for a cluster.
+#'
+#' @importFrom ape keep.tip
+#' @importFrom dplyr group_by slice_min ungroup select mutate arrange pull
+#' @importFrom paletteer paletteer_d
+#' @importFrom ggplot2 geom_tile scale_fill_manual scale_fill_gradientn theme unit
+#' @importFrom ggnewscale new_scale_fill
+#' @importFrom ggtree ggtree geom_tiplab gheatmap vexpand
+#' @importFrom ggtreeExtra geom_fruit
+#' @export
+plot_cluster_patient_trace <- function(
+    tree,
+    cluster_seqs,
+    dates,
+    ip_seqs,
+    seq2pt,
+    trace_data,
+    trace_colors = paletteer_d("ggthemes::Classic_Cyclic"),
+    surv_colors = c("darkblue", "red", "yellow")
+) {
+    # prepare a data frame for all isolates in the cluster
+    df <- data.frame(
+        id = names(cluster_seqs),
+        patient = seq2pt[names(cluster_seqs)],
+        date = dates[names(cluster_seqs)]
+    )
+
+    # subset the trace_data matrix
+    pt_in_trace <- df$patient %in% row.names(trace_data)
+    seq_ids_in_trace <- df$id[pt_in_trace]
+    trace_sub <- trace_data[as.character(df$patient[pt_in_trace]), , drop = FALSE]
+    row.names(trace_sub) <- seq_ids_in_trace
+
+    # for each patient, find earliest isolate in time
+    # then map each isolate to that earliest isolate
+    isolate_order <- df |>
+        group_by(patient) |>
+        arrange(date) |>
+        slice_min(date, with_ties = FALSE) |>
+        ungroup() |>
+        pull(id)
+
+    # reorder rows by earliest isolates in cluster/date order
+    keep_rows <- intersect(isolate_order, seq_ids_in_trace)
+    trace_sub <- trace_sub[keep_rows, , drop = FALSE]
+
+    # for each isolate for each patient in this cluster, set the trace value to 1.75
+    for (id in keep_rows) {
+        # find patient for this id
+        pt_id <- df$patient[df$id == id]
+        for (isolate in df$id[df$patient == pt_id]) {
+            trace_sub[id, as.character(df$date[df$id == isolate])] <- 1.75
+        }
+    }
+
+    # identify convert isolates
+    is_convert_isolate <- sapply(keep_rows, function(id) {
+        row_vals <- trace_sub[id, ]
+        i_negative <- which(row_vals %in% c(1.25))
+        i_positive <- which(row_vals %in% c(1.5, 1.75))
+        if (length(i_negative) == 0 || length(i_positive) == 0) {
+            return(FALSE)
+        }
+        is_convert <- min(i_negative) < min(i_positive)
+        trace_date <- as.numeric(colnames(trace_sub)[min(i_positive)])
+        iso_date <- df$date[df$id == id]
+        (iso_date - trace_date < 7) && is_convert && !(id %in% ip_seqs)
+    })
+
+    # index isolates
+    is_index_isolate <- keep_rows %in% ip_seqs
+
+    # build annotation data
+    patient_labels <- c("Secondary convert", "Index patient", "Convert patient")
+    convert_class <- rep("Secondary convert", length(keep_rows))
+    convert_class[is_index_isolate] <- "Index patient"
+    convert_class[!is_index_isolate & is_convert_isolate] <- "Convert patient"
+
+    # construct the annotation data frame
+    annotation_row <- data.frame(
+        id = keep_rows,
+        Convert = factor(convert_class, levels = patient_labels)
+    )
+
+    # annotation colors
+    ann_colors <- list(Convert = setNames(c("gray95", "red", "gray"), patient_labels))
+
+    # prepare the column labels
+    col_lab <- colnames(trace_sub)
+    idx_keep_labels <- seq(1, length(col_lab), 14)
+    col_lab[setdiff(seq_along(col_lab), idx_keep_labels)] <- ""
+
+    # set up breaks
+    custom_breaks <- sort(unique(as.numeric(as.matrix(trace_sub))))
+
+    # calculate number of colors needed (excluding white for 0)
+    n_colors <- length(custom_breaks) - 1
+
+    # if n_colors > length(trace_colors), error out
+    if (n_colors > length(trace_colors)) {
+        warning(
+            paste0(
+                "More than ",
+                length(trace_colors),
+                " colors needed for trace. Consider increasing the ",
+                "number of colors in the palette."
+            )
+        )
+    }
+
+    # create final color vector with white for 0 value
+    trace_custom_colors <- c(
+        "white",
+        trace_colors[1],
+        surv_colors,
+        trace_colors[2:length(trace_colors)]
+    )
+
+    tree_sub <- keep.tip(tree, keep_rows)
+    trace_df <- as.data.frame(trace_sub)
+    trace_df[] <- lapply(trace_df, function(x) {
+        factor(as.numeric(as.character(x)), levels = custom_breaks)
+    })
+
+    # Create tip label mapping with patient IDs
+    tip_label_map <- sapply(tree_sub$tip.label, function(tip) {
+        # convert tip to character for consistent lookup
+        tip_char <- as.character(tip)
+
+        if (tip_char %in% names(seq2pt)) {
+            paste0(seq2pt[tip_char], " (", tip, ")")
+        } else {
+            tip # use original tip label if no mapping exists
+        }
+    })
+
+    # Update all relevant objects with new tip labels
+    tree_sub$tip.label <- tip_label_map
+    annotation_row$id <- tip_label_map[annotation_row$id]
+    row.names(trace_df) <- tip_label_map[row.names(trace_df)]
+
+    # validate mappings and anchor y-order to tree tips
+    if (any(is.na(annotation_row$id))) {
+        stop(
+            "Some annotation IDs could not be mapped to tree tip labels. Check seq2pt and input IDs."
+        )
+    }
+    if (!all(row.names(trace_df) %in% tree_sub$tip.label)) {
+        stop("Trace row names are not all present in tree tip labels after relabeling.")
+    }
+    annotation_row$id <- factor(annotation_row$id, levels = tree_sub$tip.label)
+
+    tree_plot <- ggtree(tree_sub) +
+        geom_tiplab(size = 0.75, align = TRUE, offset = 1.5, linetype = NULL)
+
+    gheatmap(
+        tree_plot,
+        trace_df,
+        offset = 2,
+        width = 4,
+        font.size = 1,
+        custom_column_labels = col_lab,
+        colnames_angle = 90
+    ) +
+        vexpand(0.1, -1) +
+        # Trace annotation
+        scale_fill_manual(
+            name = "Trace",
+            values = trace_custom_colors,
+            breaks = custom_breaks,
+            labels = custom_breaks,
+            na.value = "white",
+            drop = FALSE
+        ) +
+        new_scale_fill() +
+        # Convert annotation
+        geom_fruit(
+            data = annotation_row,
+            geom = geom_tile,
+            mapping = aes(y = id, x = 1, fill = Convert),
+            offset = -0.19,
+            width = 1
+        ) +
+        scale_fill_manual(
+            name = "Convert",
+            values = ann_colors$Convert,
+            labels = names(ann_colors$Convert),
+            limits = levels(annotation_row$Convert),
+            drop = FALSE
+        ) +
         theme(
             legend.title = element_text(size = 8),
             legend.text = element_text(size = 6),
