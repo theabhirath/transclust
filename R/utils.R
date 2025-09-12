@@ -55,7 +55,7 @@ get_phylo_tree <- function(dna_aln, snp_dist, method = c("nj", "pars")) {
         nj_tree
     }
 
-    # Return the tree
+    # return the tree
     tree
 }
 

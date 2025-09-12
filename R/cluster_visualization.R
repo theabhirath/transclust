@@ -20,25 +20,25 @@
 #' @importFrom stats setNames
 #' @export
 plot_clusters_phylo <- function(tree, clusters, seq2pt = NULL, patient_label = FALSE) {
-    # Convert phylo object to ggtree object
+    # convert phylo object to ggtree object
     tree <- ggtree(tree)
 
-    # Format the clusters into a dataframe
+    # format the clusters into a dataframe
     cluster_df <- data.frame(isolate = names(clusters), clust_id = factor(clusters))
 
-    # Use iwanthue to generate colors for clusters
+    # use iwanthue to generate colors for clusters
     cluster_colors <- setNames(
         iwanthue(length(unique(cluster_df$clust_id))),
         levels(cluster_df$clust_id)
     )
 
-    # Add cluster information to the tree
+    # add cluster information to the tree
     tree$data <- tree$data |> left_join(cluster_df, by = c("label" = "isolate"))
 
-    # Build the plot
+    # build the plot
     p <- tree + geom_tippoint(aes(color = .data$clust_id), size = 2, alpha = 0.8)
 
-    # Add patient labels if requested
+    # add patient labels if requested
     if (!is.null(seq2pt) && patient_label) {
         p <- p +
             geom_tiplab(
@@ -48,7 +48,7 @@ plot_clusters_phylo <- function(tree, clusters, seq2pt = NULL, patient_label = F
             )
     }
 
-    # Return the final plot
+    # return the final plot
     p +
         scale_color_manual(values = cluster_colors) +
         guides(
@@ -80,18 +80,18 @@ plot_clusters_phylo <- function(tree, clusters, seq2pt = NULL, patient_label = F
 #' @importFrom ggplot2 theme element_text scale_fill_gradient
 #' @export
 compare_clusters <- function(clusters1, clusters2, width = 10, height = 10) {
-    # Unique cluster labels
+    # unique cluster labels
     clusters1_unique_labels <- as.character(sort(unique(clusters1)))
     clusters2_unique_labels <- as.character(sort(unique(clusters2)))
 
-    # Create a matrix to store the overlap between clusters
+    # create a matrix to store the overlap between clusters
     cluster_overlap <- matrix(
         nrow = length(clusters1_unique_labels),
         ncol = length(clusters2_unique_labels),
         dimnames = list(clusters1_unique_labels, clusters2_unique_labels)
     )
 
-    # Compute cluster overlap
+    # compute cluster overlap
     for (cluster1 in clusters1_unique_labels) {
         for (cluster2 in clusters2_unique_labels) {
             cluster_overlap[cluster1, cluster2] <- length(intersect(
@@ -133,11 +133,11 @@ compare_clusters <- function(clusters1, clusters2, width = 10, height = 10) {
 #'
 #' @export
 cluster_genetic_context <- function(clusters, seq2pt, ip_seqs, snp_dist, prefix) {
-    # Subset of isolates assigned to clusters
+    # subset of isolates assigned to clusters
     clusters_subset <- clusters[clusters != 1]
     unique_clusters <- sort(unique(clusters_subset))
 
-    # Compute maximum genetic distance within cluster, minimum genetic distance to another cluster,
+    # compute maximum genetic distance within cluster, minimum genetic distance to another cluster,
     # and minimum genetic distance to an isolate not in the same cluster
     cluster_distances <- vapply(
         unique_clusters,
@@ -157,9 +157,9 @@ cluster_genetic_context <- function(clusters, seq2pt, ip_seqs, snp_dist, prefix)
         numeric(3)
     )
 
-    # Define function for generating plots
+    # define function for generating plots
     generate_plot <- function(x, y, xlab, ylab, file_name) {
-        # Create directory if it doesn't exist
+        # create directory if it doesn't exist
         dir.create("figures", showWarnings = FALSE)
         file_path <- paste0(
             "figures/",
@@ -193,7 +193,7 @@ cluster_genetic_context <- function(clusters, seq2pt, ip_seqs, snp_dist, prefix)
         dev.off()
     }
 
-    # Generate plots
+    # generate plots
     generate_plot(
         cluster_distances[1, ],
         cluster_distances[2, ],
@@ -209,7 +209,7 @@ cluster_genetic_context <- function(clusters, seq2pt, ip_seqs, snp_dist, prefix)
         "intra_vs_inter_isolate_gen_dist"
     )
 
-    # Create and return result matrix
+    # create and return result matrix
     intra_inter_cluster_dist_mat <- t(cluster_distances)
     row.names(intra_inter_cluster_dist_mat) <- unique_clusters
     colnames(intra_inter_cluster_dist_mat) <- c(
@@ -383,7 +383,7 @@ plot_st_patient_trace <- function(
         }
     })
 
-    # Update all relevant objects with new tip labels
+    # update all relevant objects with new tip labels
     tree_sub$tip.label <- tip_label_map
     annotation_row$id <- tip_label_map[annotation_row$id]
     row.names(trace_df) <- tip_label_map[row.names(trace_df)]
@@ -415,7 +415,7 @@ plot_st_patient_trace <- function(
         colnames_offset_y = -2
     ) +
         vexpand(0.1, -1) +
-        # Trace annotation
+        # trace annotation
         scale_fill_manual(
             name = "Trace",
             values = trace_custom_colors,
@@ -425,7 +425,7 @@ plot_st_patient_trace <- function(
             drop = FALSE
         ) +
         new_scale_fill() +
-        # Cluster annotation
+        # cluster annotation
         geom_fruit(
             data = annotation_row,
             geom = geom_tile,
@@ -441,7 +441,7 @@ plot_st_patient_trace <- function(
             drop = FALSE
         ) +
         new_scale_fill() +
-        # Convert annotation
+        # convert annotation
         geom_fruit(
             data = annotation_row,
             geom = geom_tile,
@@ -457,7 +457,7 @@ plot_st_patient_trace <- function(
             drop = FALSE
         ) +
         new_scale_fill() +
-        # Intra_pt_dist annotation
+        # intra_pt_dist annotation
         geom_fruit(
             data = annotation_row,
             geom = geom_tile,
@@ -610,7 +610,7 @@ plot_cluster_patient_trace <- function(
         factor(as.numeric(as.character(x)), levels = custom_breaks)
     })
 
-    # Create tip label mapping with patient IDs
+    # create tip label mapping with patient IDs
     tip_label_map <- sapply(tree_sub$tip.label, function(tip) {
         # convert tip to character for consistent lookup
         tip_char <- as.character(tip)
@@ -651,7 +651,7 @@ plot_cluster_patient_trace <- function(
         colnames_angle = 90
     ) +
         vexpand(0.1, -1) +
-        # Trace annotation
+        # trace annotation
         scale_fill_manual(
             name = "Trace",
             values = trace_custom_colors,
@@ -661,7 +661,7 @@ plot_cluster_patient_trace <- function(
             drop = FALSE
         ) +
         new_scale_fill() +
-        # Convert annotation
+        # convert annotation
         geom_fruit(
             data = annotation_row,
             geom = geom_tile,

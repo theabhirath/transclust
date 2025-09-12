@@ -18,9 +18,9 @@ using namespace Rcpp;
 NumericMatrix computeSharedMatrix(CharacterMatrix dna_character_matrix, int out_group) {
     int n_isolates = dna_character_matrix.nrow();
     int n_cols = dna_character_matrix.ncol();
-    out_group = out_group - 1; // Convert to 0-based index
+    out_group = out_group - 1; // convert to 0-based index
 
-    // Pre-convert the dna_character_matrix matrix into a 2D array of chars
+    // pre-convert the dna_character_matrix matrix into a 2D array of chars
     Array2D<char> aln(n_isolates, n_cols);
     for (int j = 0; j < n_cols; j++) {
         for (int i = 0; i < n_isolates; i++) {
@@ -28,42 +28,42 @@ NumericMatrix computeSharedMatrix(CharacterMatrix dna_character_matrix, int out_
         }
     }
 
-    // Precompute valid columns for the outgroup
+    // precompute valid columns for the outgroup
     std::vector<int> out_valid;
-    out_valid.reserve(n_cols);  // Pre-allocate space
+    out_valid.reserve(n_cols);  // pre-allocate space
     for (int k = 0; k < n_cols; k++) {
         char base_out = aln[out_group][k];
         bool is_valid = (base_out != '-' && base_out != 'n');
         if (is_valid) out_valid.push_back(k);
     }
 
-    // Matrix to store intermediate shared counts – upper triangular
+    // matrix to store intermediate shared counts – upper triangular
     UpperTriangularMatrix<int> temp(n_isolates);
     // Initialize the max shared count
     int max_shared = 0;
 
-    // Compute shared counts for each pair of isolates (only once per pair)
+    // compute shared counts for each pair of isolates (only once per pair)
     for (int i = 0; i < n_isolates; i++) {
         for (int j = i + 1; j < n_isolates; j++) {
             int count = 0;
-            // Check each valid column for shared variants
+            // check each valid column for shared variants
             for (int idx: out_valid) {
                 char base_i = aln[i][idx];
                 if (base_i == '-' || base_i == 'n') continue; // skip invalid bases
                 char base_out = aln[out_group][idx];
                 if (base_i == base_out) continue; // skip if same as outgroup
                 char base_j = aln[j][idx];
-                // If isolates i and j share the same base:
+                // if isolates i and j share the same base:
                 if (base_i == base_j) count++; // valid shared variant found
             }
-            // Store the count in the upper triangle of the matrix
+            // store the count in the upper triangle of the matrix
             temp[i][j - i - 1] = count;
             if (count > max_shared) max_shared = count;
         }
     }
 
-    // Create the final shared variant matrix
-    // Each off-diagonal element is max_shared - shared_count, and diagonal is Inf.
+    // create the final shared variant matrix
+    // each off-diagonal element is max_shared - shared_count, and diagonal is Inf.
     NumericMatrix shared_mat(n_isolates, n_isolates);
     for (int i = 0; i < n_isolates; i++) {
         for (int j = i; j < n_isolates; j++) {
@@ -71,14 +71,14 @@ NumericMatrix computeSharedMatrix(CharacterMatrix dna_character_matrix, int out_
                 shared_mat(i, j) = R_PosInf;
             } else {
                 int val = max_shared - temp[i][j - i - 1];
-                // Fill in the matrix symmetrically
+                // fill in the matrix symmetrically
                 shared_mat(i, j) = val;
                 shared_mat(j, i) = val;
             }
         }
     }
 
-    // Return the shared variant matrix
+    // return the shared variant matrix
     return shared_mat;
 }
 
@@ -96,7 +96,7 @@ std::vector<int> computeDefiningVariants(CharacterMatrix dna_character_matrix, C
     int n_cols = dna_character_matrix.ncol();
     int n_subtrees = subtrees.size();
 
-    // Pre-convert the dna_character_matrix matrix into a 2D array of chars
+    // pre-convert the dna_character_matrix matrix into a 2D array of chars
     Array2D<char> aln(n_isolates, n_cols);
     for (int j = 0; j < n_cols; j++) {
         for (int i = 0; i < n_isolates; i++) {
@@ -104,13 +104,13 @@ std::vector<int> computeDefiningVariants(CharacterMatrix dna_character_matrix, C
         }
     }
 
-    // Precompute mapping from isolate names to indices (0-based)
+    // precompute mapping from isolate names to indices (0-based)
     std::unordered_map<std::string, int> isolate_index_map;
     for (int i = 0; i < n_isolates; i++) {
         isolate_index_map[as<std::string>(isolate_names[i])] = i;
     }
 
-    // Define a getter function for indices from the map
+    // define a getter function for indices from the map
     auto get_index = [&](const std::string &tip) -> int {
         auto it = isolate_index_map.find(tip);
         try {
@@ -121,18 +121,18 @@ std::vector<int> computeDefiningVariants(CharacterMatrix dna_character_matrix, C
         }
     };
 
-    // Vector to store the number of defining variants for each subtree
+    // vector to store the number of defining variants for each subtree
     std::vector<int> defining_variants(n_subtrees);
 
-    // Iterate over each subtree
+    // iterate over each subtree
     for (int s = 0; s < n_subtrees; s++) {
-        // Current subtree
+        // current subtree
         List subtree = subtrees[s];
         // Get all tip labels from the subtree
         CharacterVector subtree_tip_labels = subtree["tip.label"];
         int n_subtree_tips = subtree_tip_labels.size();
 
-        // Compute subtree indices
+        // compute subtree indices
         std::vector<int> subtree_indices;
         std::vector<bool> in_subtree(n_isolates, false);
         subtree_indices.reserve(n_subtree_tips);
@@ -142,20 +142,20 @@ std::vector<int> computeDefiningVariants(CharacterMatrix dna_character_matrix, C
             subtree_indices.push_back(index);
             in_subtree[index] = true;
         }
-        // Get the indices of isolates not in the subtree
+        // get the indices of isolates not in the subtree
         std::vector<int> outside_indices;
         outside_indices.reserve(n_isolates - subtree_indices.size());
         for (int i = 0; i < n_isolates; i++) {
             if (!in_subtree[i]) outside_indices.push_back(i);
         }
 
-        // Initialize the defining variant count for this subtree
+        // initialize the defining variant count for this subtree
         int dvcount = 0;
-        // Iterate over each column in the alignment
+        // iterate over each column in the alignment
         for (int j = 0; j < n_cols; j++) {
-            // Check that all subtree isolates have the same base at this column
+            // check that all subtree isolates have the same base at this column
             char first_base = aln[subtree_indices[0]][j];
-            if (first_base == '-' || first_base == 'n') continue;  // Early exit for invalid bases
+            if (first_base == '-' || first_base == 'n') continue;  // early exit for invalid bases
             bool same_in_subtree = true;
             for (int idx: subtree_indices) {
                 if (aln[idx][j] != first_base) {
@@ -165,8 +165,8 @@ std::vector<int> computeDefiningVariants(CharacterMatrix dna_character_matrix, C
             }
             if (!same_in_subtree) continue; // early continue if bases differ
 
-            // This is an alternative to avoid having to use a boolean set – bitwise operations are faster
-            // We use a 128-bit mask to track which bases are seen and assume the bases are standard ASCII characters
+            // this is an alternative to avoid having to use a boolean set – bitwise operations are faster
+            // we use a 128-bit mask to track which bases are seen and assume the bases are standard ASCII characters
             uint128_t seen = 0;
             for (int idx: outside_indices) {
                 char base = aln[idx][j];
@@ -174,22 +174,22 @@ std::vector<int> computeDefiningVariants(CharacterMatrix dna_character_matrix, C
                 int ascii_code = static_cast<int>(base);
                 seen |= ((uint128_t)1 << ascii_code); // mark the base as seen
             }
-            // Count unique bases by splitting the 128-bit integer into two 64-bit halves
+            // count unique bases by splitting the 128-bit integer into two 64-bit halves
             // and tallying total bits set
             uint64_t low = (uint64_t) seen;
             uint64_t high = (uint64_t) (seen >> 64);
             int unique_count = __builtin_popcountll(low) + __builtin_popcountll(high);
 
-            // Condition: outside must have at least one unique base (ignoring 'n')
+            // condition: outside must have at least one unique base (ignoring 'n')
             // and the bit corresponding to the first base must not be set
             if (unique_count >= 1 && !((seen >> static_cast<int>(first_base)) & 1)) {
                 dvcount++;
             }
         }
-        // Store the count of defining variants for this subtree
+        // store the count of defining variants for this subtree
         defining_variants[s] = dvcount;
     }
 
-    // Return the vector of defining variant counts
+    // return the vector of defining variant counts
     return defining_variants;
 }
