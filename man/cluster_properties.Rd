@@ -24,7 +24,7 @@ columns are patient IDs).}
 (names must be sequence IDs, values must be patient IDs).}
 
 \item{ip_pt_seqs}{A character vector of sequence IDs corresponding to patients
-who tested positive on admission (\"intake positive\").}
+who tested positive on admission ("intake positive").}
 
 \item{ip_seqs}{A character vector of sequence IDs presumed to be imported from
 outside (a subset of \code{ip_pt_seqs} or similar).}

@@ -180,8 +180,8 @@ intra_cluster_genetic_var_analysis <- function(clusters, dna_aln, var_pos) {
 #' @return Vector with basic cluster count properties
 #' @keywords internal
 compute_basic_cluster_counts <- function(seqs, seq2pt, ip_seqs, ip_pt_seqs, dates, pt_trace) {
-    # integer converted trace mat dates (row names are strings by default)
-    trace_dates <- as.integer(row.names(pt_trace))
+    # integer converted trace mat dates (column names are strings by default)
+    trace_dates <- as.integer(colnames(pt_trace))
 
     # initialize output vector
     basic_counts <- numeric(4)
@@ -271,7 +271,7 @@ compute_cluster_duration_metrics <- function(seqs, seq2pt, dates) {
         },
         numeric(1)
     )
-    earliest_pos_by_pt <- sort(earliest_pos_by_pt)
+    earliest_pos_by_pt <- sort(setNames(earliest_pos_by_pt, unique(seq2pt[seqs])))
 
     duration_stats <- numeric(4)
     names(duration_stats) <- c(
@@ -334,7 +334,7 @@ compute_cluster_duration_metrics <- function(seqs, seq2pt, dates) {
 #' @keywords internal
 analyze_convert_patients <- function(seqs, seq2pt, ip_pt_seqs, dates, pt_trace) {
     # integer converted trace mat dates
-    trace_dates <- as.integer(row.names(pt_trace))
+    trace_dates <- as.integer(colnames(pt_trace))
 
     # number of converts: patients who are not in ip_pt_seqs
     num_converts <- length(unique(seq2pt[seqs[!(seqs %in% ip_pt_seqs)]]))
@@ -352,7 +352,7 @@ analyze_convert_patients <- function(seqs, seq2pt, ip_pt_seqs, dates, pt_trace) 
 
     # if we have at least one convert in the cluster:
     if (num_converts > 0) {
-        # for each convert patient, find the earliest date in 'dates' for the cluster
+        # for each convert patient, find the earliest date in "dates" for the cluster
         convert_pt_ids <- unique(seq2pt[seqs[!(seqs %in% ip_pt_seqs)]])
         convert_pos <- vapply(
             convert_pt_ids,
@@ -371,7 +371,7 @@ analyze_convert_patients <- function(seqs, seq2pt, ip_pt_seqs, dates, pt_trace) 
         conversion_day_indices <- vapply(
             convert_pt_ids,
             function(pt_id) {
-                positive_days <- which(pt_trace[, pt_id] == 1.5)
+                positive_days <- which(pt_trace[as.character(pt_id), ] == 1.5)
                 if (length(positive_days) > 0) {
                     min(positive_days)
                 } else {
@@ -383,14 +383,13 @@ analyze_convert_patients <- function(seqs, seq2pt, ip_pt_seqs, dates, pt_trace) 
         conversion_day_indices[is.infinite(conversion_day_indices)] <- NA
 
         conversion_day <- trace_dates[conversion_day_indices]
-        conversion_day[is.na(conversion_day)] <- trace_dates[nrow(pt_trace)]
+        conversion_day[is.na(conversion_day)] <- trace_dates[ncol(pt_trace)]
 
-        # distinguish 'initial' converts from 'later' converts based on 7-day threshold
+        # distinguish "initial" converts from "later" converts based on 7-day threshold
         day_diff <- convert_pos - conversion_day
         initial_mask <- day_diff <= 7
 
         initial_convert_pts <- convert_pt_ids[initial_mask]
-        convert_pts <- convert_pt_ids
 
         # mark those that fail the 7-day threshold as Inf
         convert_pos[day_diff > 7] <- Inf
@@ -399,9 +398,9 @@ analyze_convert_patients <- function(seqs, seq2pt, ip_pt_seqs, dates, pt_trace) 
         convert_data$convert_pos <- convert_pos
         convert_data$conversion_day <- conversion_day
         convert_data$initial_convert_pts <- initial_convert_pts
-        convert_data$convert_pts <- convert_pts
+        convert_data$convert_pts <- convert_pt_ids
         convert_data$num_initial_converts <- sum(initial_mask)
-        convert_data$num_later_converts <- sum(!initial_mask)
+        convert_data$num_later_converts <- sum(day_diff > 7)
     }
 
     convert_data
@@ -412,6 +411,7 @@ analyze_convert_patients <- function(seqs, seq2pt, ip_pt_seqs, dates, pt_trace) 
 #' @description
 #' Analyze conversions relative to index patient timing
 #'
+#' @param basic_counts Output from compute_basic_cluster_counts()
 #' @param convert_data Output from analyze_convert_patients()
 #' @param seqs Vector of sequence IDs in the cluster
 #' @param seq2pt Named vector mapping sequence IDs to patient IDs
@@ -423,6 +423,7 @@ analyze_convert_patients <- function(seqs, seq2pt, ip_pt_seqs, dates, pt_trace) 
 #' @return Vector with conversion timing properties
 #' @keywords internal
 analyze_conversions_after_index <- function(
+    basic_counts,
     convert_data,
     seqs,
     seq2pt,
@@ -432,7 +433,7 @@ analyze_conversions_after_index <- function(
     pt_trace
 ) {
     # integer converted trace mat dates
-    trace_dates <- as.integer(row.names(pt_trace))
+    trace_dates <- as.integer(colnames(pt_trace))
 
     conversion_stats <- numeric(6)
     names(conversion_stats) <- c(
@@ -445,13 +446,13 @@ analyze_conversions_after_index <- function(
     )
 
     # count how many converts happen after the earliest known index's date
-    if (length(unique(seq2pt[seqs[seqs %in% ip_seqs]])) > 0 && convert_data$num_converts > 0) {
+    if (basic_counts["Number_of_start_indexes"] > 0 && convert_data$num_converts > 0) {
         # the earliest index date among ip_seqs in this cluster
         ip_seqs_in_cluster <- ip_seqs[ip_seqs %in% seqs]
-        if (length(ip_seqs_in_cluster) > 0) {
-            index_pos <- min(dates[ip_seqs_in_cluster])
+        index_pos <- if (length(ip_seqs_in_cluster) > 0) {
+            min(dates[as.character(ip_seqs_in_cluster)])
         } else {
-            index_pos <- Inf
+            Inf
         }
 
         # number of all converts that appear on or after that index date
@@ -466,8 +467,8 @@ analyze_conversions_after_index <- function(
         valid_idx <- valid_idx[valid_idx >= index_pos]
 
         if (length(valid_idx) > 0) {
-            conversion_stats["Time_from_index_to_first_convert"] <- min(valid_idx) - index_pos
-            conversion_stats["Time_from_index_to_last_convert"] <- max(valid_idx) - index_pos
+            conversion_stats["Time_from_index_to_first_convert"] <- min(valid_idx - index_pos)
+            conversion_stats["Time_from_index_to_last_convert"] <- max(valid_idx - index_pos)
         } else {
             conversion_stats["Time_from_index_to_first_convert"] <- NA
             conversion_stats["Time_from_index_to_last_convert"] <- NA
@@ -485,7 +486,7 @@ analyze_conversions_after_index <- function(
         index_pos_indices <- vapply(
             unique(seq2pt[seqs[seqs %in% ip_pt_seqs]]),
             function(pt_id) {
-                positive_days <- which(pt_trace[, pt_id] == 1.5)
+                positive_days <- which(pt_trace[as.character(pt_id), ] == 1.5)
                 if (length(positive_days) > 0) {
                     min(positive_days)
                 } else {
@@ -509,7 +510,8 @@ analyze_conversions_after_index <- function(
             )
             conversion_stats["Number_of_initial_converts_after_index_seq"] <-
                 sum(
-                    convert_data$convert_pos >= earliest_index_pos & convert_data$convert_pos != Inf
+                    convert_data$convert_pos >= earliest_index_pos &
+                        convert_data$convert_pos != Inf
                 )
         } else {
             conversion_stats["Number_of_converts_after_index_seq"] <- 0
@@ -547,17 +549,18 @@ analyze_location_overlaps <- function(
     floor_trace = NULL,
     room_trace = NULL
 ) {
-    # helper function: check if there's an overlap in location
+    # check if there's an overlap in location
     pt_overlap <- function(pt_donor, pt_recipient, first_pos_vec, trace) {
-        donor_date <- first_pos_vec[pt_donor]
-        recipient_date <- first_pos_vec[pt_recipient]
+        donor_date <- first_pos_vec[as.character(pt_donor)]
+        recipient_date <- first_pos_vec[as.character(pt_recipient)]
         # if the donor's earliest date is <= the recipient's earliest date:
-        if (first_pos_vec[pt_donor] <= first_pos_vec[pt_recipient]) {
+        if (donor_date <= recipient_date) {
             time_range <- seq(from = donor_date, to = recipient_date, by = 1)
             # check if there's a day where pt_donor and pt_recipient share a location
             any(
-                floor(trace[time_range, pt_donor]) == floor(trace[time_range, pt_recipient]) &
-                    (floor(trace[time_range, pt_recipient]) > 0)
+                floor(trace[as.character(pt_donor), time_range]) ==
+                    floor(trace[as.character(pt_recipient), time_range]) &
+                    (floor(trace[as.character(pt_recipient), time_range]) > 0)
             )
         } else {
             FALSE
@@ -620,7 +623,12 @@ analyze_location_overlaps <- function(
             !any(is.infinite(earliest_pos_by_pt))
     ) {
         overlap_stats["Number_of_initial_converts_with_source"] <-
-            sum(vapply(convert_data$initial_convert_pts, find_source, trace = pt_trace, logical(1)))
+            sum(vapply(
+                convert_data$initial_convert_pts,
+                find_source,
+                trace = pt_trace,
+                logical(1)
+            ))
 
         if (!is.null(floor_trace)) {
             overlap_stats["Number_of_initial_converts_with_floor_source"] <-
@@ -664,7 +672,7 @@ analyze_location_overlaps <- function(
 #' @param seq2pt A named character vector mapping sequence IDs to patient IDs
 #'               (names must be sequence IDs, values must be patient IDs).
 #' @param ip_pt_seqs A character vector of sequence IDs corresponding to patients
-#'                   who tested positive on admission (\"intake positive\").
+#'                   who tested positive on admission ("intake positive").
 #' @param ip_seqs A character vector of sequence IDs presumed to be imported from
 #'                outside (a subset of \code{ip_pt_seqs} or similar).
 #' @param snp_dist A matrix of SNP distances between isolates (row and column
@@ -773,6 +781,7 @@ cluster_properties <- function(
 
     # 5. conversions after an index patient is in the cluster
     conversion_stats <- analyze_conversions_after_index(
+        basic_counts,
         convert_data,
         seqs,
         seq2pt,

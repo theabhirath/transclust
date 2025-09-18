@@ -5,6 +5,7 @@
 \title{Analyze Conversions After Index}
 \usage{
 analyze_conversions_after_index(
+  basic_counts,
   convert_data,
   seqs,
   seq2pt,
@@ -15,6 +16,8 @@ analyze_conversions_after_index(
 )
 }
 \arguments{
+\item{basic_counts}{Output from compute_basic_cluster_counts()}
+
 \item{convert_data}{Output from analyze_convert_patients()}
 
 \item{seqs}{Vector of sequence IDs in the cluster}
