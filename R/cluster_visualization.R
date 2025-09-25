@@ -12,7 +12,7 @@
 #'
 #' @return A `ggtree` object with clusters visualized on the tree.
 #'
-#' @importFrom ggtree ggtree geom_tippoint geom_tiplab
+#' @importFrom ggtree ggtree geom_tippoint geom_tiplab geom_rootedge scaleClade
 #' @importFrom hues iwanthue
 #' @importFrom rlang .data
 #' @importFrom dplyr left_join
@@ -20,6 +20,15 @@
 #' @importFrom stats setNames
 #' @export
 plot_clusters_phylo <- function(tree, clusters, seq2pt = NULL, patient_label = FALSE) {
+    parents <- unique(tree$edge[, 1])
+    children <- unique(tree$edge[, 2])
+    root_node <- setdiff(parents, children)
+    # reduce branch length of root node clade
+    # find max branch length
+    max_branch_length <- max(tree$edge.length)
+    # reduce branch length of root node clade to 50% of max branch length
+    tree$edge.length[tree$edge[, 1] == root_node] <- max_branch_length * 0.05
+
     # convert phylo object to ggtree object
     tree <- ggtree(tree)
 
@@ -36,7 +45,9 @@ plot_clusters_phylo <- function(tree, clusters, seq2pt = NULL, patient_label = F
     tree$data <- tree$data |> left_join(cluster_df, by = c("label" = "isolate"))
 
     # build the plot
-    p <- tree + geom_tippoint(aes(color = .data$clust_id), size = 2, alpha = 0.8)
+    p <- tree +
+        geom_tippoint(aes(color = .data$clust_id), size = 2, alpha = 0.8) +
+        geom_rootedge(rootedge = max_branch_length * 0.01)
 
     # add patient labels if requested
     if (!is.null(seq2pt) && patient_label) {

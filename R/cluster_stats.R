@@ -52,10 +52,10 @@ intra_cluster_genetic_var_analysis <- function(clusters, dna_aln, var_pos) {
     iter <- 1
     # loop over overall population (represented by -1) and each cluster
     for (cluster in c(-1, cluster_ids)) {
-        if (cluster == -1) {
-            seq_ids <- names(clusters)
+        seq_ids <- if (cluster == -1) {
+            names(clusters)
         } else {
-            seq_ids <- names(clusters)[clusters == cluster]
+            names(clusters)[clusters == cluster]
         }
 
         # subset the alignment for the current group

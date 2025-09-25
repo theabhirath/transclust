@@ -57,8 +57,10 @@ get_tn_clusters_sv_index <- function(dna_aln, snp_dist, ip_seqs, ip_pt_seqs, seq
     #   c. the base is not a gap ('-') or ambiguous ('n'),
     # and then we convert this similarity count to a distance-like measure.
     ####################################################################################
-    # compute out-group: the isolate with the maximum average SNP distance
-    out_group <- which.max(rowMeans(snp_dist))
+    # get root of the tree, which is the out-group
+    parents <- unique(tree$edge[, 1])
+    children <- unique(tree$edge[, 2])
+    out_group <- setdiff(parents, children)
     # convert the DNA alignment object to a character matrix
     dna_char <- as.character(dna_aln)
     # call the Rcpp function to compute the shared variant matrix
