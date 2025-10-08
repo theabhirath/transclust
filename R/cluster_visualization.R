@@ -13,13 +13,35 @@
 #' @return A `ggtree` object with clusters visualized on the tree.
 #'
 #' @importFrom ggtree ggtree geom_tippoint geom_facet geom_tiplab geom_rootedge scaleClade
+#' @importFrom ggtree ggtree geom_tippoint geom_facet geom_tiplab geom_rootedge scaleClade
 #' @importFrom hues iwanthue
 #' @importFrom rlang .data
 #' @importFrom dplyr left_join
 #' @importFrom ggplot2 aes scale_color_manual theme element_text unit guides guide_legend
 #' @importFrom stats setNames
 #' @importFrom ape dist.dna as.DNAbin
+#' @importFrom ape dist.dna as.DNAbin
 #' @export
+plot_clusters_phylo <- function(
+    tree,
+    clusters,
+    seq2pt = NULL,
+    dna_var = NULL,
+    patient_label = FALSE,
+    convert_status = FALSE,
+    ip_seqs = NULL,
+    dates = NULL,
+    pt_trace = NULL
+) {
+    # ensure that epi data is provided if convert status is TRUE
+    if (convert_status) {
+        if (is.null(pt_trace) || is.null(ip_seqs) || is.null(dates) || is.null(seq2pt)) {
+            stop(paste(
+                "pt_trace, ip_seqs, dates, and seq2pt must be provided if convert_status",
+                "is TRUE, since convert status requires epi data to be provided."
+            ))
+        }
+    }
 plot_clusters_phylo <- function(
     tree,
     clusters,
@@ -44,6 +66,7 @@ plot_clusters_phylo <- function(
     children <- unique(tree$edge[, 2])
     root_node <- setdiff(parents, children)
 
+
     # find max branch length
     max_branch_length <- max(tree$edge.length)
     # reduce branch length of root node clade to 50% of max branch length
@@ -61,6 +84,34 @@ plot_clusters_phylo <- function(
         levels(cluster_df$clust_id)
     )
 
+    # identify convert isolates
+    if (convert_status) {
+        is_convert_isolate <- sapply(names(clusters), function(id) {
+            if (is.na(seq2pt[id])) {
+                print(paste0("Sequence ", id, " has no patient label."))
+                return(FALSE)
+            }
+            row_vals <- pt_trace[as.character(seq2pt[id]), ]
+            i_negative <- which(row_vals %in% c(1.25))
+            i_positive <- which(row_vals %in% c(1.5, 1.75))
+            if (length(i_negative) == 0 || length(i_positive) == 0) {
+                return(FALSE)
+            }
+            is_convert <- min(i_negative) < min(i_positive)
+            trace_date <- as.numeric(colnames(pt_trace)[min(i_positive)])
+            iso_date <- dates[id]
+            (iso_date - trace_date < 7) && is_convert && !(id %in% ip_seqs)
+        })
+        # index isolates are those which are in ip_seqs
+        is_index_isolate <- names(clusters) %in% ip_seqs
+        # add convert class information to cluster_df
+        convert_class <- rep("Secondary convert", nrow(cluster_df))
+        convert_class[is_index_isolate] <- "Index patient"
+        convert_class[!is_index_isolate & is_convert_isolate] <- "Convert patient"
+        cluster_df$convert_class <- convert_class
+    }
+
+    # add cluster information to the tree
     # identify convert isolates
     if (convert_status) {
         is_convert_isolate <- sapply(names(clusters), function(id) {
