@@ -213,10 +213,10 @@ get_tn_clusters_sv_index <- function(dna_aln, snp_dist, ip_seqs, ip_pt_seqs, seq
                 },
                 numeric(1)
             )
-            # If no valid subtrees are found, default to cluster 1
+            # If no valid subtrees are found, default to cluster 0
             # Otherwise, assign the cluster based on the subtree with the highest score
             if (length(st_scores) == 0 || max(st_scores) <= 0) {
-                1
+                0
             } else {
                 valid_indices[which.max(st_scores)]
             }

@@ -88,7 +88,7 @@ remove_singleton_clusters <- function(clusters) {
 #' @returns A numeric vector of remapped cluster assignments.
 #'
 #' @keywords internal
-remap_cluster_values <- function(x, special_val = 1) {
+remap_cluster_values <- function(x, special_val = 0) {
     lookup <- new.env(hash = TRUE, parent = emptyenv())
     next_id <- 1
     out <- integer(length(x))
