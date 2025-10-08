@@ -1,0 +1,45 @@
+library(ape)
+library(ggplot2)
+
+load("/Users/theabhirath/Code/transclust-preprocess/output/LTACH_C/combined_data.RData")
+
+dna_aln <- read.dna(
+    "/Users/theabhirath/Downloads/LTACH_C_filtered_aln/Rush_ST258.filtered_polymorphic_sites.fasta",
+    format = "fasta"
+)
+dna_var <- dna_aln
+
+# only keep those sequences that are in the trace matrix
+dna_var <- dna_var[dna_pt_labels[labels(dna_var)] %in% row.names(trace_mat), ]
+# get all variable positions in the alignment
+var_pos <- apply(dna_var, 2, function(x) sum(x == x[1]) < nrow(dna_var))
+# only keep variable positions
+dna_var <- dna_var[, var_pos]
+# get pairwise distances core
+snp_dist <- get_snp_dist_matrix(dna_var)
+# get the phylogenetic tree
+tree <- get_phylo_tree(dna_var, snp_dist, "pars")
+# return the clusters
+clusters <- get_tn_clusters_sv_index(
+    dna_var,
+    snp_dist,
+    ip_seqs_3days,
+    ip_seqs,
+    dna_pt_labels,
+    dates,
+    tree
+)
+
+perm_props <- cluster_property_perm_test(
+    clusters,
+    trace_mat,
+    dna_pt_labels,
+    ip_seqs,
+    ip_seqs_3days,
+    dates,
+    snp_dist,
+    nperm = 1000,
+    floor_trace = floor_mat,
+    room_trace = room_mat,
+    num_cores = 4
+)
