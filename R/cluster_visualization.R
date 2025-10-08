@@ -349,32 +349,46 @@ plot_st_patient_trace <- function(
     idx_keep_labels <- seq(1, length(col_lab), 14)
     col_lab[setdiff(seq_along(col_lab), idx_keep_labels)] <- ""
 
-    # set up breaks
-    custom_breaks <- sort(unique(as.numeric(as.matrix(trace_sub))))
+    # set up full, fixed breaks to ensure consistent colors/legend
+    observed_breaks <- sort(unique(as.numeric(as.matrix(trace_sub))))
+    base_special_breaks <- c(0, 1, 1.25, 1.5)
+    custom_breaks <- sort(unique(c(base_special_breaks, observed_breaks)))
 
-    # calculate number of colors needed (excluding white for 0)
-    n_colors <- length(custom_breaks) - 1
+    # build a named color map aligned to breaks, guaranteeing surveillance colors
+    color_map <- setNames(rep(NA_character_, length(custom_breaks)), as.character(custom_breaks))
+    # mandatory mappings
+    color_map["0"] <- "white"
+    color_map["1"] <- if (length(trace_colors) >= 1) trace_colors[1] else "grey90"
+    color_map["1.25"] <- if (length(surv_colors) >= 1) surv_colors[1] else "darkblue"
+    color_map["1.5"] <- if (length(surv_colors) >= 2) surv_colors[2] else "red"
 
-    # if n_colors > 13, recycle colors
-    if (n_colors > length(trace_colors)) {
-        trace_colors <- rep(trace_colors, length.out = n_colors)
-        warning(
-            paste0(
-                "More than ",
-                length(trace_colors),
-                " colors needed for trace. Consider increasing the ",
-                "number of colors in the palette."
-            )
-        )
-    }
-
-    # create final color vector with white for 0 value
-    trace_custom_colors <- c(
-        "white",
-        trace_colors[1],
-        surv_colors,
+    # assign remaining breaks (excluding the specials) using the remaining trace palette
+    remaining_breaks <- setdiff(custom_breaks, c(0, 1, 1.25, 1.5))
+    remaining_palette <- if (length(trace_colors) >= 2) {
         trace_colors[2:length(trace_colors)]
-    )
+    } else {
+        character(0)
+    }
+    if (length(remaining_breaks) > 0) {
+        if (length(remaining_palette) == 0) {
+            # fall back to recycling the first color if no remainder provided
+            remaining_palette <- rep(
+                if (length(trace_colors) >= 1) trace_colors[1] else "grey80",
+                length(remaining_breaks)
+            )
+        } else if (length(remaining_breaks) > length(remaining_palette)) {
+            warning(
+                paste0(
+                    "More than ",
+                    length(remaining_palette),
+                    " non-surveillance breaks detected; recycling colors."
+                )
+            )
+            remaining_palette <- rep(remaining_palette, length.out = length(remaining_breaks))
+        }
+        names(remaining_palette) <- as.character(remaining_breaks)
+        color_map[names(remaining_palette)] <- remaining_palette
+    }
 
     tree_sub <- keep.tip(tree, keep_rows)
     trace_df <- as.data.frame(trace_sub)
@@ -429,7 +443,7 @@ plot_st_patient_trace <- function(
         # Trace annotation
         scale_fill_manual(
             name = "Trace",
-            values = trace_custom_colors,
+            values = color_map,
             breaks = custom_breaks,
             labels = custom_breaks,
             na.value = "white",
@@ -441,7 +455,7 @@ plot_st_patient_trace <- function(
             data = annotation_row,
             geom = geom_tile,
             mapping = aes(y = id, x = 1, fill = Cluster),
-            offset = -0.2,
+            offset = -0.22,
             width = 1
         ) +
         scale_fill_manual(
@@ -457,7 +471,7 @@ plot_st_patient_trace <- function(
             data = annotation_row,
             geom = geom_tile,
             mapping = aes(y = id, x = 1, fill = Convert),
-            offset = -0.19,
+            offset = -0.17,
             width = 1
         ) +
         scale_fill_manual(
@@ -473,7 +487,7 @@ plot_st_patient_trace <- function(
             data = annotation_row,
             geom = geom_tile,
             mapping = aes(y = id, x = 1, fill = Intra_pt_dist),
-            offset = -0.18,
+            offset = -0.16,
             width = 1
         ) +
         scale_fill_gradientn(name = "Intra_pt_dist", colors = ann_colors$Intra_pt_dist) +
@@ -589,31 +603,51 @@ plot_cluster_patient_trace <- function(
     idx_keep_labels <- seq(1, length(col_lab), 14)
     col_lab[setdiff(seq_along(col_lab), idx_keep_labels)] <- ""
 
-    # set up breaks
-    custom_breaks <- sort(unique(as.numeric(as.matrix(trace_sub))))
+    # set up full, fixed breaks to ensure consistent colors/legend
+    observed_breaks <- sort(unique(as.numeric(as.matrix(trace_sub))))
+    base_special_breaks <- c(0, 1, 1.25, 1.5, 1.75)
+    custom_breaks <- sort(unique(c(base_special_breaks, observed_breaks)))
 
-    # calculate number of colors needed (excluding white for 0)
-    n_colors <- length(custom_breaks) - 1
-
-    # if n_colors > length(trace_colors), error out
-    if (n_colors > length(trace_colors)) {
-        warning(
-            paste0(
-                "More than ",
-                length(trace_colors),
-                " colors needed for trace. Consider increasing the ",
-                "number of colors in the palette."
-            )
-        )
+    # build a named color map aligned to breaks, guaranteeing surveillance colors
+    color_map <- setNames(rep(NA_character_, length(custom_breaks)), as.character(custom_breaks))
+    # mandatory mappings
+    color_map["0"] <- "white"
+    color_map["1"] <- if (length(trace_colors) >= 1) trace_colors[1] else "grey90"
+    color_map["1.25"] <- if (length(surv_colors) >= 1) surv_colors[1] else "darkblue"
+    color_map["1.5"] <- if (length(surv_colors) >= 2) surv_colors[2] else "red"
+    if (length(surv_colors) >= 3) {
+        color_map["1.75"] <- surv_colors[3]
+    } else {
+        # default for isolate-day marker if not provided
+        color_map["1.75"] <- "gold"
     }
 
-    # create final color vector with white for 0 value
-    trace_custom_colors <- c(
-        "white",
-        trace_colors[1],
-        surv_colors,
+    # assign remaining breaks (excluding the specials) using the remaining trace palette
+    remaining_breaks <- setdiff(custom_breaks, c(0, 1, 1.25, 1.5, 1.75))
+    remaining_palette <- if (length(trace_colors) >= 2) {
         trace_colors[2:length(trace_colors)]
-    )
+    } else {
+        character(0)
+    }
+    if (length(remaining_breaks) > 0) {
+        if (length(remaining_palette) == 0) {
+            remaining_palette <- rep(
+                if (length(trace_colors) >= 1) trace_colors[1] else "grey80",
+                length(remaining_breaks)
+            )
+        } else if (length(remaining_breaks) > length(remaining_palette)) {
+            warning(
+                paste0(
+                    "More than ",
+                    length(remaining_palette),
+                    " non-surveillance breaks detected; recycling colors."
+                )
+            )
+            remaining_palette <- rep(remaining_palette, length.out = length(remaining_breaks))
+        }
+        names(remaining_palette) <- as.character(remaining_breaks)
+        color_map[names(remaining_palette)] <- remaining_palette
+    }
 
     tree_sub <- keep.tip(tree, keep_rows)
     trace_df <- as.data.frame(trace_sub)
@@ -665,7 +699,7 @@ plot_cluster_patient_trace <- function(
         # Trace annotation
         scale_fill_manual(
             name = "Trace",
-            values = trace_custom_colors,
+            values = color_map,
             breaks = custom_breaks,
             labels = custom_breaks,
             na.value = "white",
