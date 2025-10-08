@@ -4,7 +4,17 @@
 \alias{plot_clusters_phylo}
 \title{Maps clusters onto a phylogenetic tree and visualizes them}
 \usage{
-plot_clusters_phylo(tree, clusters, seq2pt = NULL, patient_label = FALSE)
+plot_clusters_phylo(
+  tree,
+  clusters,
+  seq2pt = NULL,
+  dna_var = NULL,
+  patient_label = FALSE,
+  convert_status = FALSE,
+  ip_seqs = NULL,
+  dates = NULL,
+  pt_trace = NULL
+)
 }
 \arguments{
 \item{tree}{A phylogenetic tree object of class \code{phylo}.}
