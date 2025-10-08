@@ -57,8 +57,10 @@ get_tn_clusters_sv_index <- function(dna_aln, snp_dist, ip_seqs, ip_pt_seqs, seq
     #   c. the base is not a gap ('-') or ambiguous ('n'),
     # and then we convert this similarity count to a distance-like measure.
     ####################################################################################
-    # compute out-group: the isolate with the maximum average SNP distance
-    out_group <- which.max(rowMeans(snp_dist))
+    # get root of the tree, which is the out-group
+    parents <- unique(tree$edge[, 1])
+    children <- unique(tree$edge[, 2])
+    out_group <- setdiff(parents, children)
     # convert the DNA alignment object to a character matrix
     dna_char <- as.character(dna_aln)
     # call the Rcpp function to compute the shared variant matrix
@@ -115,7 +117,7 @@ get_tn_clusters_sv_index <- function(dna_aln, snp_dist, ip_seqs, ip_pt_seqs, seq
         ip_rep <- vapply(
             ip_patients,
             function(pt) {
-                seqs <- intersect(patient_seq_map[[toString(pt)]], tip_labels)
+                seqs <- intersect(patient_seq_map[[as.character(pt)]], tip_labels)
                 other <- setdiff(tip_labels, seqs)
                 # if there are no other sequences, return the first one
                 # otherwise, find the sequence with the minimum shared variant distance to all other sequences
@@ -143,10 +145,12 @@ get_tn_clusters_sv_index <- function(dna_aln, snp_dist, ip_seqs, ip_pt_seqs, seq
         # compute cluster score if there are defining variants and index isolates are not overly
         # distant from the representative sequence (i.e. their shared variant counts are nearly identical)
         score <- if (sub_trees_dv[st_i] > 0 && length(unique(shared_counts_rep)) <= 1) {
+            # all patients that are not represented in this subtree by an intake-positive
+            patients_non_rep <- setdiff(unique(seq2pt), seq2pt[unlist(ip_rep)])
             # reward intake-positives that could have started a cluster
             ip_convert_seq_count <- length(setdiff(
                 tip_labels,
-                ip_pt_seqs[seq2pt[ip_pt_seqs] %in% setdiff(unique(seq2pt), seq2pt[unlist(ip_rep)])]
+                ip_pt_seqs[seq2pt[ip_pt_seqs] %in% patients_non_rep]
             ))
             # penalize intake-positives that could not have started a cluster
             ip_pt_count <- sum(tip_labels %in% ip_pt_seqs) / 1e6
