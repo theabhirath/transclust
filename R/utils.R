@@ -112,3 +112,18 @@ remap_cluster_values <- function(x, special_val = 1) {
     names(out) <- names(x) # keep original names (if any)
     out
 }
+
+#' Remove a node from a vector of cluster assignments.
+#'
+#' @description
+#' This function removes a node from a vector of cluster assignments.
+#'
+#' @param clusters A numeric vector of cluster assignments.
+#' @param out_group The node to remove.
+#'
+#' @returns A numeric vector of cluster assignments with the node removed.
+#'
+#' @keywords internal
+remove_node_from_clusters <- function(clusters, node) {
+    clusters[!(names(clusters) == node)]
+}
