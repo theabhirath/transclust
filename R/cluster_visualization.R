@@ -202,6 +202,18 @@ plot_clusters_phylo <- function(
         # override to 2 where the isolate base is unknown (do not consider outgroup unknowns)
         is_unknown_isolate <- dna_mat %in% unknowns
         variant_code_mat[is_unknown_isolate] <- 2L
+        # filter positions: if all variant, or all unknown, or all non-variant, drop
+        # check this for all non-reference genomes
+        keep_cols <- apply(variant_code_mat[-1, ], 2, function(col_vals) {
+            if (all(col_vals %in% unknowns)) {
+                FALSE
+            } else if (all(col_vals == col_vals[1])) {
+                FALSE
+            } else {
+                TRUE
+            }
+        })
+        variant_code_mat <- variant_code_mat[, keep_cols]
         dna_var_reref <- as.data.frame(variant_code_mat)
 
         # build long-format data with labels matching tree tip labels
