@@ -12,18 +12,38 @@
 #'
 #' @return A `ggtree` object with clusters visualized on the tree.
 #'
-#' @importFrom ggtree ggtree geom_tippoint geom_tiplab geom_rootedge scaleClade
+#' @importFrom ggtree ggtree geom_tippoint geom_facet geom_tiplab geom_rootedge scaleClade
 #' @importFrom hues iwanthue
 #' @importFrom rlang .data
 #' @importFrom dplyr left_join
 #' @importFrom ggplot2 aes scale_color_manual theme element_text unit guides guide_legend
 #' @importFrom stats setNames
+#' @importFrom ape dist.dna as.DNAbin
 #' @export
-plot_clusters_phylo <- function(tree, clusters, seq2pt = NULL, patient_label = FALSE) {
+plot_clusters_phylo <- function(
+    tree,
+    clusters,
+    seq2pt = NULL,
+    dna_var = NULL,
+    patient_label = FALSE,
+    convert_status = FALSE,
+    ip_seqs = NULL,
+    dates = NULL,
+    pt_trace = NULL
+) {
+    # ensure that epi data is provided if convert status is TRUE
+    if (convert_status) {
+        if (is.null(pt_trace) || is.null(ip_seqs) || is.null(dates) || is.null(seq2pt)) {
+            stop(paste(
+                "pt_trace, ip_seqs, dates, and seq2pt must be provided if convert_status",
+                "is TRUE, since convert status requires epi data to be provided."
+            ))
+        }
+    }
     parents <- unique(tree$edge[, 1])
     children <- unique(tree$edge[, 2])
     root_node <- setdiff(parents, children)
-    # reduce branch length of root node clade
+
     # find max branch length
     max_branch_length <- max(tree$edge.length)
     # reduce branch length of root node clade to 50% of max branch length
@@ -41,13 +61,187 @@ plot_clusters_phylo <- function(tree, clusters, seq2pt = NULL, patient_label = F
         levels(cluster_df$clust_id)
     )
 
-    # Add cluster information to the tree
+    # identify convert isolates
+    if (convert_status) {
+        is_convert_isolate <- sapply(names(clusters), function(id) {
+            if (is.na(seq2pt[id])) {
+                print(paste0("Sequence ", id, " has no patient label."))
+                return(FALSE)
+            }
+            row_vals <- pt_trace[as.character(seq2pt[id]), ]
+            i_negative <- which(row_vals %in% c(1.25))
+            i_positive <- which(row_vals %in% c(1.5, 1.75))
+            if (length(i_negative) == 0 || length(i_positive) == 0) {
+                return(FALSE)
+            }
+            is_convert <- min(i_negative) < min(i_positive)
+            trace_date <- as.numeric(colnames(pt_trace)[min(i_positive)])
+            iso_date <- dates[id]
+            (iso_date - trace_date < 7) && is_convert && !(id %in% ip_seqs)
+        })
+        # index isolates are those which are in ip_seqs
+        is_index_isolate <- names(clusters) %in% ip_seqs
+        # add convert class information to cluster_df
+        convert_class <- rep("Secondary convert", nrow(cluster_df))
+        convert_class[is_index_isolate] <- "Index patient"
+        convert_class[!is_index_isolate & is_convert_isolate] <- "Convert patient"
+        cluster_df$convert_class <- convert_class
+    }
+
+    # add cluster information to the tree
     tree$data <- tree$data |> left_join(cluster_df, by = c("label" = "isolate"))
 
     # build the plot
-    p <- tree +
-        geom_tippoint(aes(color = .data$clust_id), size = 2, alpha = 0.8) +
-        geom_rootedge(rootedge = max_branch_length * 0.01)
+    # if convert_status is true, use shape of nodes to indicate convert class
+    if (convert_status) {
+        p <- tree +
+            geom_tippoint(
+                aes(color = .data$clust_id, shape = .data$convert_class),
+                size = 2,
+                alpha = 0.8
+            ) +
+            geom_rootedge(rootedge = max_branch_length * 0.01)
+    }
+
+    # if dna_var is provided, plot the variants
+    if (!is.null(dna_var)) {
+        # coerce potential DNAbin/raw matrices to character for safe processing
+        dna_mat <- as.matrix(dna_var)
+        storage.mode(dna_mat) <- "character"
+        # ensure column names (position IDs) exist for consistent reordering
+        if (is.null(colnames(dna_mat))) {
+            colnames(dna_mat) <- paste0("Pos", seq_len(ncol(dna_mat)))
+        }
+        # hierarchical clustering of variant columns using DNA distance
+        # rows = positions, columns = samples for distance over positions
+        dna_for_clust <- t(dna_mat)
+        # ensure row names (position identifiers) mirror position column names
+        rownames(dna_for_clust) <- colnames(dna_mat)
+        # filter to informative positions, ignoring unknowns ('N' and '-')
+        unknowns <- c("-", "N", "n")
+        keep_rows <- apply(dna_for_clust, 1, function(row_vals) {
+            row_no_unknown <- row_vals[!(row_vals %in% unknowns)]
+            uniq <- unique(row_vals)
+            uniq_no_unknown <- setdiff(uniq, unknowns)
+            if (length(uniq_no_unknown) == 0) {
+                FALSE # all N/- → drop
+            } else if (length(uniq_no_unknown) == 1 && length(uniq) == 1) {
+                FALSE # all same → drop
+            } else if (sum(table(row_no_unknown) >= 2) < 2) {
+                FALSE # the column has at least two variants but minor variants only appeared once → drop
+            } else {
+                TRUE # informative site
+            }
+        })
+        dna_filtered <- dna_for_clust[keep_rows, , drop = FALSE]
+        if (nrow(dna_filtered) >= 2) {
+            clustered_pos_order <- tryCatch(
+                {
+                    dna_dist <- dist.dna(
+                        as.DNAbin(dna_filtered),
+                        pairwise.deletion = TRUE,
+                        model = "N"
+                    )
+                    hclust(dna_dist, method = "average")$order
+                },
+                error = function(e) {
+                    seq_len(nrow(dna_filtered))
+                }
+            )
+            ordered_pos_labels <- rownames(dna_filtered)[clustered_pos_order]
+            # reorder original columns to clustered order; append any dropped/filtered cols at the end
+            remaining_cols <- setdiff(colnames(dna_mat), ordered_pos_labels)
+            cols_ordered <- c(ordered_pos_labels, remaining_cols)
+            dna_mat <- dna_mat[, cols_ordered, drop = FALSE]
+        }
+        out_group <- 1
+        # calculate 0/1/2 variant codes relative to the specified outgroup row in dna_var
+        # 0: no variant, 1: variant, 2: isolate base unknown ("-","N","n")
+        out_bases <- dna_mat[out_group, , drop = TRUE]
+        # start with 0s
+        variant_code_mat <- matrix(
+            0L,
+            nrow = nrow(dna_mat),
+            ncol = ncol(dna_mat),
+            dimnames = list(rownames(dna_mat), colnames(dna_mat))
+        )
+        # mark variants as 1 where isolate base differs from outgroup base
+        diff_mat <- dna_mat !=
+            matrix(out_bases, nrow = nrow(dna_mat), ncol = ncol(dna_mat), byrow = TRUE)
+        variant_code_mat[diff_mat] <- 1L
+        # override to 2 where the isolate base is unknown (do not consider outgroup unknowns)
+        is_unknown_isolate <- dna_mat %in% unknowns
+        variant_code_mat[is_unknown_isolate] <- 2L
+        dna_var_reref <- as.data.frame(variant_code_mat)
+
+        # build long-format data with labels matching tree tip labels
+        row_labels <- if (!is.null(rownames(dna_var_reref))) {
+            rownames(dna_var_reref)
+        } else {
+            as.character(seq_len(nrow(dna_var_reref)))
+        }
+        col_labels <- colnames(dna_var_reref)
+        long_df <- data.frame(
+            label = rep(row_labels, times = length(col_labels)),
+            variant = rep(col_labels, each = length(row_labels)),
+            value = as.vector(as.matrix(dna_var_reref)),
+            stringsAsFactors = FALSE
+        )
+
+        # ensure discrete fill (0/1/2) and align label factor order to tree tips
+        long_df$value <- factor(as.integer(long_df$value), levels = c(0, 1, 2))
+        # derive tip order strictly by y-position to match plotted order
+        tip_order <- with(tree$data[tree$data$isTip, ], label[order(y)])
+        long_df$label <- factor(long_df$label, levels = tip_order)
+        # numeric y aligned to tip order to satisfy continuous scale inside facet panel
+        label_index_map <- setNames(seq_along(tip_order), tip_order)
+        long_df$label_index <- as.numeric(label_index_map[as.character(long_df$label)])
+        # map variant IDs to a numeric index to avoid continuous scale errors in facet panel
+        variant_levels <- unique(col_labels)
+        variant_index_map <- setNames(seq_along(variant_levels), variant_levels)
+        long_df$variant_index <- as.numeric(variant_index_map[long_df$variant])
+
+        # this has to be plotted as a heatmap aligned to the tree tips
+        if (convert_status) {
+            p <- tree +
+                geom_tippoint(
+                    aes(color = .data$clust_id, shape = .data$convert_class),
+                    size = 2,
+                    alpha = 0.8
+                ) +
+                geom_rootedge(rootedge = max_branch_length * 0.01) +
+                geom_facet(
+                    panel = "Variants",
+                    data = long_df,
+                    mapping = aes(x = variant_index, y = label_index, fill = value),
+                    geom = geom_tile
+                ) +
+                scale_fill_manual(
+                    name = "Variant",
+                    values = c("0" = "lightgray", "1" = "red", "2" = "black"),
+                    drop = FALSE
+                )
+        } else {
+            p <- tree +
+                geom_tippoint(aes(color = .data$clust_id), size = 2, alpha = 0.8) +
+                geom_rootedge(rootedge = max_branch_length * 0.01) +
+                geom_facet(
+                    panel = "Variants",
+                    data = long_df,
+                    mapping = aes(x = variant_index, y = label_index, fill = value),
+                    geom = geom_tile
+                ) +
+                scale_fill_manual(
+                    name = "Variant",
+                    values = c("0" = "lightgray", "1" = "red", "2" = "black"),
+                    drop = FALSE
+                )
+        }
+    } else {
+        p <- tree +
+            geom_tippoint(aes(color = .data$clust_id), size = 2, alpha = 0.8) +
+            geom_rootedge(rootedge = max_branch_length * 0.01)
+    }
 
     # Add patient labels if requested
     if (!is.null(seq2pt) && patient_label) {
