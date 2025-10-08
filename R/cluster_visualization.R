@@ -42,30 +42,9 @@ plot_clusters_phylo <- function(
             ))
         }
     }
-plot_clusters_phylo <- function(
-    tree,
-    clusters,
-    seq2pt = NULL,
-    dna_var = NULL,
-    patient_label = FALSE,
-    convert_status = FALSE,
-    ip_seqs = NULL,
-    dates = NULL,
-    pt_trace = NULL
-) {
-    # ensure that epi data is provided if convert status is TRUE
-    if (convert_status) {
-        if (is.null(pt_trace) || is.null(ip_seqs) || is.null(dates) || is.null(seq2pt)) {
-            stop(paste(
-                "pt_trace, ip_seqs, dates, and seq2pt must be provided if convert_status",
-                "is TRUE, since convert status requires epi data to be provided."
-            ))
-        }
-    }
     parents <- unique(tree$edge[, 1])
     children <- unique(tree$edge[, 2])
     root_node <- setdiff(parents, children)
-
 
     # find max branch length
     max_branch_length <- max(tree$edge.length)
