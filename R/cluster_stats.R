@@ -16,27 +16,27 @@
 #'
 #' @export
 intra_cluster_genetic_var_analysis <- function(clusters, dna_aln, var_pos) {
-    # pre-compute a character matrix of the alignment
+    # Pre-compute a character matrix of the alignment
     dna_aln_char <- matrix(
         as.character(dna_aln),
         nrow = nrow(dna_aln),
         dimnames = dimnames(dna_aln)
     )
 
-    # identify cluster IDs (excluding a potential singleton "1" if present)
+    # Identify cluster IDs (excluding a potential singleton "1" if present)
     cluster_ids <- setdiff(sort(unique(clusters)), 1)
 
-    # compute major alleles across the entire alignment
+    # Compute major alleles across the entire alignment
     major_alleles_all <- apply(dna_aln_char, 2, function(pos_aln) {
         allele_tab <- table(pos_aln)
         names(allele_tab)[which.max(allele_tab)]
     })
 
-    # filter the alignment to only include variable positions
+    # Filter the alignment to only include variable positions
     dna_aln_char <- dna_aln_char[, var_pos, drop = FALSE]
     major_alleles_all <- major_alleles_all[var_pos]
 
-    # pre-allocate vectors for results
+    # Pre-allocate vectors for results
     n_iter <- length(cluster_ids) + 1 # +1 for the overall population
     num_var_sites <- numeric(n_iter)
     gc_at_transition_rate <- numeric(n_iter)
@@ -46,27 +46,27 @@ intra_cluster_genetic_var_analysis <- function(clusters, dna_aln, var_pos) {
     at_ta_transversion_rate <- numeric(n_iter)
     gc_cg_transversion_rate <- numeric(n_iter)
 
-    # define row names for the output: overall population and each cluster
+    # Define row names for the output: overall population and each cluster
     cluster_labels <- c("Pop. freq.", cluster_ids)
 
     iter <- 1
-    # loop over overall population (represented by -1) and each cluster
+    # Loop over overall population (represented by -1) and each cluster
     for (cluster in c(-1, cluster_ids)) {
-        seq_ids <- if (cluster == -1) {
-            names(clusters)
+        if (cluster == -1) {
+            seq_ids <- names(clusters)
         } else {
-            names(clusters)[clusters == cluster]
+            seq_ids <- names(clusters)[clusters == cluster]
         }
 
-        # subset the alignment for the current group
+        # Subset the alignment for the current group
         aln_subset <- dna_aln_char[seq_ids, , drop = FALSE]
-        # determine variable positions within the current group
+        # Determine variable positions within the current group
         var_pos_cluster <- apply(aln_subset, 2, function(pos_aln) {
             sum(pos_aln == pos_aln[1]) < length(seq_ids)
         })
         var_idx <- which(var_pos_cluster)
 
-        # compute minor allele for each variable position
+        # Compute minor allele for each variable position
         minor_alleles <- vapply(
             var_idx,
             function(j) {
@@ -89,10 +89,10 @@ intra_cluster_genetic_var_analysis <- function(clusters, dna_aln, var_pos) {
             },
             character(1)
         )
-        # compute major allele for each variable position
+        # Compute major allele for each variable position
         major_alleles <- major_alleles_all[var_idx]
 
-        # filter positions to those with valid nucleotide calls (both alleles among a, c, t, g)
+        # Filter positions to those with valid nucleotide calls (both alleles among a, c, t, g)
         valid_pos <- which(
             minor_alleles != major_alleles &
                 major_alleles %in% c("a", "c", "t", "g") &
@@ -102,7 +102,7 @@ intra_cluster_genetic_var_analysis <- function(clusters, dna_aln, var_pos) {
         num_sites <- length(valid_pos)
         num_var_sites[iter] <- num_sites
 
-        # if no positions are variable or no valid sites are found, assign NA to mutation rates
+        # If no positions are variable or no valid sites are found, assign NA to mutation rates
         if (num_sites == 0 || !any(var_pos_cluster)) {
             gc_at_transition_rate[iter] <- NA
             at_gc_transition_rate[iter] <- NA
@@ -117,7 +117,7 @@ intra_cluster_genetic_var_analysis <- function(clusters, dna_aln, var_pos) {
         major_valid <- major_alleles[valid_pos]
         minor_valid <- minor_alleles[valid_pos]
 
-        # calculate mutation rates
+        # Calculate mutation rates
         gc_at_transition_rate[iter] <- sum(
             (major_valid == "g" & minor_valid == "a") |
                 (major_valid == "c" & minor_valid == "t")
@@ -165,499 +165,6 @@ intra_cluster_genetic_var_analysis <- function(clusters, dna_aln, var_pos) {
     )
 }
 
-#' Compute Basic Cluster Counts
-#'
-#' @description
-#' Calculate basic patient counts and classifications for a cluster
-#'
-#' @param seqs Vector of sequence IDs in the cluster
-#' @param seq2pt Named vector mapping sequence IDs to patient IDs
-#' @param ip_seqs Vector of sequence IDs corresponding to imported cases
-#' @param ip_pt_seqs Vector of sequence IDs corresponding to intake positive patients
-#' @param dates Vector of isolate dates named by sequence IDs
-#' @param pt_trace Matrix with rows representing days and columns representing patients
-#'
-#' @return Vector with basic cluster count properties
-#' @keywords internal
-compute_basic_cluster_counts <- function(seqs, seq2pt, ip_seqs, ip_pt_seqs, dates, pt_trace) {
-    # integer converted trace mat dates (column names are strings by default)
-    trace_dates <- as.integer(colnames(pt_trace))
-
-    # initialize output vector
-    basic_counts <- numeric(4)
-    names(basic_counts) <- c(
-        "Number_of_patients",
-        "Number_of_start_indexes",
-        "Number_of_non-start_indexes",
-        "Number_of_study_start_indexes"
-    )
-
-    # number of unique patients in this cluster
-    basic_counts["Number_of_patients"] <- length(unique(seq2pt[seqs]))
-
-    # number of start-index patients (imported cases) who belong to this cluster
-    basic_counts["Number_of_start_indexes"] <- length(unique(seq2pt[seqs[
-        seqs %in% ip_seqs
-    ]]))
-
-    # number of non-start index patients (any intake-positive but not the 'imported' subset)
-    basic_counts["Number_of_non-start_indexes"] <- length(setdiff(
-        unique(seq2pt[seqs[seqs %in% ip_pt_seqs]]),
-        unique(seq2pt[seqs[seqs %in% ip_seqs]])
-    ))
-
-    # number of study start indexes
-    basic_counts["Number_of_study_start_indexes"] <- length(setdiff(
-        unique(seq2pt[seqs[seqs %in% ip_seqs]]),
-        unique(seq2pt[seqs[dates[seqs] > trace_dates[1] + 3]])
-    ))
-
-    basic_counts
-}
-
-#' Compute Genetic Distances
-#'
-#' @description
-#' Calculate genetic distance statistics within a cluster
-#'
-#' @param seqs Vector of sequence IDs in the cluster
-#' @param snp_dist Matrix of SNP distances between isolates
-#'
-#' @return Vector with genetic distance properties
-#' @keywords internal
-compute_genetic_distances <- function(seqs, snp_dist) {
-    # subset the SNP distance matrix to only the cluster sequences
-    snp_dist_subset <- snp_dist[seqs, seqs, drop = FALSE]
-
-    # get the upper triangle of the SNP distance matrix (excluding the diagonal)
-    seq_vals <- snp_dist_subset[upper.tri(snp_dist_subset)]
-
-    genetic_stats <- numeric(3)
-    names(genetic_stats) <- c(
-        "Mean_genetic_distance",
-        "Median_genetic_distance",
-        "Max_genetic_distance"
-    )
-
-    genetic_stats["Mean_genetic_distance"] <- mean(seq_vals)
-    genetic_stats["Median_genetic_distance"] <- median(seq_vals)
-    genetic_stats["Max_genetic_distance"] <- max(seq_vals)
-
-    genetic_stats
-}
-
-#' Compute Cluster Duration Metrics
-#'
-#' @description
-#' Calculate temporal metrics for cluster spread
-#'
-#' @param seqs Vector of sequence IDs in the cluster
-#' @param seq2pt Named vector mapping sequence IDs to patient IDs
-#' @param dates Vector of isolate dates named by sequence IDs
-#'
-#' @return Vector with cluster duration properties
-#' @keywords internal
-compute_cluster_duration_metrics <- function(seqs, seq2pt, dates) {
-    # calculate earliest positive date for each patient in the cluster
-    earliest_pos_by_pt <- vapply(
-        unique(seq2pt[seqs]),
-        function(pt_id) {
-            patient_seqs <- seqs[seq2pt[seqs] == pt_id]
-            if (length(patient_seqs) > 0) {
-                min(dates[patient_seqs])
-            } else {
-                Inf
-            }
-        },
-        numeric(1)
-    )
-    earliest_pos_by_pt <- sort(setNames(earliest_pos_by_pt, unique(seq2pt[seqs])))
-
-    duration_stats <- numeric(4)
-    names(duration_stats) <- c(
-        "Cluster_duration",
-        "Time_to_first_acquisition",
-        "Time_to_last_acquisition",
-        "Median_time_to_acquisition"
-    )
-
-    # check if we have any patients
-    if (length(earliest_pos_by_pt) > 0) {
-        # cluster duration = difference between min and max of earliest positive dates
-        duration_stats["Cluster_duration"] <- max(earliest_pos_by_pt) - min(earliest_pos_by_pt)
-
-        # time to first acquisition = difference between the earliest two patients' dates
-        if (length(earliest_pos_by_pt) >= 2) {
-            duration_stats["Time_to_first_acquisition"] <- earliest_pos_by_pt[2] -
-                earliest_pos_by_pt[1]
-        } else {
-            duration_stats["Time_to_first_acquisition"] <- 0
-        }
-
-        # time to last acquisition = difference between the earliest and latest
-        duration_stats["Time_to_last_acquisition"] <-
-            earliest_pos_by_pt[length(earliest_pos_by_pt)] - earliest_pos_by_pt[1]
-
-        # median time to acquisition
-        if (length(earliest_pos_by_pt) >= 2) {
-            duration_stats["Median_time_to_acquisition"] <- median(vapply(
-                earliest_pos_by_pt[2:length(earliest_pos_by_pt)],
-                function(x) x - earliest_pos_by_pt[1],
-                numeric(1)
-            ))
-        } else {
-            duration_stats["Median_time_to_acquisition"] <- 0
-        }
-    } else {
-        # no patients in cluster
-        duration_stats["Cluster_duration"] <- 0
-        duration_stats["Time_to_first_acquisition"] <- 0
-        duration_stats["Time_to_last_acquisition"] <- 0
-        duration_stats["Median_time_to_acquisition"] <- 0
-    }
-
-    list(stats = duration_stats, earliest_pos_by_pt = earliest_pos_by_pt)
-}
-
-#' Analyze Convert Patients
-#'
-#' @description
-#' Analyze patients who converted while in facility
-#'
-#' @param seqs Vector of sequence IDs in the cluster
-#' @param seq2pt Named vector mapping sequence IDs to patient IDs
-#' @param ip_pt_seqs Vector of sequence IDs corresponding to intake positive patients
-#' @param dates Vector of isolate dates named by sequence IDs
-#' @param pt_trace Matrix with rows representing days and columns representing patients
-#'
-#' @return List containing convert patient analysis results
-#' @keywords internal
-analyze_convert_patients <- function(seqs, seq2pt, ip_pt_seqs, dates, pt_trace) {
-    # integer converted trace mat dates
-    trace_dates <- as.integer(colnames(pt_trace))
-
-    # number of converts: patients who are not in ip_pt_seqs
-    num_converts <- length(unique(seq2pt[seqs[!(seqs %in% ip_pt_seqs)]]))
-
-    # initialize convert_data with default values
-    convert_data <- list(
-        num_converts = num_converts,
-        convert_pos = numeric(0),
-        conversion_day = character(0),
-        initial_convert_pts = character(0),
-        convert_pts = character(0),
-        num_initial_converts = 0,
-        num_later_converts = 0
-    )
-
-    # if we have at least one convert in the cluster:
-    if (num_converts > 0) {
-        # for each convert patient, find the earliest date in "dates" for the cluster
-        convert_pt_ids <- unique(seq2pt[seqs[!(seqs %in% ip_pt_seqs)]])
-        convert_pos <- vapply(
-            convert_pt_ids,
-            function(pt_id) {
-                patient_seqs <- seqs[seq2pt[seqs] == pt_id]
-                if (length(patient_seqs) > 0) {
-                    min(dates[patient_seqs])
-                } else {
-                    Inf
-                }
-            },
-            numeric(1)
-        )
-
-        # in pt_trace, 1.5 indicates a positive test day
-        conversion_day_indices <- vapply(
-            convert_pt_ids,
-            function(pt_id) {
-                positive_days <- which(pt_trace[as.character(pt_id), ] == 1.5)
-                if (length(positive_days) > 0) {
-                    min(positive_days)
-                } else {
-                    Inf
-                }
-            },
-            numeric(1)
-        )
-        conversion_day_indices[is.infinite(conversion_day_indices)] <- NA
-
-        conversion_day <- trace_dates[conversion_day_indices]
-        conversion_day[is.na(conversion_day)] <- trace_dates[ncol(pt_trace)]
-
-        # distinguish "initial" converts from "later" converts based on 7-day threshold
-        day_diff <- convert_pos - conversion_day
-        initial_mask <- day_diff <= 7
-
-        initial_convert_pts <- convert_pt_ids[initial_mask]
-
-        # mark those that fail the 7-day threshold as Inf
-        convert_pos[day_diff > 7] <- Inf
-
-        # update convert_data with calculated values
-        convert_data$convert_pos <- convert_pos
-        convert_data$conversion_day <- conversion_day
-        convert_data$initial_convert_pts <- initial_convert_pts
-        convert_data$convert_pts <- convert_pt_ids
-        convert_data$num_initial_converts <- sum(initial_mask)
-        convert_data$num_later_converts <- sum(day_diff > 7)
-    }
-
-    convert_data
-}
-
-#' Analyze Conversions After Index
-#'
-#' @description
-#' Analyze conversions relative to index patient timing
-#'
-#' @param basic_counts Output from compute_basic_cluster_counts()
-#' @param convert_data Output from analyze_convert_patients()
-#' @param seqs Vector of sequence IDs in the cluster
-#' @param seq2pt Named vector mapping sequence IDs to patient IDs
-#' @param ip_seqs Vector of sequence IDs corresponding to imported cases
-#' @param ip_pt_seqs Vector of sequence IDs corresponding to intake positive patients
-#' @param dates Vector of isolate dates named by sequence IDs
-#' @param pt_trace Matrix with rows representing days and columns representing patients
-#'
-#' @return Vector with conversion timing properties
-#' @keywords internal
-analyze_conversions_after_index <- function(
-    basic_counts,
-    convert_data,
-    seqs,
-    seq2pt,
-    ip_seqs,
-    ip_pt_seqs,
-    dates,
-    pt_trace
-) {
-    # integer converted trace mat dates
-    trace_dates <- as.integer(colnames(pt_trace))
-
-    conversion_stats <- numeric(6)
-    names(conversion_stats) <- c(
-        "Number_of_converts_after_index",
-        "Number_of_initial_converts_after_index",
-        "Number_of_converts_after_index_seq",
-        "Number_of_initial_converts_after_index_seq",
-        "Time_from_index_to_first_convert",
-        "Time_from_index_to_last_convert"
-    )
-
-    # count how many converts happen after the earliest known index's date
-    if (basic_counts["Number_of_start_indexes"] > 0 && convert_data$num_converts > 0) {
-        # the earliest index date among ip_seqs in this cluster
-        ip_seqs_in_cluster <- ip_seqs[ip_seqs %in% seqs]
-        index_pos <- if (length(ip_seqs_in_cluster) > 0) {
-            min(dates[as.character(ip_seqs_in_cluster)])
-        } else {
-            Inf
-        }
-
-        # number of all converts that appear on or after that index date
-        conversion_stats["Number_of_converts_after_index"] <- sum(
-            convert_data$convert_pos >= index_pos
-        )
-        conversion_stats["Number_of_initial_converts_after_index"] <-
-            sum(convert_data$convert_pos >= index_pos & convert_data$convert_pos != Inf)
-
-        # time from earliest index to first and last convert (for initial converts only)
-        valid_idx <- convert_data$convert_pos[convert_data$convert_pos != Inf]
-        valid_idx <- valid_idx[valid_idx >= index_pos]
-
-        if (length(valid_idx) > 0) {
-            conversion_stats["Time_from_index_to_first_convert"] <- min(valid_idx - index_pos)
-            conversion_stats["Time_from_index_to_last_convert"] <- max(valid_idx - index_pos)
-        } else {
-            conversion_stats["Time_from_index_to_first_convert"] <- NA
-            conversion_stats["Time_from_index_to_last_convert"] <- NA
-        }
-    } else {
-        conversion_stats["Number_of_converts_after_index"] <- 0
-        conversion_stats["Number_of_initial_converts_after_index"] <- 0
-        conversion_stats["Time_from_index_to_first_convert"] <- NA
-        conversion_stats["Time_from_index_to_last_convert"] <- NA
-    }
-
-    # conversions after ANY intake-positive isolate in the cluster
-    if ((sum(seqs %in% ip_pt_seqs) > 0) && convert_data$num_converts > 0) {
-        # find earliest day index in pt_trace for the intake positives
-        index_pos_indices <- vapply(
-            unique(seq2pt[seqs[seqs %in% ip_pt_seqs]]),
-            function(pt_id) {
-                positive_days <- which(pt_trace[as.character(pt_id), ] == 1.5)
-                if (length(positive_days) > 0) {
-                    min(positive_days)
-                } else {
-                    Inf
-                }
-            },
-            numeric(1)
-        )
-        index_pos_indices[is.infinite(index_pos_indices)] <- NA
-
-        # convert the earliest index position to a row name date
-        earliest_index_pos <- min(trace_dates[index_pos_indices], na.rm = TRUE)
-        if (is.infinite(earliest_index_pos)) {
-            earliest_index_pos <- NA
-        }
-
-        # count how many convert_pos are >= that date
-        if (!is.na(earliest_index_pos)) {
-            conversion_stats["Number_of_converts_after_index_seq"] <- sum(
-                convert_data$convert_pos >= earliest_index_pos
-            )
-            conversion_stats["Number_of_initial_converts_after_index_seq"] <-
-                sum(
-                    convert_data$convert_pos >= earliest_index_pos &
-                        convert_data$convert_pos != Inf
-                )
-        } else {
-            conversion_stats["Number_of_converts_after_index_seq"] <- 0
-            conversion_stats["Number_of_initial_converts_after_index_seq"] <- 0
-        }
-    } else {
-        conversion_stats["Number_of_converts_after_index_seq"] <- 0
-        conversion_stats["Number_of_initial_converts_after_index_seq"] <- 0
-    }
-
-    conversion_stats
-}
-
-#' Analyze Location Overlaps
-#'
-#' @description
-#' Check for location-based transmission opportunities
-#'
-#' @param convert_data Output from analyze_convert_patients()
-#' @param earliest_pos_by_pt Vector of earliest positive dates by patient
-#' @param seqs Vector of sequence IDs in the cluster
-#' @param seq2pt Named vector mapping sequence IDs to patient IDs
-#' @param pt_trace Matrix with rows representing days and columns representing patients
-#' @param floor_trace Optional floor trace matrix
-#' @param room_trace Optional room trace matrix
-#'
-#' @return Vector with location overlap properties
-#' @keywords internal
-analyze_location_overlaps <- function(
-    convert_data,
-    earliest_pos_by_pt,
-    seqs,
-    seq2pt,
-    pt_trace,
-    floor_trace = NULL,
-    room_trace = NULL
-) {
-    # check if there's an overlap in location
-    pt_overlap <- function(pt_donor, pt_recipient, first_pos_vec, trace) {
-        donor_date <- first_pos_vec[as.character(pt_donor)]
-        recipient_date <- first_pos_vec[as.character(pt_recipient)]
-        # if the donor's earliest date is <= the recipient's earliest date:
-        if (donor_date <= recipient_date) {
-            time_range <- seq(from = donor_date, to = recipient_date, by = 1)
-            # check if there's a day where pt_donor and pt_recipient share a location
-            any(
-                floor(trace[as.character(pt_donor), time_range]) ==
-                    floor(trace[as.character(pt_recipient), time_range]) &
-                    (floor(trace[as.character(pt_recipient), time_range]) > 0)
-            )
-        } else {
-            FALSE
-        }
-    }
-
-    find_source <- function(pt_convert, trace) {
-        all_others <- setdiff(unique(seq2pt[seqs]), pt_convert)
-        any(vapply(
-            all_others,
-            pt_overlap,
-            pt_recipient = pt_convert,
-            first_pos_vec = earliest_pos_by_pt,
-            trace = trace,
-            logical(1)
-        ))
-    }
-
-    overlap_stats <- numeric(6)
-    names(overlap_stats) <- c(
-        "Number_of_converts_with_source",
-        "Number_of_initial_converts_with_source",
-        "Number_of_converts_with_floor_source",
-        "Number_of_initial_converts_with_floor_source",
-        "Number_of_converts_with_room_source",
-        "Number_of_initial_converts_with_room_source"
-    )
-
-    # count how many converts can be assigned a source patient in the cluster
-    if (
-        convert_data$num_converts > 0 &&
-            length(unique(seq2pt[seqs])) > 1 &&
-            !any(is.infinite(earliest_pos_by_pt))
-    ) {
-        # for each convert, see if any other patient in the cluster can be a source
-        overlap_stats["Number_of_converts_with_source"] <-
-            sum(vapply(convert_data$convert_pts, find_source, trace = pt_trace, logical(1)))
-
-        # if we have floor_trace, do the same overlap check
-        if (!is.null(floor_trace)) {
-            overlap_stats["Number_of_converts_with_floor_source"] <-
-                sum(vapply(convert_data$convert_pts, find_source, trace = floor_trace, logical(1)))
-        }
-
-        # if we have room_trace, do the same overlap check
-        if (!is.null(room_trace)) {
-            overlap_stats["Number_of_converts_with_room_source"] <-
-                sum(vapply(convert_data$convert_pts, find_source, trace = room_trace, logical(1)))
-        }
-    } else {
-        overlap_stats["Number_of_converts_with_source"] <- 0
-        overlap_stats["Number_of_converts_with_floor_source"] <- 0
-        overlap_stats["Number_of_converts_with_room_source"] <- 0
-    }
-
-    # if we have any initial converts, do the same overlap checks specifically for those patients
-    if (
-        convert_data$num_initial_converts > 0 &&
-            length(unique(seq2pt[seqs])) > 1 &&
-            !any(is.infinite(earliest_pos_by_pt))
-    ) {
-        overlap_stats["Number_of_initial_converts_with_source"] <-
-            sum(vapply(
-                convert_data$initial_convert_pts,
-                find_source,
-                trace = pt_trace,
-                logical(1)
-            ))
-
-        if (!is.null(floor_trace)) {
-            overlap_stats["Number_of_initial_converts_with_floor_source"] <-
-                sum(vapply(
-                    convert_data$initial_convert_pts,
-                    find_source,
-                    trace = floor_trace,
-                    logical(1)
-                ))
-        }
-
-        if (!is.null(room_trace)) {
-            overlap_stats["Number_of_initial_converts_with_room_source"] <-
-                sum(vapply(
-                    convert_data$initial_convert_pts,
-                    find_source,
-                    trace = room_trace,
-                    logical(1)
-                ))
-        }
-    } else {
-        overlap_stats["Number_of_initial_converts_with_source"] <- 0
-        overlap_stats["Number_of_initial_converts_with_floor_source"] <- 0
-        overlap_stats["Number_of_initial_converts_with_room_source"] <- 0
-    }
-
-    overlap_stats
-}
-
 #' Compute various cluster-level properties
 #'
 #' @description
@@ -672,7 +179,7 @@ analyze_location_overlaps <- function(
 #' @param seq2pt A named character vector mapping sequence IDs to patient IDs
 #'               (names must be sequence IDs, values must be patient IDs).
 #' @param ip_pt_seqs A character vector of sequence IDs corresponding to patients
-#'                   who tested positive on admission ("intake positive").
+#'                   who tested positive on admission (\"intake positive\").
 #' @param ip_seqs A character vector of sequence IDs presumed to be imported from
 #'                outside (a subset of \code{ip_pt_seqs} or similar).
 #' @param snp_dist A matrix of SNP distances between isolates (row and column
@@ -716,8 +223,10 @@ analyze_location_overlaps <- function(
 #'   }
 #' These can be used for further analysis or visualization, including for example in
 #' the permutation tests to assess the significance of the observed cluster properties.
+#'
+#' @importFrom stats median
 cluster_properties <- function(
-    seqs,
+    cluster_seqs,
     pt_trace,
     seq2pt,
     ip_pt_seqs,
@@ -757,57 +266,285 @@ cluster_properties <- function(
         "Time_from_index_to_last_convert"
     )
 
-    # initialize output vector for cluster properties
+    # Initialize output vector for cluster properties
     cluster_prop <- setNames(numeric(length(attr_names)), attr_names)
+    # Integer converted trace mat dates (row names are strings by default)
+    trace_dates <- as.integer(row.names(pt_trace))
 
-    # 1. basic cluster-level counts
-    basic_counts <- compute_basic_cluster_counts(seqs, seq2pt, ip_seqs, ip_pt_seqs, dates, pt_trace)
-    cluster_prop[names(basic_counts)] <- basic_counts
+    # 1. Basic cluster-level counts #####
+    # Number of unique patients in this cluster
+    cluster_prop["Number_of_patients"] <- length(unique(seq2pt[cluster_seqs]))
 
-    # 2. genetic distances within the cluster
-    genetic_stats <- compute_genetic_distances(seqs, snp_dist)
-    cluster_prop[names(genetic_stats)] <- genetic_stats
+    # Number of start-index patients (imported cases) who belong to this cluster
+    # i.e. those with sequence IDs in ip_seqs
+    cluster_prop["Number_of_start_indexes"] <- length(unique(seq2pt[cluster_seqs[
+        cluster_seqs %in% ip_seqs
+    ]]))
 
-    # 3. cluster duration metrics
-    duration_result <- compute_cluster_duration_metrics(seqs, seq2pt, dates)
-    cluster_prop[names(duration_result$stats)] <- duration_result$stats
-    earliest_pos_by_pt <- duration_result$earliest_pos_by_pt
+    # Number of non-start index patients (any intake-positive but not the 'imported' subset)
+    cluster_prop["Number_of_non-start_indexes"] <- length(setdiff(
+        unique(seq2pt[cluster_seqs[cluster_seqs %in% ip_pt_seqs]]),
+        unique(seq2pt[cluster_seqs[cluster_seqs %in% ip_seqs]])
+    ))
 
-    # 4. detailed convert-patient calculations
-    convert_data <- analyze_convert_patients(seqs, seq2pt, ip_pt_seqs, dates, pt_trace)
-    cluster_prop["Number_of_converts"] <- convert_data$num_converts
-    cluster_prop["Number_of_initial_converts"] <- convert_data$num_initial_converts
-    cluster_prop["Number_of_later_converts"] <- convert_data$num_later_converts
+    # Number of study start indexes
+    cluster_prop["Number_of_study_start_indexes"] <- length(setdiff(
+        unique(seq2pt[cluster_seqs[cluster_seqs %in% ip_seqs]]),
+        unique(seq2pt[cluster_seqs[
+            dates[cluster_seqs] > trace_dates[1] + 3
+        ]])
+    ))
 
-    # 5. conversions after an index patient is in the cluster
-    conversion_stats <- analyze_conversions_after_index(
-        basic_counts,
-        convert_data,
-        seqs,
-        seq2pt,
-        ip_seqs,
-        ip_pt_seqs,
-        dates,
-        pt_trace
+    # 2. Convert (non-index) patient counts #####
+    # Number of converts: patients who are not in ip_pt_seqs
+    # i.e. those who became positive while in the facility (not on admission).
+    cluster_prop["Number_of_converts"] <- length(unique(
+        seq2pt[cluster_seqs[!(cluster_seqs %in% ip_pt_seqs)]]
+    ))
+
+    # 3. Genetic distances within the cluster #####
+    # Subset the SNP distance matrix to only the cluster sequences
+    snp_dist_subset <- snp_dist[cluster_seqs, cluster_seqs, drop = FALSE]
+
+    # Get the upper triangle of the SNP distance matrix (excluding the diagonal)
+    seq_vals <- snp_dist_subset[upper.tri(snp_dist_subset)]
+
+    cluster_prop["Mean_genetic_distance"] <- mean(seq_vals)
+    cluster_prop["Median_genetic_distance"] <- median(seq_vals)
+    cluster_prop["Max_genetic_distance"] <- max(seq_vals)
+
+    # 4. Cluster duration metrics #####
+    # Calculate earliest positive date for each patient in the cluster
+    # Then compute the cluster duration = difference between min and max
+    # of those earliest positive dates.
+    earliest_pos_by_pt <- vapply(
+        unique(seq2pt[cluster_seqs]),
+        function(pt_id) {
+            min(dates[cluster_seqs[seq2pt[cluster_seqs] == pt_id]])
+        },
+        numeric(1)
     )
-    cluster_prop[names(conversion_stats)] <- conversion_stats
+    earliest_pos_by_pt <- sort(earliest_pos_by_pt)
 
-    # 6. location overlap checks
-    overlap_stats <- analyze_location_overlaps(
-        convert_data,
-        earliest_pos_by_pt,
-        seqs,
-        seq2pt,
-        pt_trace,
-        floor_trace,
-        room_trace
-    )
-    cluster_prop[names(overlap_stats)] <- overlap_stats
+    cluster_prop["Cluster_duration"] <- max(earliest_pos_by_pt) - min(earliest_pos_by_pt)
 
-    # replace any infinite values with NA
+    # Time to first acquisition = difference between the earliest two patients' dates
+    cluster_prop["Time_to_first_acquisition"] <- earliest_pos_by_pt[2] - earliest_pos_by_pt[1]
+
+    # Time to last acquisition = difference between the earliest and latest
+    # in the sorted vector of earliest_pos_by_pt
+    cluster_prop["Time_to_last_acquisition"] <- earliest_pos_by_pt[length(earliest_pos_by_pt)] -
+        earliest_pos_by_pt[1]
+
+    # Median time to acquisition (the median difference from the cluster's
+    # earliest overall positive to each subsequent patient's earliest positive).
+    cluster_prop["Median_time_to_acquisition"] <- median(vapply(
+        earliest_pos_by_pt[2:length(earliest_pos_by_pt)],
+        function(x) x - earliest_pos_by_pt[1],
+        numeric(1)
+    ))
+
+    # 5. Detailed convert-patient calculations #####
+    convert_pos <- numeric(0)
+    conversion_day <- character(0)
+    initial_convert_pts <- character(0)
+    convert_pts <- character(0)
+
+    # If we have at least one convert in the cluster:
+    if (cluster_prop["Number_of_converts"] > 0) {
+        # For each convert patient, find the earliest date in 'dates' for the cluster
+        # and the day index from pt_trace where that patient first tested 1.5
+        convert_pt_ids <- unique(seq2pt[cluster_seqs[!(cluster_seqs %in% ip_pt_seqs)]])
+        convert_pos <- vapply(
+            convert_pt_ids,
+            function(pt_id) {
+                min(dates[cluster_seqs[seq2pt[cluster_seqs] == pt_id]])
+            },
+            numeric(1)
+        )
+
+        # In pt_trace, 1.5 presumably indicates a positive test day
+        # conversion_day is the row name of pt_trace for that day index
+        # If NA, we set it to the last row in pt_trace
+        conversion_day_indices <- vapply(
+            convert_pt_ids,
+            function(pt_id) {
+                min(which(pt_trace[, pt_id] == 1.5))
+            },
+            numeric(1)
+        )
+        conversion_day_indices[is.infinite(conversion_day_indices)] <- NA
+
+        conversion_day <- trace_dates[conversion_day_indices]
+        conversion_day[is.na(conversion_day)] <- trace_dates[nrow(pt_trace)]
+
+        # Distinguish 'initial' converts from 'later' converts based on a
+        # 7-day difference threshold between the earliest cluster date and that day in trace
+        day_diff <- convert_pos - conversion_day
+        initial_mask <- day_diff <= 7
+
+        initial_convert_pts <- convert_pt_ids[initial_mask]
+        convert_pts <- convert_pt_ids
+
+        cluster_prop["Number_of_initial_converts"] <- sum(initial_mask)
+        cluster_prop["Number_of_later_converts"] <- sum(!initial_mask)
+
+        # Mark those that fail the 7-day threshold as Inf in convert_pos
+        # to indicate no in-cluster first positive
+        convert_pos[day_diff > 7] <- Inf
+    }
+
+    # 6. Conversions after an index patient is in the cluster #####
+    # Count how many converts happen after the earliest known index's date
+    if (cluster_prop["Number_of_start_indexes"] > 0 && cluster_prop["Number_of_converts"] > 0) {
+        # The earliest index date among ip_seqs in this cluster
+        index_pos <- min(dates[ip_seqs[ip_seqs %in% cluster_seqs]])
+
+        # Number of all converts that appear on or after that index date
+        cluster_prop["Number_of_converts_after_index"] <- sum(convert_pos >= index_pos)
+        cluster_prop["Number_of_initial_converts_after_index"] <-
+            sum(convert_pos >= index_pos & convert_pos != Inf)
+
+        # Time from earliest index to first and last convert (for initial converts only)
+        valid_idx <- convert_pos[convert_pos != Inf]
+        valid_idx <- valid_idx[valid_idx >= index_pos]
+
+        if (length(valid_idx) > 0) {
+            cluster_prop["Time_from_index_to_first_convert"] <- min(valid_idx) - index_pos
+            cluster_prop["Time_from_index_to_last_convert"] <- max(valid_idx) - index_pos
+        } else {
+            cluster_prop["Time_from_index_to_first_convert"] <- NA
+            cluster_prop["Time_from_index_to_last_convert"] <- NA
+        }
+    } else {
+        cluster_prop["Number_of_converts_after_index"] <- 0
+        cluster_prop["Number_of_initial_converts_after_index"] <- 0
+        cluster_prop["Time_from_index_to_first_convert"] <- NA
+        cluster_prop["Time_from_index_to_last_convert"] <- NA
+    }
+
+    # Conversions after ANY intake-positive isolate in the cluster
+    # Might matter if a patient has multiple isolates, etc.
+    if ((sum(cluster_seqs %in% ip_pt_seqs) > 0) && cluster_prop["Number_of_converts"] > 0) {
+        # Find earliest day index in pt_trace for the intake positives
+        # row.names(pt_trace) is used to get the day label
+        index_pos_indices <- vapply(
+            unique(seq2pt[cluster_seqs[cluster_seqs %in% ip_pt_seqs]]),
+            function(pt_id) {
+                min(which(pt_trace[, pt_id] == 1.5))
+            },
+            numeric(1)
+        )
+        index_pos_indices[is.infinite(index_pos_indices)] <- NA
+
+        # Convert the earliest index position to a row name date
+        earliest_index_pos <- min(trace_dates[index_pos_indices], na.rm = TRUE)
+        if (is.infinite(earliest_index_pos)) {
+            earliest_index_pos <- NA
+        }
+
+        # Count how many convert_pos are >= that date
+        if (!is.na(earliest_index_pos)) {
+            cluster_prop["Number_of_converts_after_index_seq"] <- sum(
+                convert_pos >= earliest_index_pos
+            )
+            cluster_prop["Number_of_initial_converts_after_index_seq"] <-
+                sum(convert_pos >= earliest_index_pos & convert_pos != Inf)
+        } else {
+            cluster_prop["Number_of_converts_after_index_seq"] <- 0
+            cluster_prop["Number_of_initial_converts_after_index_seq"] <- 0
+        }
+    } else {
+        cluster_prop["Number_of_converts_after_index_seq"] <- 0
+        cluster_prop["Number_of_initial_converts_after_index_seq"] <- 0
+    }
+
+    # 7. Location overlap checks #####
+    # Helper function: given a donor pt_donor, a recipient pt_recipient, earliest_pos_by_pt,
+    # and a trace data set, check if there's an overlap in location
+    # after pt_donor has the strain and on or before pt_recipient's first positive.
+    pt_overlap <- function(pt_donor, pt_recipient, first_pos_vec, trace) {
+        donor_date <- first_pos_vec[pt_donor]
+        recipient_date <- first_pos_vec[pt_recipient]
+        # If the donor's earliest date is <= the recipient's earliest date:
+        if (first_pos_vec[pt_donor] <= first_pos_vec[pt_recipient]) {
+            time_range <- seq(from = donor_date, to = recipient_date, by = 1)
+            # Check if there's a day where pt_donor and pt_recipient share a location
+            # (i.e., same floor/room/patient unit) in 'trace'
+            any(
+                floor(trace[time_range, pt_donor]) == floor(trace[time_range, pt_recipient]) &
+                    (floor(trace[time_range, pt_recipient]) > 0)
+            )
+        } else {
+            FALSE
+        }
+    }
+
+    find_source <- function(pt_convert, trace) {
+        all_others <- setdiff(unique(seq2pt[cluster_seqs]), pt_convert)
+        any(vapply(
+            all_others,
+            pt_overlap,
+            pt_recipient = pt_convert,
+            first_pos_vec = earliest_pos_by_pt,
+            trace = trace,
+            logical(1)
+        ))
+    }
+
+    # Count how many converts can be assigned a source patient in the cluster
+    # based on shared location prior to convert's first positive.
+    if (
+        cluster_prop["Number_of_converts"] > 0 &&
+            cluster_prop["Number_of_patients"] > 1 &&
+            !any(is.infinite(earliest_pos_by_pt))
+    ) {
+        # convert_pts was captured above as all convert patient IDs
+        # for each convert, see if any other patient in the cluster can be a source
+        cluster_prop["Number_of_converts_with_source"] <-
+            sum(vapply(convert_pts, find_source, trace = pt_trace, logical(1)))
+        # If we have floor_trace, do the same overlap check
+        if (!is.null(floor_trace)) {
+            cluster_prop["Number_of_converts_with_floor_source"] <-
+                sum(vapply(convert_pts, find_source, trace = floor_trace, logical(1)))
+        }
+        # If we have room_trace, do the same overlap check
+        if (!is.null(room_trace)) {
+            cluster_prop["Number_of_converts_with_room_source"] <-
+                sum(vapply(convert_pts, find_source, trace = room_trace, logical(1)))
+        }
+    } else {
+        cluster_prop["Number_of_converts_with_source"] <- 0
+        cluster_prop["Number_of_converts_with_floor_source"] <- 0
+        cluster_prop["Number_of_converts_with_room_source"] <- 0
+    }
+
+    # If we have any initial converts, do the same overlap checks specifically for those patients
+    if (
+        cluster_prop["Number_of_initial_converts"] > 0 &&
+            cluster_prop["Number_of_patients"] > 1 &&
+            !any(is.infinite(earliest_pos_by_pt))
+    ) {
+        cluster_prop["Number_of_initial_converts_with_source"] <-
+            sum(vapply(initial_convert_pts, find_source, trace = pt_trace, logical(1)))
+        if (!is.null(floor_trace)) {
+            cluster_prop["Number_of_initial_converts_with_floor_source"] <-
+                sum(vapply(initial_convert_pts, find_source, trace = floor_trace, logical(1)))
+        }
+        if (!is.null(room_trace)) {
+            cluster_prop["Number_of_initial_converts_with_room_source"] <-
+                sum(vapply(initial_convert_pts, find_source, trace = room_trace, logical(1)))
+        }
+    } else {
+        cluster_prop["Number_of_initial_converts_with_source"] <- 0
+        cluster_prop["Number_of_initial_converts_with_floor_source"] <- 0
+        cluster_prop["Number_of_initial_converts_with_room_source"] <- 0
+    }
+
+    # Replace any infinite values with NA
     cluster_prop[is.infinite(cluster_prop)] <- NA
 
-    # return the final numeric vector of cluster properties
+    # Return the final numeric vector of cluster properties
     cluster_prop
 }
 
@@ -851,20 +588,23 @@ cluster_property_perm_test <- function(
     room_trace = NULL,
     num_cores = detectCores() - 1
 ) {
-    # remove singleton clusters
-    clusters <- remove_singleton_clusters(clusters)
-    # remove single-patient clusters
+    # Process clusters to set single-patient clusters to 1
     unique_clusters <- sort(unique(clusters))
     cluster_size <- vapply(
         unique_clusters,
-        function(x) length(unique(seq2pt[names(clusters)[clusters == x]])),
+        function(x) {
+            length(unique(seq2pt[names(clusters)[clusters == x]]))
+        },
         integer(1)
     )
-    single_pt_clusters <- unique_clusters[cluster_size == 1]
-    clusters <- clusters[!(clusters %in% single_pt_clusters)]
+    single_clusters <- unique_clusters[cluster_size == 1]
+    clusters[clusters %in% single_clusters] <- 1
+
+    # Exclude patients in default cluster 1
+    clusters <- clusters[clusters != 1]
     cluster_names <- names(clusters)
 
-    # compute properties of the actual (observed) clusters
+    # Compute properties of the actual (observed) clusters
     valid_clusters <- sort(unique(clusters))
     cluster_props <- t(sapply(valid_clusters, function(c) {
         cluster_properties(
@@ -881,8 +621,8 @@ cluster_property_perm_test <- function(
     }))
     row.names(cluster_props) <- valid_clusters
 
-    # create list of eligible index patients and convert patients to be added to clusters
-    # note that this accounts for patients being in multiple clusters (those patients are
+    # Create list of eligible index patients and convert patients to be added to clusters
+    # Note that this accounts for patients being in multiple clusters (those patients are
     # eligible to go into multiple clusters) and multiple isolates from the same patient
     # being in a single cluster (those isolates always stay together)
     index_pt_start_seqs <- unlist(sapply(ip_seqs, function(seq_id) {
@@ -892,7 +632,7 @@ cluster_property_perm_test <- function(
     index_seqs_not_start <- intersect(setdiff(ip_pt_seqs, index_seqs_start), cluster_names)
     convert_seqs <- setdiff(cluster_names, c(index_seqs_start, index_seqs_not_start))
 
-    # create eligibility matrices
+    # Create eligibility matrices
     get_elig_mat <- function(seqs) {
         cbind(
             seq = as.character(seqs),
@@ -905,17 +645,13 @@ cluster_property_perm_test <- function(
     elig_index_not_start_pts <- get_elig_mat(index_seqs_not_start)
     elig_convert_pts <- get_elig_mat(convert_seqs)
 
-    # determine the number of clusters each patient is in
+    # Determine the number of clusters each patient is in
     cluster_per_patient <- function(elig_mat) {
         pt_unique_sorted <- sort(unique(elig_mat[, "patient"]))
         setNames(
-            vapply(
-                pt_unique_sorted,
-                function(pt) {
-                    length(unique(elig_mat[elig_mat[, "patient"] == pt, "cluster"]))
-                },
-                integer(1)
-            ),
+            sapply(pt_unique_sorted, function(pt) {
+                length(unique(elig_mat[elig_mat[, "patient"] == pt, "cluster"]))
+            }),
             pt_unique_sorted
         )
     }
@@ -923,17 +659,13 @@ cluster_property_perm_test <- function(
     cluster_per_index_not_start <- cluster_per_patient(elig_index_not_start_pts)
     cluster_per_convert <- cluster_per_patient(elig_convert_pts)
 
-    # determine the number of index and convert patients in each cluster
+    # Determine the number of index and convert patients in each cluster
     pt_per_cluster <- function(elig_mat) {
         clusters_unique_sorted <- sort(unique(clusters))
         setNames(
-            vapply(
-                clusters_unique_sorted,
-                function(clust) {
-                    length(unique(elig_mat[elig_mat[, "cluster"] == clust, "patient"]))
-                },
-                integer(1)
-            ),
+            sapply(clusters_unique_sorted, function(clust) {
+                length(unique(elig_mat[elig_mat[, "cluster"] == clust, "patient"]))
+            }),
             clusters_unique_sorted
         )
     }
@@ -941,59 +673,63 @@ cluster_property_perm_test <- function(
     index_not_start_per_cluster <- pt_per_cluster(elig_index_not_start_pts)
     convert_per_cluster <- pt_per_cluster(elig_convert_pts)
 
-    # assign patients to clusters, starting with patients in multiple clusters
+    # Assign patients to clusters, starting with patients in multiple clusters
     assign_pt_clusters <- function(elig_vec, cluster_per_pt, pt_per_cluster, rand_clusters) {
         names_pt_per_cluster <- names(pt_per_cluster)
-        # for each patient, assign them to a cluster
+        # For each patient, assign them to a cluster
         for (pt in names(sort(cluster_per_pt, decreasing = TRUE))) {
-            # get unique cluster assignments for the current patient
+            # Get unique cluster assignments for the current patient
             pt_clust_ids <- unique(elig_vec[elig_vec[, "patient"] == pt, "comb"])
-            # pick correct number of eligible clusters to assign to them
+            # Pick correct number of eligible clusters to assign to them
             cluster_assign <- sample(names_pt_per_cluster[pt_per_cluster > 0], length(pt_clust_ids))
-            # remove one from available openings in assigned
+            # Remove one from available openings in assigned
             pt_per_cluster[cluster_assign] <- pt_per_cluster[cluster_assign] - 1
-            # for each patient-cluster, assign all associated isolates to new cluster
+            # For each patient-cluster, assign all associated isolates to new cluster
             for (pt_c_i in seq_along(pt_clust_ids)) {
-                # get all sequences for this patient-cluster combination
+                # Get all sequences for this patient-cluster combination
                 seqs_to_assign <- elig_vec[elig_vec[, "comb"] == pt_clust_ids[pt_c_i], "seq"]
-                # assign all sequences to the target cluster
+                # Assign all sequences to the target cluster
                 rand_clusters[seqs_to_assign] <- as.numeric(cluster_assign[pt_c_i])
             }
         }
         rand_clusters
     }
 
-    # initialize an array to store cluster properties for each permutation
+    # Initialize an array to store cluster properties for each permutation
     n_props <- ncol(cluster_props)
     prop_array <- array(
         dim = c(nrow(cluster_props), n_props, nperm + 1),
-        dimnames = list(seq_len(nrow(cluster_props)), colnames(cluster_props), seq_len(nperm + 1))
+        dimnames = list(
+            seq_len(nrow(cluster_props)),
+            colnames(cluster_props),
+            seq_len(nperm + 1)
+        )
     )
 
-    # permute the clusters in parallel
+    # Permute the clusters in parallel
     perm_results <- mclapply(
         seq_len(nperm),
         function(n) {
             perm_clust <- setNames(rep(-1, length(clusters)), cluster_names)
-            # sequentially assign patients to clusters from each category
+            # Sequentially assign patients to clusters from each category
             perm_clust <- assign_pt_clusters(
                 elig_convert_pts,
                 cluster_per_convert,
                 convert_per_cluster,
                 perm_clust
-            ) # converts
+            ) # Converts
             perm_clust <- assign_pt_clusters(
                 elig_index_start_pts,
                 cluster_per_index_start,
                 index_start_per_cluster,
                 perm_clust
-            ) # index patients who started clusters
+            ) # Index patients who started clusters
             perm_clust <- assign_pt_clusters(
                 elig_index_not_start_pts,
                 cluster_per_index_not_start,
                 index_not_start_per_cluster,
                 perm_clust
-            ) # index patients whose isolate was not an index isolate
+            ) # Index patients whose isolate was not an index isolate
             perm_valid <- sort(unique(perm_clust))
             perm_cluster_props <- t(sapply(perm_valid, function(c) {
                 cluster_properties(
@@ -1008,20 +744,20 @@ cluster_property_perm_test <- function(
                     room_trace
                 )
             }))
-            # return the permuted cluster properties
+            # Return the permuted cluster properties
             perm_cluster_props
         },
         mc.cores = num_cores
     )
 
-    # store the permuted cluster properties
+    # Store the permuted cluster properties
     for (n in seq_len(nperm)) {
         prop_array[,, n] <- perm_results[[n]]
     }
-    # store observed cluster properties in the final slice of the array
+    # Store observed cluster properties in the final slice of the array
     prop_array[,, nperm + 1] <- cluster_props
 
-    # compute summary statistics for each permutation
+    # Compute summary statistics for each permutation
     median_stat_names <- paste("Median", colnames(cluster_props))
 
     per_conv_cols <- c(
@@ -1062,10 +798,10 @@ cluster_property_perm_test <- function(
     )
 
     for (i in seq_len(nperm + 1)) {
-        # median statistics
+        # Median statistics
         perm_props[i, median_stat_names] <- apply(prop_array[,, i], 2, median, na.rm = TRUE)
 
-        # per-convert statistics (as a fraction of the total converts in observed clusters)
+        # Per-convert statistics (as a fraction of the total converts in observed clusters)
         perm_props[i, per_conv_stat_names] <- vapply(
             per_conv_cols,
             function(col) {
@@ -1074,7 +810,7 @@ cluster_property_perm_test <- function(
             numeric(1)
         )
 
-        # per-initial-convert statistics
+        # Per-initial-convert statistics
         perm_props[i, per_init_conv_stat_names] <- vapply(
             per_init_conv_cols,
             function(col) {
@@ -1086,7 +822,7 @@ cluster_property_perm_test <- function(
             numeric(1)
         )
 
-        # fraction of clusters statistic
+        # Fraction of clusters statistic
         perm_props[i, cluster_stat_names] <- vapply(
             cluster_cols,
             function(col) {
