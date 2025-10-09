@@ -166,7 +166,8 @@ plot_clusters_phylo <- function(
             dimnames = list(rownames(dna_mat), colnames(dna_mat))
         )
         # mark variants as 1 where isolate base differs from outgroup base
-        diff_mat <- dna_mat != matrix(out_bases, nrow = nrow(dna_mat), ncol = ncol(dna_mat), byrow = TRUE)
+        diff_mat <- dna_mat !=
+            matrix(out_bases, nrow = nrow(dna_mat), ncol = ncol(dna_mat), byrow = TRUE)
         variant_code_mat[diff_mat] <- 1L
         # override to 2 where the isolate base is unknown (do not consider outgroup unknowns)
         is_unknown_isolate <- dna_mat %in% unknowns
