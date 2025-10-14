@@ -5,7 +5,7 @@
 \title{Compute various cluster-level properties}
 \usage{
 cluster_properties(
-  cluster_seqs,
+  seqs,
   pt_trace,
   seq2pt,
   ip_pt_seqs,
@@ -17,8 +17,6 @@ cluster_properties(
 )
 }
 \arguments{
-\item{cluster_seqs}{A character vector of sequence IDs belonging to the cluster.}
-
 \item{pt_trace}{A data frame or matrix of patient-level trace data (rows are days,
 columns are patient IDs).}
 
@@ -26,7 +24,7 @@ columns are patient IDs).}
 (names must be sequence IDs, values must be patient IDs).}
 
 \item{ip_pt_seqs}{A character vector of sequence IDs corresponding to patients
-who tested positive on admission (\"intake positive\").}
+who tested positive on admission ("intake positive").}
 
 \item{ip_seqs}{A character vector of sequence IDs presumed to be imported from
 outside (a subset of \code{ip_pt_seqs} or similar).}
@@ -39,6 +37,8 @@ names should match sequence IDs).}
 \item{floor_trace}{(Optional) A data frame or matrix for floor-level tracing.}
 
 \item{room_trace}{(Optional) A data frame or matrix for room-level tracing.}
+
+\item{cluster_seqs}{A character vector of sequence IDs belonging to the cluster.}
 }
 \value{
 A named numeric vector containing various cluster-level properties. The list
@@ -60,7 +60,6 @@ This function computes the following properties for the given cluster:
 \item Number_of_converts
 \item Number_of_initial_converts
 \item Number_of_later_converts
-\item Cluster_duration
 \item Mean_genetic_distance
 \item Median_genetic_distance
 \item Max_genetic_distance

@@ -5,7 +5,7 @@
 \title{Remap cluster values: each unique value (including each special value) gets its own number
 in order of appearance.}
 \usage{
-remap_cluster_values(x, special_val = 1)
+remap_cluster_values(x, special_val = 0)
 }
 \arguments{
 \item{x}{A numeric vector of cluster assignments.}

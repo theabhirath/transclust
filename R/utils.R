@@ -88,7 +88,7 @@ remove_singleton_clusters <- function(clusters) {
 #' @returns A numeric vector of remapped cluster assignments.
 #'
 #' @keywords internal
-remap_cluster_values <- function(x, special_val = 1) {
+remap_cluster_values <- function(x, special_val = 0) {
     lookup <- new.env(hash = TRUE, parent = emptyenv())
     next_id <- 1
     out <- integer(length(x))
@@ -111,4 +111,19 @@ remap_cluster_values <- function(x, special_val = 1) {
     }
     names(out) <- names(x) # keep original names (if any)
     out
+}
+
+#' Remove a node from a vector of cluster assignments.
+#'
+#' @description
+#' This function removes a node from a vector of cluster assignments.
+#'
+#' @param clusters A numeric vector of cluster assignments.
+#' @param out_group The node to remove.
+#'
+#' @returns A numeric vector of cluster assignments with the node removed.
+#'
+#' @keywords internal
+remove_node_from_clusters <- function(clusters, node) {
+    clusters[!(names(clusters) == node)]
 }
