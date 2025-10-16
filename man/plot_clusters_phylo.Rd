@@ -33,7 +33,3 @@ A \code{ggtree} object with clusters visualized on the tree.
 \description{
 Maps clusters onto a phylogenetic tree and visualizes them
 }
-\author{
-\href{mailto:aryansin@umich.edu}{Aryan Singh} -
-ORCID ID: \href{https://orcid.org/0000-0002-1850-5598}{0000-0002-1850-5598}
-}

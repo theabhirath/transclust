@@ -1,7 +1,5 @@
 #' Maps clusters onto a phylogenetic tree and visualizes them
 #'
-#' @author [Aryan Singh](mailto:aryansin@umich.edu) -
-#'         ORCID ID: [0000-0002-1850-5598](https://orcid.org/0000-0002-1850-5598)
 #'
 #' @param tree A phylogenetic tree object of class `phylo`.
 #' @param clusters A vector named by sequence IDs with values indicating the cluster (subtree) each sequence belongs to.
@@ -70,7 +68,7 @@ plot_clusters_phylo <- function(
             }
             row_vals <- pt_trace[as.character(seq2pt[id]), ]
             i_negative <- which(row_vals %in% c(1.25))
-            i_positive <- which(row_vals %in% c(1.5, 1.75))
+            i_positive <- which(row_vals %in% c(1.5))
             if (length(i_negative) == 0 || length(i_positive) == 0) {
                 return(FALSE)
             }
@@ -82,9 +80,8 @@ plot_clusters_phylo <- function(
         # index isolates are those which are in ip_seqs
         is_index_isolate <- names(clusters) %in% ip_seqs
         # add convert class information to cluster_df
-        convert_class <- rep("Secondary convert", nrow(cluster_df))
+        convert_class <- rep("Convert patient", nrow(cluster_df))
         convert_class[is_index_isolate] <- "Index patient"
-        convert_class[!is_index_isolate & is_convert_isolate] <- "Convert patient"
         cluster_df$convert_class <- convert_class
     }
 
@@ -750,6 +747,15 @@ plot_cluster_patient_trace <- function(
     trace_sub <- trace_data[as.character(df$patient[pt_in_trace]), , drop = FALSE]
     row.names(trace_sub) <- seq_ids_in_trace
 
+    # for each isolate for each patient in this cluster, set the trace value to 1.75
+    for (id in seq_ids_in_trace) {
+        # find patient for this id
+        pt_id <- df$patient[df$id == id]
+        for (isolate in df$id[df$patient == pt_id]) {
+            trace_sub[id, as.character(df$date[df$id == isolate])] <- 1.75
+        }
+    }
+
     # for each patient, find earliest isolate in time
     # then map each isolate to that earliest isolate
     isolate_order <- df |>
@@ -762,15 +768,6 @@ plot_cluster_patient_trace <- function(
     # reorder rows by earliest isolates in cluster/date order
     keep_rows <- intersect(isolate_order, seq_ids_in_trace)
     trace_sub <- trace_sub[keep_rows, , drop = FALSE]
-
-    # for each isolate for each patient in this cluster, set the trace value to 1.75
-    for (id in keep_rows) {
-        # find patient for this id
-        pt_id <- df$patient[df$id == id]
-        for (isolate in df$id[df$patient == pt_id]) {
-            trace_sub[id, as.character(df$date[df$id == isolate])] <- 1.75
-        }
-    }
 
     # identify convert isolates
     is_convert_isolate <- sapply(keep_rows, function(id) {
