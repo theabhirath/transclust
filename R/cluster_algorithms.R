@@ -200,11 +200,18 @@ get_tn_clusters_sv_index <- function(dna_aln, snp_dist, ip_seqs, ip_pt_seqs, seq
                     nested <- vapply(
                         setdiff(valid_indices, st_i),
                         function(sub_i) {
-                            as.integer(
-                                all(sub_trees[[sub_i]]$tip.label %in% st$tip.label) &&
-                                    sub_trees_index_first[sub_i] < sub_trees_index_first[st_i] &&
-                                    sub_trees_index_first[sub_i] > 0
-                            )
+                            # Check if subtree is contained within current subtree
+                            is_contained <- all(sub_trees[[sub_i]]$tip.label %in% st$tip.label)
+                            if (!is_contained) return(FALSE)
+
+                            # Determine nesting based on index counts
+                            current_index <- sub_trees_index_first[st_i]
+                            other_index <- sub_trees_index_first[sub_i]
+
+                            # If current subtree has no index (0), any nested subtree with index > 0 is nested
+                            # If current subtree has index > 0, nested subtree must have smaller positive index
+                            (current_index == 0 && other_index > 0) || 
+                            (current_index > 0 && other_index > 0 && other_index < current_index)
                         },
                         integer(1)
                     )
