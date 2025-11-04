@@ -637,6 +637,7 @@ plot_st_patient_trace <- function(
         trace_df,
         offset = 4,
         width = 4,
+        color = NULL,
         font.size = 1,
         custom_column_labels = col_lab,
         colnames_angle = 90,
@@ -648,7 +649,19 @@ plot_st_patient_trace <- function(
             name = "Trace",
             values = color_map,
             breaks = custom_breaks,
-            labels = custom_breaks,
+            labels = ifelse(
+                custom_breaks == 1,
+                "in facility",
+                ifelse(
+                    custom_breaks == 1.25,
+                    "negative surveillance",
+                    ifelse(
+                        custom_breaks == 1.5,
+                        "positive surveillance",
+                        as.character(custom_breaks)
+                    )
+                )
+            ),
             na.value = "white",
             drop = FALSE
         ) +
@@ -892,6 +905,7 @@ plot_cluster_patient_trace <- function(
     gheatmap(
         tree_plot,
         trace_df,
+        color = NULL,
         offset = 2,
         width = 4,
         font.size = 1,
@@ -904,7 +918,15 @@ plot_cluster_patient_trace <- function(
             name = "Trace",
             values = color_map,
             breaks = custom_breaks,
-            labels = custom_breaks,
+            labels = ifelse(
+                custom_breaks == 1.25,
+                "negative surveillance",
+                ifelse(
+                    custom_breaks == 1.5,
+                    "non-cluster isolate",
+                    ifelse(custom_breaks == 1.75, "cluster isolate", as.character(custom_breaks))
+                )
+            ),
             na.value = "white",
             drop = FALSE
         ) +
