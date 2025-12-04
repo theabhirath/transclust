@@ -275,8 +275,8 @@ plot_clusters_phylo <- function(
             plot.title.position = "plot",
             plot.title = element_text(hjust = 0.5),
             legend.position = "right",
-            legend.key.height = unit(0.5, "cm"),
-            legend.key.width = unit(0.2, "cm")
+            legend.key.height = unit(0.8, "cm"),
+            legend.key.width = unit(0.5, "cm")
         )
 }
 
@@ -708,11 +708,11 @@ plot_st_patient_trace <- function(
         ) +
         scale_fill_gradientn(name = "Intra_pt_dist", colors = ann_colors$Intra_pt_dist) +
         theme(
-            legend.title = element_text(size = 8),
-            legend.text = element_text(size = 6),
+            legend.title = element_text(size = 11),
+            legend.text = element_text(size = 9),
             legend.position = "right",
-            legend.key.height = unit(0.5, "cm"),
-            legend.key.width = unit(0.2, "cm")
+            legend.key.height = unit(0.8, "cm"),
+            legend.key.width = unit(0.5, "cm")
         )
 }
 
@@ -947,10 +947,10 @@ plot_cluster_patient_trace <- function(
             drop = FALSE
         ) +
         theme(
-            legend.title = element_text(size = 8),
-            legend.text = element_text(size = 6),
+            legend.title = element_text(size = 11),
+            legend.text = element_text(size = 9),
             legend.position = "right",
-            legend.key.height = unit(0.5, "cm"),
-            legend.key.width = unit(0.2, "cm")
+            legend.key.height = unit(0.8, "cm"),
+            legend.key.width = unit(0.5, "cm")
         )
 }
