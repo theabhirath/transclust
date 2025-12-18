@@ -7,14 +7,16 @@
 #' @param snp_dist A matrix of SNP distances between isolates constructed using a model of DNA evolution.
 #'                 See [`get_snp_dist_matrix`] for a useful function to generate this.
 #' @param snp_thresh A threshold for defining clusters.
+#' @param hclust_method A string indicating the method to use for hierarchical clustering.
+#'                     See [`\link[stats]{hclust}`] for more details. Default is "complete".
 #'
 #' @return A numeric vector indicating the cluster that each isolate belongs to.
 #'
 #' @importFrom stats hclust as.dist cutree
 #' @export
-get_tn_clusters_snp_thresh <- function(snp_dist, snp_thresh) {
+get_tn_clusters_snp_thresh <- function(snp_dist, snp_thresh, hclust_method = "complete") {
     # convert distance matrix to hclust object
-    snp_hclust <- hclust(as.dist(snp_dist))
+    snp_hclust <- hclust(as.dist(snp_dist), method = hclust_method)
     # cut at the specified threshold to create clusters and return the clusters
     cutree(snp_hclust, h = snp_thresh)
 }
