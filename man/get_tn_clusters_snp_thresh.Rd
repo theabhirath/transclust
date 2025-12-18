@@ -4,13 +4,16 @@
 \alias{get_tn_clusters_snp_thresh}
 \title{Perform clustering of isolates using a hard SNP distance cutoff.}
 \usage{
-get_tn_clusters_snp_thresh(snp_dist, snp_thresh)
+get_tn_clusters_snp_thresh(snp_dist, snp_thresh, hclust_method = "complete")
 }
 \arguments{
 \item{snp_dist}{A matrix of SNP distances between isolates constructed using a model of DNA evolution.
 See \code{\link{get_snp_dist_matrix}} for a useful function to generate this.}
 
 \item{snp_thresh}{A threshold for defining clusters.}
+
+\item{hclust_method}{A string indicating the method to use for hierarchical clustering.
+See [\verb{\link[stats]\{hclust\}}] for more details. Default is "complete".}
 }
 \value{
 A numeric vector indicating the cluster that each isolate belongs to.

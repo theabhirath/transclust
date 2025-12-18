@@ -9,13 +9,12 @@
 #' @param clusters A named vector of cluster assignments (cluster IDs) with names corresponding to sequence IDs.
 #' @param dna_aln A matrix representing the DNA sequence alignment, where rows are sequences (named by sequence IDs)
 #'                and columns represent nucleotide positions.
-#' @param var_pos A logical vector indicating which positions in the alignment are variable.
 #'
 #' @return A data frame with one row per cluster (plus a row for the overall population) containing the
 #'   number of variable sites and the rates for six mutation types. Mutation rates are rounded to three decimals.
 #'
 #' @export
-intra_cluster_genetic_var_analysis <- function(clusters, dna_aln, var_pos) {
+intra_cluster_genetic_var_analysis <- function(clusters, dna_aln) {
     # pre-compute a character matrix of the alignment
     dna_aln_char <- matrix(
         as.character(dna_aln),
@@ -31,6 +30,9 @@ intra_cluster_genetic_var_analysis <- function(clusters, dna_aln, var_pos) {
         allele_tab <- table(pos_aln)
         names(allele_tab)[which.max(allele_tab)]
     })
+
+    # get all variable positions in the alignment
+    var_pos <- apply(dna_aln_char, 2, function(x) sum(x == x[1]) < nrow(dna_aln_char))
 
     # filter the alignment to only include variable positions
     dna_aln_char <- dna_aln_char[, var_pos, drop = FALSE]

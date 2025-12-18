@@ -4,15 +4,13 @@
 \alias{intra_cluster_genetic_var_analysis}
 \title{Analyze Intra-Cluster Genetic Variation}
 \usage{
-intra_cluster_genetic_var_analysis(clusters, dna_aln, var_pos)
+intra_cluster_genetic_var_analysis(clusters, dna_aln)
 }
 \arguments{
 \item{clusters}{A named vector of cluster assignments (cluster IDs) with names corresponding to sequence IDs.}
 
 \item{dna_aln}{A matrix representing the DNA sequence alignment, where rows are sequences (named by sequence IDs)
 and columns represent nucleotide positions.}
-
-\item{var_pos}{A logical vector indicating which positions in the alignment are variable.}
 }
 \value{
 A data frame with one row per cluster (plus a row for the overall population) containing the
