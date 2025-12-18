@@ -7,8 +7,8 @@
 get_tn_clusters_sv_index(
   dna_aln,
   snp_dist,
-  ip_seqs,
-  ip_pt_seqs,
+  adm_seqs,
+  adm_pos_pt_seqs,
   seq2pt,
   dates,
   tree
@@ -20,10 +20,10 @@ get_tn_clusters_sv_index(
 \item{snp_dist}{A matrix of SNP distances between isolates constructed using a model of DNA evolution.
 See \code{\link{get_snp_dist_matrix}} for a useful function to generate this.}
 
-\item{ip_seqs}{A vector of sequence IDs which correspond to intake patient sequences presumed to be imported.}
+\item{adm_seqs}{A vector of sequence IDs which correspond to admission positive patient sequences.}
 
-\item{ip_pt_seqs}{A vector of all sequence IDs which correspond to intake-positive patients, imported or
-collected later. This will be a superset of \code{ip_seqs} by definition.}
+\item{adm_pos_pt_seqs}{A vector of all sequence IDs which correspond to admission-positive patients, either at
+intake or collected later. This will be a superset of \code{adm_seqs} by definition.}
 
 \item{seq2pt}{A named vector mapping sequence IDs to patient IDs.}
 

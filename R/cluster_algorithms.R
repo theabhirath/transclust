@@ -31,9 +31,9 @@ get_tn_clusters_snp_thresh <- function(snp_dist, snp_thresh) {
 #' @param dna_aln A DNA alignment object of class `DNAbin`.
 #' @param snp_dist A matrix of SNP distances between isolates constructed using a model of DNA evolution.
 #'                 See [`get_snp_dist_matrix`] for a useful function to generate this.
-#' @param ip_seqs A vector of sequence IDs which correspond to intake patient sequences presumed to be imported.
-#' @param ip_pt_seqs A vector of all sequence IDs which correspond to intake-positive patients, imported or
-#'                   collected later. This will be a superset of `ip_seqs` by definition.
+#' @param adm_seqs A vector of sequence IDs which correspond to admission positive patient sequences.
+#' @param adm_pos_pt_seqs A vector of all sequence IDs which correspond to admission-positive patients, either at
+#'                        intake or collected later. This will be a superset of `adm_seqs` by definition.
 #' @param seq2pt A named vector mapping sequence IDs to patient IDs.
 #' @param dates A vector of isolate dates named by sequence IDs.
 #' @param tree A phylogenetic tree object of class `phylo` constructed from the DNA alignment. This can be constructed
@@ -48,7 +48,7 @@ get_tn_clusters_snp_thresh <- function(snp_dist, snp_thresh) {
 #'
 #' @importFrom ape subtrees
 #' @export
-get_tn_clusters_sv_index <- function(dna_aln, snp_dist, ip_seqs, ip_pt_seqs, seq2pt, dates, tree) {
+get_tn_clusters_sv_index <- function(dna_aln, snp_dist, adm_seqs, adm_pos_pt_seqs, seq2pt, dates, tree) {
     #####################################################################################
     # 1. Compute the shared variant matrix #####
     # For each pair of isolates, we compute the number of positions where:
@@ -106,9 +106,9 @@ get_tn_clusters_sv_index <- function(dna_aln, snp_dist, ip_seqs, ip_pt_seqs, seq
         st <- sub_trees[[st_i]]
         tip_labels <- st$tip.label
         # identify intake-positive sequences in the subtree
-        ip_in_sub <- intersect(ip_seqs, tip_labels)
+        ip_in_sub <- intersect(tip_labels, adm_seqs)
         # determine the earliest date among convert sequences (non-intake-positive patients)
-        convert_dates <- dates[setdiff(tip_labels, ip_pt_seqs)]
+        convert_dates <- dates[setdiff(tip_labels, adm_pos_pt_seqs)]
         min_convert_date <- if (length(convert_dates) > 0) min(convert_dates) else Inf
         # filter intake-positives to those that occur on/before the cutoff
         valid_ip <- ip_in_sub[dates[ip_in_sub] <= min_convert_date]
@@ -150,17 +150,17 @@ get_tn_clusters_sv_index <- function(dna_aln, snp_dist, ip_seqs, ip_pt_seqs, seq
             # reward intake-positives that could have started a cluster
             ip_convert_seq_count <- length(setdiff(
                 tip_labels,
-                ip_pt_seqs[seq2pt[ip_pt_seqs] %in% patients_non_rep]
+                adm_pos_pt_seqs[seq2pt[adm_pos_pt_seqs] %in% patients_non_rep]
             ))
             # penalize intake-positives that could not have started a cluster
-            ip_pt_count <- sum(tip_labels %in% ip_pt_seqs) / 1e6
+            ip_pt_count <- sum(tip_labels %in% adm_pos_pt_seqs) / 1e6
             ip_convert_seq_count - ip_pt_count
         } else {
             0
         }
         # compute index count: subtrees that have an index before all converts
-        num_converts <- length(setdiff(tip_labels, ip_pt_seqs))
-        num_ip_pts <- length(unique(seq2pt[intersect(tip_labels, ip_seqs)]))
+        num_converts <- length(setdiff(tip_labels, adm_pos_pt_seqs))
+        num_ip_pts <- length(unique(seq2pt[intersect(tip_labels, adm_seqs)]))
         index_count <- if (length(valid_ip) > 0 && num_converts > 0) num_ip_pts else 0
         # return both metrics
         list(score = score, index_count = index_count)
