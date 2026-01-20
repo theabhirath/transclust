@@ -50,7 +50,15 @@ get_tn_clusters_snp_thresh <- function(snp_dist, snp_thresh, hclust_method = "co
 #'
 #' @importFrom ape subtrees
 #' @export
-get_tn_clusters_sv_index <- function(dna_aln, snp_dist, adm_seqs, adm_pos_pt_seqs, seq2pt, dates, tree) {
+get_tn_clusters_sv_index <- function(
+    dna_aln,
+    snp_dist,
+    adm_seqs,
+    adm_pos_pt_seqs,
+    seq2pt,
+    dates,
+    tree
+) {
     #####################################################################################
     # 1. Compute the shared variant matrix #####
     # For each pair of isolates, we compute the number of positions where:

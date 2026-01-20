@@ -177,84 +177,90 @@ cluster_isolate_overlap <- function(isolate_lookup, iso_overlap_df) {
 #' @export
 categorize_cluster_overlap <- function(isolate_lookup, cluster_overlap_df, surv_df) {
     # iterate over each cluster in cluster_overlap_df
-    setNames(sapply(unique(cluster_overlap_df$cluster), function(cl) {
-        # overlap for cluster
-        cluster_overlap_sub <- cluster_overlap_df[cluster_overlap_df$cluster == cl, ]
-        # find the isolate with the earliest date for all patients in the cluster
-        cluster_patients <- unique(isolate_lookup$patient_id[isolate_lookup$cluster == cl])
-        lookup_sub <- isolate_lookup[isolate_lookup$patient_id %in% cluster_patients, ]
-        index_lookup <- lookup_sub[lookup_sub$date == min(lookup_sub$date), ]
-        # if there are multiple isolates with the same earliest date, filter down to one by:
-        # - keeping those in the cluster
-        # - keeping those that are admission positive
-        # - keeping the one with the lowest genome ID
-        if (nrow(index_lookup) > 1) {
-            if (any(index_lookup$cluster == cl)) {
-                index_lookup <- index_lookup[index_lookup$cluster == cl, ]
-            }
-            if (any(index_lookup$adm_pos)) {
-                index_lookup <- index_lookup[index_lookup$adm_pos, ]
-            }
+    setNames(
+        sapply(unique(cluster_overlap_df$cluster), function(cl) {
+            # overlap for cluster
+            cluster_overlap_sub <- cluster_overlap_df[cluster_overlap_df$cluster == cl, ]
+            # find the isolate with the earliest date for all patients in the cluster
+            cluster_patients <- unique(isolate_lookup$patient_id[isolate_lookup$cluster == cl])
+            lookup_sub <- isolate_lookup[isolate_lookup$patient_id %in% cluster_patients, ]
+            index_lookup <- lookup_sub[lookup_sub$date == min(lookup_sub$date), ]
+            # if there are multiple isolates with the same earliest date, filter down to one by:
+            # - keeping those in the cluster
+            # - keeping those that are admission positive
+            # - keeping the one with the lowest genome ID
             if (nrow(index_lookup) > 1) {
-                index_lookup <- index_lookup[which.min(index_lookup$isolate_id), ]
-            }
-        }
-        # overlap explanation for all isolates except the index
-        # we ignore other admission-positive isolates
-        cluster_overlap_expl <- all(
-            cluster_overlap_sub$overlap[cluster_overlap_sub$isolate_id != index_lookup$isolate_id],
-            na.rm = TRUE
-        )
-        # check if the index isolate is in the cluster
-        cluster_isolates <- lookup_sub$isolate_id[lookup_sub$cluster == cl]
-        index_in_cluster <- index_lookup$isolate_id %in% cluster_isolates
-        if (index_in_cluster) {
-            # if the index isolate is admission-positive, it is a "true index"
-            if (index_lookup$adm_pos) {
-                # for all other isolates, overlap should be TRUE or NA, not FALSE
-                # if this is the case, the cluster category is "patient-to-patient"
-                if (cluster_overlap_expl) {
-                    "patient-to-patient"
-                } else {
-                    "missing-intermediate"
+                if (any(index_lookup$cluster == cl)) {
+                    index_lookup <- index_lookup[index_lookup$cluster == cl, ]
                 }
-            } else {
-                # if the isolate is not admission positive but is the first surveillance for the patient
-                # after admission, this is a "weak index"
-                surv_index_pt <- surv_df[surv_df$patient_id == index_lookup$patient_id, ]
-                # this is a "weak index" if the earliest surveillance date is the same as the isolate date
-                # and we have overlap explanation for all other isolates
-                if (min(surv_index_pt$surv_date) == index_lookup$date && cluster_overlap_expl) {
-                    "weak-index"
-                } else {
-                    # if we have overlap explanations for all isolates except one convert,
-                    # this is a "false negative index"
-                    # sum should be equal to the number of converts in the cluster minus one
-                    converts_lookup_sub <- lookup_sub[lookup_sub$adm_pos == FALSE, ]
-                    num_overlap_expl <- sum(cluster_overlap_sub$overlap[
-                        cluster_overlap_sub$isolate_id %in% cluster_isolates &
-                            cluster_overlap_sub$isolate_id %in% converts_lookup_sub$isolate_id
-                    ])
-                    num_converts <- length(converts_lookup_sub$isolate_id)
-                    if (num_overlap_expl == num_converts) {
-                        "false-negative-index"
+                if (any(index_lookup$adm_pos)) {
+                    index_lookup <- index_lookup[index_lookup$adm_pos, ]
+                }
+                if (nrow(index_lookup) > 1) {
+                    index_lookup <- index_lookup[which.min(index_lookup$isolate_id), ]
+                }
+            }
+            # overlap explanation for all isolates except the index
+            # we ignore other admission-positive isolates
+            cluster_overlap_expl <- all(
+                cluster_overlap_sub$overlap[
+                    cluster_overlap_sub$isolate_id != index_lookup$isolate_id
+                ],
+                na.rm = TRUE
+            )
+            # check if the index isolate is in the cluster
+            cluster_isolates <- lookup_sub$isolate_id[lookup_sub$cluster == cl]
+            index_in_cluster <- index_lookup$isolate_id %in% cluster_isolates
+            if (index_in_cluster) {
+                # if the index isolate is admission-positive, it is a "true index"
+                if (index_lookup$adm_pos) {
+                    # for all other isolates, overlap should be TRUE or NA, not FALSE
+                    # if this is the case, the cluster category is "patient-to-patient"
+                    if (cluster_overlap_expl) {
+                        "patient-to-patient"
                     } else {
-                        "missing-source"
+                        "missing-intermediate"
+                    }
+                } else {
+                    # if the isolate is not admission positive but is the first surveillance for the patient
+                    # after admission, this is a "weak index"
+                    surv_index_pt <- surv_df[surv_df$patient_id == index_lookup$patient_id, ]
+                    # this is a "weak index" if the earliest surveillance date is the same as the isolate date
+                    # and we have overlap explanation for all other isolates
+                    if (min(surv_index_pt$surv_date) == index_lookup$date && cluster_overlap_expl) {
+                        "weak-index"
+                    } else {
+                        # if we have overlap explanations for all isolates except one convert,
+                        # this is a "false negative index"
+                        # sum should be equal to the number of converts in the cluster minus one
+                        converts_lookup_sub <- lookup_sub[lookup_sub$adm_pos == FALSE, ]
+                        num_overlap_expl <- sum(cluster_overlap_sub$overlap[
+                            cluster_overlap_sub$isolate_id %in%
+                                cluster_isolates &
+                                cluster_overlap_sub$isolate_id %in% converts_lookup_sub$isolate_id
+                        ])
+                        num_converts <- length(converts_lookup_sub$isolate_id)
+                        if (num_overlap_expl == num_converts) {
+                            "false-negative-index"
+                        } else {
+                            "missing-source"
+                        }
                     }
                 }
-            }
-        } else {
-            # if the earliest isolate is not in the cluster but is admission positive
-            # this is a "multiply-colonized index"
-            if (index_lookup$adm_pos) {
-                if (cluster_overlap_expl) {
-                    "multiply-colonized-index"
-                } else {
-                    "multiply-colonized-index-missing-intermediate"
-                }
             } else {
-                "inexplicable"
+                # if the earliest isolate is not in the cluster but is admission positive
+                # this is a "multiply-colonized index"
+                if (index_lookup$adm_pos) {
+                    if (cluster_overlap_expl) {
+                        "multiply-colonized-index"
+                    } else {
+                        "multiply-colonized-index-missing-intermediate"
+                    }
+                } else {
+                    "inexplicable"
+                }
             }
-        }
-    }), unique(cluster_overlap_df$cluster))
+        }),
+        unique(cluster_overlap_df$cluster)
+    )
 }

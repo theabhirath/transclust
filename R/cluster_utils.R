@@ -27,7 +27,8 @@ get_isolate_lookup <- function(clusters, dna_aln, seq2pt, adm_seqs, dates, surv_
         date = unname(dates[labels(dna_aln)]),
         cluster = unname(clusters[labels(dna_aln)]),
         adm_pos = labels(dna_aln) %in% adm_seqs
-    ) |> na.omit()
+    ) |>
+        na.omit()
 
     # pre-split surveillance dates by patient_id once
     surv_by_patient <- with(surv_df, split(surv_date, patient_id))
