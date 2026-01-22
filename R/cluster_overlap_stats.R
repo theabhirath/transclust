@@ -202,12 +202,14 @@ categorize_cluster_overlap <- function(isolate_lookup, cluster_overlap_df, surv_
             }
             # overlap explanation for all isolates except the index
             # we ignore other admission-positive isolates
-            cluster_overlap_expl <- all(
-                cluster_overlap_sub$overlap[
-                    cluster_overlap_sub$isolate_id != index_lookup$isolate_id
-                ],
-                na.rm = TRUE
-            )
+            overlap_expl_sub <- cluster_overlap_sub$overlap[
+                cluster_overlap_sub$isolate_id != index_lookup$isolate_id
+            ]
+            # if overlap_expl_sub is all NA, the cluster has only admission positive isolates
+            if (all(is.na(overlap_expl_sub))) {
+                return("all-admission-positive")
+            }
+            cluster_overlap_expl <- all(overlap_expl_sub, na.rm = TRUE)
             # check if the index isolate is in the cluster
             cluster_isolates <- lookup_sub$isolate_id[lookup_sub$cluster == cl]
             index_in_cluster <- index_lookup$isolate_id %in% cluster_isolates
@@ -261,6 +263,44 @@ categorize_cluster_overlap <- function(isolate_lookup, cluster_overlap_df, surv_
                 }
             }
         }),
+        unique(cluster_overlap_df$cluster)
+    )
+}
+
+#' Calculate the percentage of converts with overlap
+#'
+#' @description
+#' This function calculates the percentage of converts with overlap for each cluster.
+#'
+#' @param cluster_overlap_df A data frame with overlap information for isolate pairs. For more
+#'                            information, see [`cluster_isolate_overlap`].
+#' @param isolate_lookup A lookup table for isolates and their clusters assignments which has
+#'                        other relevant epidemiological information. For more information, see
+#'                        [`get_isolate_lookup`].
+#'
+#' @return A named vector with the percentage of converts with overlap for each cluster.
+#'
+#' @export
+percentage_converts_with_overlap <- function(cluster_overlap_df, isolate_lookup) {
+    setNames(
+        vapply(
+            unique(cluster_overlap_df$cluster),
+            function(cl) {
+                lookup_sub <- isolate_lookup[isolate_lookup$cluster == cl, ]
+                convert_isolates <- lookup_sub$isolate_id[
+                    lookup_sub$adm_pos == FALSE
+                ]
+                num_converts <- length(unique(lookup_sub$isolate_id[!lookup_sub$adm_pos]))
+                num_converts_with_overlap <- sum(
+                    cluster_overlap_df$overlap[
+                        cluster_overlap_df$isolate_id %in% convert_isolates
+                    ],
+                    na.rm = TRUE
+                )
+                num_converts_with_overlap / num_converts
+            },
+            numeric(1)
+        ),
         unique(cluster_overlap_df$cluster)
     )
 }
