@@ -27,6 +27,7 @@ Imports:
     ggplot2,
     ggtree,
     parallel,
+    pbmcapply,
     paletteer,
     ggnewscale,
     ggtreeExtra,
