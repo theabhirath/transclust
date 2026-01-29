@@ -58,27 +58,26 @@ get_isolate_lookup <- function(clusters, dna_aln, seq2pt, adm_seqs, dates, surv_
     lookup
 }
 
-#' Remove clusters with only one patient from a vector of cluster assignments.
+#' Get non-single patient clusters from a vector of cluster assignments.
 #'
 #' @description
-#' This function removes clusters with only one patient from a vector of cluster assignments.
+#' This function gets non-single patient clusters from a vector of cluster assignments.
 #'
 #' @param isolate_lookup A lookup table for isolates and their clusters assignments which has
 #'                       other relevant epidemiological information. For more information, see
 #'                       [`get_isolate_lookup`].
 #'
-#' @returns A lookup table for isolates and their clusters assignments with the single patient clusters removed.
+#' @returns A numeric vector of cluster assignments with the non-single patient clusters.
 #'
 #' @export
-remove_single_patient_clusters <- function(isolate_lookup) {
+get_non_single_patient_clusters <- function(isolate_lookup) {
     unique_clusters <- sort(unique(isolate_lookup$cluster))
     cluster_size <- vapply(
         unique_clusters,
         function(x) length(unique(isolate_lookup$patient_id[isolate_lookup$cluster == x])),
         integer(1)
     )
-    single_pt_clusters <- unique_clusters[cluster_size == 1]
-    isolate_lookup[!(isolate_lookup$cluster %in% single_pt_clusters), ]
+    unique_clusters[cluster_size > 1]
 }
 
 #' Remove singleton clusters from a vector of cluster assignments.
