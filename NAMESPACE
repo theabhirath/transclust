@@ -3,6 +3,7 @@
 export(categorize_cluster_overlap)
 export(cluster_genetic_context)
 export(cluster_isolate_overlap)
+export(cluster_patient_categorization)
 export(cluster_property_perm_test)
 export(compare_clusters)
 export(fraction_converts_with_overlap)
