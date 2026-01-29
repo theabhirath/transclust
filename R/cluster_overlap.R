@@ -98,15 +98,14 @@ isolate_isolate_overlap <- function(isolate_lookup, trace_mat) {
 #'
 #' @export
 cluster_isolate_overlap <- function(isolate_lookup, iso_overlap_df) {
-    # keep only clusters with >1 patient
-    lookup <- remove_single_patient_clusters(isolate_lookup)
-    clusters <- unique(lookup$cluster)
+    # get non-single patient clusters
+    clusters <- get_non_single_patient_clusters(isolate_lookup)
 
     # list of data frames for each cluster
     out_list <- lapply(clusters, function(cl) {
-        idx_cl <- lookup$cluster == cl
-        isolates <- lookup$isolate_id[idx_cl]
-        adm_pos <- lookup$adm_pos[idx_cl]
+        idx_cl <- isolate_lookup$cluster == cl
+        isolates <- isolate_lookup$isolate_id[idx_cl]
+        adm_pos <- isolate_lookup$adm_pos[idx_cl]
 
         # overlaps within this cluster only
         od <- iso_overlap_df[
@@ -176,30 +175,18 @@ cluster_isolate_overlap <- function(isolate_lookup, iso_overlap_df) {
 #'
 #' @export
 categorize_cluster_overlap <- function(isolate_lookup, cluster_overlap_df, surv_df) {
+    unique_clusters <- as.character(unique(cluster_overlap_df$cluster))
     # iterate over each cluster in cluster_overlap_df
     setNames(
-        sapply(unique(cluster_overlap_df$cluster), function(cl) {
+        sapply(unique_clusters, function(cl) {
             # overlap for cluster
             cluster_overlap_sub <- cluster_overlap_df[cluster_overlap_df$cluster == cl, ]
-            # find the isolate with the earliest date for all patients in the cluster
+
+            # find the index isolate (earliest date, with tiebreakers)
             cluster_patients <- unique(isolate_lookup$patient_id[isolate_lookup$cluster == cl])
             lookup_sub <- isolate_lookup[isolate_lookup$patient_id %in% cluster_patients, ]
-            index_lookup <- lookup_sub[lookup_sub$date == min(lookup_sub$date), ]
-            # if there are multiple isolates with the same earliest date, filter down to one by:
-            # - keeping those in the cluster
-            # - keeping those that are admission positive
-            # - keeping the one with the lowest genome ID
-            if (nrow(index_lookup) > 1) {
-                if (any(index_lookup$cluster == cl)) {
-                    index_lookup <- index_lookup[index_lookup$cluster == cl, ]
-                }
-                if (any(index_lookup$adm_pos)) {
-                    index_lookup <- index_lookup[index_lookup$adm_pos, ]
-                }
-                if (nrow(index_lookup) > 1) {
-                    index_lookup <- index_lookup[which.min(index_lookup$isolate_id), ]
-                }
-            }
+            index_lookup <- find_index_isolate(cl, cluster_patients, isolate_lookup)
+
             # overlap explanation for all isolates except the index
             # we ignore other admission-positive isolates
             overlap_expl_sub <- cluster_overlap_sub$overlap[
@@ -263,14 +250,14 @@ categorize_cluster_overlap <- function(isolate_lookup, cluster_overlap_df, surv_
                 }
             }
         }),
-        unique(cluster_overlap_df$cluster)
+        unique_clusters
     )
 }
 
-#' Calculate the percentage of converts with overlap
+#' Calculate the fraction of converts with overlap
 #'
 #' @description
-#' This function calculates the percentage of converts with overlap for each cluster.
+#' This function calculates the fraction of converts with overlap for each cluster.
 #'
 #' @param cluster_overlap_df A data frame with overlap information for isolate pairs. For more
 #'                            information, see [`cluster_isolate_overlap`].
@@ -278,10 +265,10 @@ categorize_cluster_overlap <- function(isolate_lookup, cluster_overlap_df, surv_
 #'                        other relevant epidemiological information. For more information, see
 #'                        [`get_isolate_lookup`].
 #'
-#' @return A named vector with the percentage of converts with overlap for each cluster.
+#' @return A named vector with the fraction of converts with overlap for each cluster.
 #'
 #' @export
-percentage_converts_with_overlap <- function(cluster_overlap_df, isolate_lookup) {
+fraction_converts_with_overlap <- function(cluster_overlap_df, isolate_lookup) {
     setNames(
         vapply(
             unique(cluster_overlap_df$cluster),
@@ -297,7 +284,11 @@ percentage_converts_with_overlap <- function(cluster_overlap_df, isolate_lookup)
                     ],
                     na.rm = TRUE
                 )
-                num_converts_with_overlap / num_converts
+                if (num_converts > 0) {
+                    num_converts_with_overlap / num_converts
+                } else {
+                    NA
+                }
             },
             numeric(1)
         ),
