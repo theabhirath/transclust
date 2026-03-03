@@ -398,9 +398,7 @@ fraction_convert_same_source_from_lookups <- function(
 
     # Get convert -> sources mappings for both assignments
     map1 <- get_convert_source_map(isolate_lookup1)
-    print(length(map1))
     map2 <- get_convert_source_map(isolate_lookup2)
-    print(length(map2))
 
     # Find common converts
     common_converts <- intersect(names(map1), names(map2))
@@ -417,8 +415,5 @@ fraction_convert_same_source_from_lookups <- function(
         },
         logical(1)
     )
-    print(matches)
-    print(sum(matches))
-    print(length(common_converts))
     sum(matches) / length(common_converts)
 }
