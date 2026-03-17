@@ -6,24 +6,23 @@
 #' Tests overlap at facility, floor, and room levels.
 #'
 #' @param clusters A named numeric vector of cluster assignments.
-#' @param dna_aln A DNA alignment object (used for isolate IDs via labels()).
+#' @param dna_aln A DNA alignment object (used for isolate IDs).
 #' @param seq2pt A named vector mapping sequence IDs to patient IDs.
 #' @param adm_seqs A vector of sequence IDs which correspond to admission positive sequences.
 #' @param adm_pos_pt_seqs A vector of sequence IDs for patients who are admission positive.
 #' @param dates A named vector mapping sequence IDs to dates.
 #' @param surv_df A data frame with surveillance data.
 #' @param facility_trace A matrix with patient IDs as row names and dates as column names.
-#' @param floor_trace A matrix with floor-level trace data (same structure as facility_trace).
-#' @param room_trace A matrix with room-level trace data (same structure as facility_trace).
+#' @param floor_trace A matrix with floor-level trace data (same structure as `facility_trace`).
+#' @param room_trace A matrix with room-level trace data (same structure as `facility_trace`).
 #' @param nperm Number of permutations to perform. Default 1000.
-#' @param num_cores Number of cores for parallel processing. Default is detectCores() - 1.
+#' @param num_cores Number of cores for parallel processing. Default is `detectCores() - 1`.
 #'
 #' @returns A list containing:
-#'   \itemize{
-#'     \item \code{observed}: Named list with facility, floor, room fractions for observed data
-#'     \item \code{permuted}: Array of dimensions (n_clusters, 3 trace_types, nperm)
-#'     \item \code{valid_clusters}: Vector of cluster IDs that have more than one patient
-#'   }
+#'     - `observed`: Named list with facility, floor, room, seq_facility, seq_floor,
+#'       seq_room fractions for observed data
+#'     - `permuted`: Array of dimensions (n_clusters, 6 trace_types, nperm)
+#'     - `valid_clusters`: Vector of cluster IDs that have more than one patient
 #'
 #' @importFrom parallel detectCores
 #' @importFrom pbmcapply pbmclapply
@@ -71,6 +70,11 @@ cluster_overlap_perm_test <- function(
     iso_overlap_floor <- isolate_isolate_overlap(observed_lookup, floor_trace)
     iso_overlap_room <- isolate_isolate_overlap(observed_lookup, room_trace)
 
+    # Precompute sequential isolate-isolate overlaps once
+    seq_overlap_facility <- isolate_isolate_sequential_overlap(observed_lookup, facility_trace)
+    seq_overlap_floor <- isolate_isolate_sequential_overlap(observed_lookup, floor_trace)
+    seq_overlap_room <- isolate_isolate_sequential_overlap(observed_lookup, room_trace)
+
     # Precompute a base lookup without cluster dependency (for fast updates)
     base_lookup <- observed_lookup[, c("isolate_id", "patient_id", "date", "adm_pos", "prev_surv")]
 
@@ -80,7 +84,10 @@ cluster_overlap_perm_test <- function(
         valid_clusters,
         iso_overlap_facility,
         iso_overlap_floor,
-        iso_overlap_room
+        iso_overlap_room,
+        seq_overlap_facility,
+        seq_overlap_floor,
+        seq_overlap_room
     )
 
     # Create eligibility matrices for permutation
@@ -129,18 +136,21 @@ cluster_overlap_perm_test <- function(
                 perm_valid_clusters,
                 iso_overlap_facility,
                 iso_overlap_floor,
-                iso_overlap_room
+                iso_overlap_room,
+                seq_overlap_facility,
+                seq_overlap_floor,
+                seq_overlap_room
             )
         },
         mc.cores = num_cores
     )
 
     # Organize results into array
-    trace_types <- c("facility", "floor", "room")
+    trace_types <- c("facility", "floor", "room", "seq_facility", "seq_floor", "seq_room")
     n_clusters <- length(valid_clusters)
 
     perm_array <- array(
-        dim = c(n_clusters, 3, nperm),
+        dim = c(n_clusters, length(trace_types), nperm),
         dimnames = list(
             as.character(valid_clusters),
             trace_types,
@@ -206,7 +216,10 @@ calculate_overlap_fractions_fast <- function(
     valid_clusters,
     iso_overlap_facility,
     iso_overlap_floor,
-    iso_overlap_room
+    iso_overlap_room,
+    seq_overlap_facility = NULL,
+    seq_overlap_floor = NULL,
+    seq_overlap_room = NULL
 ) {
     # Filter lookup to valid clusters for overlap calculation
     lookup_filtered <- isolate_lookup[isolate_lookup$cluster %in% valid_clusters, ]
@@ -217,11 +230,24 @@ calculate_overlap_fractions_fast <- function(
     cluster_overlap_room <- cluster_isolate_overlap(lookup_filtered, iso_overlap_room)
 
     # Calculate fraction of converts with overlap
-    list(
+    result <- list(
         facility = fraction_converts_with_overlap(cluster_overlap_facility, lookup_filtered),
         floor = fraction_converts_with_overlap(cluster_overlap_floor, lookup_filtered),
         room = fraction_converts_with_overlap(cluster_overlap_room, lookup_filtered)
     )
+
+    # Calculate sequential overlap fractions if provided
+    if (!is.null(seq_overlap_facility)) {
+        seq_cl_facility <- cluster_isolate_overlap(lookup_filtered, seq_overlap_facility)
+        seq_cl_floor <- cluster_isolate_overlap(lookup_filtered, seq_overlap_floor)
+        seq_cl_room <- cluster_isolate_overlap(lookup_filtered, seq_overlap_room)
+
+        result$seq_facility <- fraction_converts_with_overlap(seq_cl_facility, lookup_filtered)
+        result$seq_floor <- fraction_converts_with_overlap(seq_cl_floor, lookup_filtered)
+        result$seq_room <- fraction_converts_with_overlap(seq_cl_room, lookup_filtered)
+    }
+
+    result
 }
 
 #' Create eligibility matrices for permutation

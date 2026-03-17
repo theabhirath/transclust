@@ -22,7 +22,7 @@ cluster_overlap_perm_test(
 \arguments{
 \item{clusters}{A named numeric vector of cluster assignments.}
 
-\item{dna_aln}{A DNA alignment object (used for isolate IDs via labels()).}
+\item{dna_aln}{A DNA alignment object (used for isolate IDs).}
 
 \item{seq2pt}{A named vector mapping sequence IDs to patient IDs.}
 
@@ -36,21 +36,20 @@ cluster_overlap_perm_test(
 
 \item{facility_trace}{A matrix with patient IDs as row names and dates as column names.}
 
-\item{floor_trace}{A matrix with floor-level trace data (same structure as facility_trace).}
+\item{floor_trace}{A matrix with floor-level trace data (same structure as \code{facility_trace}).}
 
-\item{room_trace}{A matrix with room-level trace data (same structure as facility_trace).}
+\item{room_trace}{A matrix with room-level trace data (same structure as \code{facility_trace}).}
 
 \item{nperm}{Number of permutations to perform. Default 1000.}
 
-\item{num_cores}{Number of cores for parallel processing. Default is detectCores() - 1.}
+\item{num_cores}{Number of cores for parallel processing. Default is \code{detectCores() - 1}.}
 }
 \value{
 A list containing:
-\itemize{
-\item \code{observed}: Named list with facility, floor, room fractions for observed data
-\item \code{permuted}: Array of dimensions (n_clusters, 3 trace_types, nperm)
-\item \code{valid_clusters}: Vector of cluster IDs that have more than one patient
-}
+- \code{observed}: Named list with facility, floor, room, seq_facility, seq_floor,
+seq_room fractions for observed data
+- \code{permuted}: Array of dimensions (n_clusters, 6 trace_types, nperm)
+- \code{valid_clusters}: Vector of cluster IDs that have more than one patient
 }
 \description{
 Performs a permutation test to assess whether the observed fraction of converts
