@@ -7,7 +7,8 @@
 fraction_convert_same_source_from_lookups(
   isolate_lookup1,
   isolate_lookup2,
-  surv_df
+  surv_df_1,
+  surv_df_2
 )
 }
 \arguments{

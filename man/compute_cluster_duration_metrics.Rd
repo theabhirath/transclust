@@ -14,9 +14,8 @@ compute_cluster_duration_metrics(seqs, seq2pt, dates)
 \item{dates}{Vector of isolate dates named by sequence IDs}
 }
 \value{
-Vector with cluster duration properties
+List with cluster duration properties and earliest positive date for each patient
 }
 \description{
 Calculate temporal metrics for cluster spread
 }
-\keyword{internal}

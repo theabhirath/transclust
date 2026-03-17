@@ -330,7 +330,7 @@ fraction_convert_same_source <- function(
     )
 
     # Delegate to the lookup-based version
-    fraction_convert_same_source_from_lookups(isolate_lookup1, isolate_lookup2, surv_df)
+    fraction_convert_same_source_from_lookups(isolate_lookup1, isolate_lookup2, surv_df, surv_df)
 }
 
 #' Fraction of Converts with Same Source from Isolate Lookups
@@ -356,12 +356,13 @@ fraction_convert_same_source <- function(
 fraction_convert_same_source_from_lookups <- function(
     isolate_lookup1,
     isolate_lookup2,
-    surv_df
+    surv_df_1,
+    surv_df_2
 ) {
     # Helper: build convert -> sources mapping from isolate_lookup
     # Returns a named list: names are convert patient IDs, values are character
     # vectors of source patient IDs (one per cluster the convert appears in)
-    get_convert_source_map <- function(isolate_lookup) {
+    get_convert_source_map <- function(isolate_lookup, surv_df) {
         categories <- cluster_patient_categorization(isolate_lookup, surv_df)
         non_single <- get_non_single_patient_clusters(isolate_lookup)
         categories <- categories[names(categories) %in% non_single]
@@ -397,8 +398,8 @@ fraction_convert_same_source_from_lookups <- function(
     }
 
     # Get convert -> sources mappings for both assignments
-    map1 <- get_convert_source_map(isolate_lookup1)
-    map2 <- get_convert_source_map(isolate_lookup2)
+    map1 <- get_convert_source_map(isolate_lookup1, surv_df_1)
+    map2 <- get_convert_source_map(isolate_lookup2, surv_df_2)
 
     # Find common converts
     common_converts <- intersect(names(map1), names(map2))

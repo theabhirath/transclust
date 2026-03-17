@@ -49,9 +49,14 @@ categorize_cluster_overlap <- function(isolate_lookup, cluster_overlap_df, surv_
             overlap_expl_sub <- cluster_overlap_sub$overlap[
                 cluster_overlap_sub$isolate_id != index_lookup$isolate_id
             ]
-            # if overlap_expl_sub is all NA, the cluster has only admission positive isolates
+            # if overlap_expl_sub is all NA
             if (all(is.na(overlap_expl_sub))) {
-                return("all-admission-positive")
+                # check if all isolates are admission positive
+                if (all(lookup_sub$adm_pos)) {
+                    return("all-admission-positive")
+                } else {
+                    return("inexplicable")
+                }
             }
             cluster_overlap_expl <- all(overlap_expl_sub, na.rm = TRUE)
             # check if the index isolate is in the cluster
@@ -163,12 +168,17 @@ categorize_cluster_patients <- function(cluster_id, isolate_lookup, surv_df) {
         )
     }
 
-    # If all non-index patients are "adm-pos", reclassify index as "adm-pos" too
+    # If all non-index patients are "adm-pos", reclassify index
     if (
         length(other_patients) > 0 &&
             all(results[as.character(other_patients)] == "adm-pos")
     ) {
-        results[index_patient] <- "adm-pos"
+        # check if the index isolate is admission positive
+        results[index_patient] <- if (index_row$adm_pos) {
+            "adm-pos"
+        } else {
+            "convert"
+        }
     }
 
     results
@@ -212,10 +222,32 @@ categorize_index_patient <- function(index_row, cluster_id) {
 #' Categorize a non-index patient based on their first positive surveillance
 #' @noRd
 categorize_non_index_patient <- function(patient, cluster_id, isolate_lookup, surv_df) {
-    # Get patient's first positive surveillance
+    # Get patient's positive surveillances
     surv_patient <- surv_df[surv_df$patient_id == patient, ]
-    surv_patient <- surv_patient[order(surv_patient$surv_date), ]
-    first_pos <- surv_patient[surv_patient$result == 1, ][1, ]
+    pos_survs <- surv_patient[surv_patient$result == 1, ]
+
+    # exceptional case, no positive surveillances - should not happen
+    if (nrow(pos_survs) == 0) {
+        return("no-pos-surv")
+    }
+
+    # Filter to positive surveillances with minimum date
+    min_date <- min(pos_survs$surv_date)
+    first_pos <- pos_survs[pos_survs$surv_date == min_date, ]
+
+    # If multiple on same date, prefer one in cluster
+    if (nrow(first_pos) > 1) {
+        cluster_genome_ids <- isolate_lookup$isolate_id[isolate_lookup$cluster == cluster_id]
+        in_cluster <- first_pos[first_pos$genome_id %in% cluster_genome_ids, ]
+        if (nrow(in_cluster) > 0) {
+            first_pos <- in_cluster
+        }
+    }
+
+    # If still multiple, use lowest genome_id
+    if (nrow(first_pos) > 1) {
+        first_pos <- first_pos[which.min(first_pos$genome_id), ][1, ]
+    }
 
     # Look up the isolate from that surveillance
     isolate_row <- isolate_lookup[isolate_lookup$isolate_id == first_pos$genome_id, ]
