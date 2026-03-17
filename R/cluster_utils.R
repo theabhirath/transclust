@@ -151,3 +151,27 @@ remap_cluster_values <- function(x, special_val = 0) {
 remove_node_from_clusters <- function(clusters, node) {
     clusters[!(names(clusters) == node)]
 }
+
+#' Flatten cluster-patient categorization to a data frame
+#'
+#' @description
+#' Converts the named list output of [cluster_patient_categorization()] into
+#' a flat data frame with one row per cluster-patient pair.
+#'
+#' @param categorization A named list as returned by [cluster_patient_categorization()].
+#'
+#' @returns A data frame with columns `cluster`, `patient_id`, and `category`.
+#'
+#' @export
+flatten_cluster_patient_categorization <- function(categorization) {
+    rows <- lapply(names(categorization), function(cl) {
+        cats <- categorization[[cl]]
+        data.frame(
+            cluster = cl,
+            patient_id = names(cats),
+            category = unname(cats),
+            stringsAsFactors = FALSE
+        )
+    })
+    do.call(rbind, rows)
+}
