@@ -21,22 +21,16 @@ Imports:
     ape,
     phangorn,
     Rcpp,
-    hues,
-    dplyr,
-    ggalign,
-    ggplot2,
-    ggtree,
     parallel,
     pbmcapply,
-    paletteer,
-    ggnewscale,
-    ggtreeExtra,
     rlang
 Suggests:
-    tidyr,
+    transclustVisualize,
     knitr,
     rmarkdown,
     testthat (>= 3.0.0)
+Remotes:
+    theabhirath/transclustVisualize
 Config/testthat/edition: 3
 Encoding: UTF-8
 LazyData: true
