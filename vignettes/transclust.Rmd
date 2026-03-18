@@ -16,10 +16,11 @@ knitr::opts_chunk$set(
 )
 ```
 
-This vignette provides a brief introduction to the `transclust` package, which is designed for analysis of transmission clusters using a combination of whole genome sequencing (WGS) data and epidemiological information. The package includes functions for clustering, visualization, and statistical analysis of transmission clusters. To get started, we will first load the package. We will also load the `ape` package, which is used for phylogenetic analysis with the package and in the vignette, and `tidyr`, `ggplot2` and `paletteer` for data manipulation and visualization.
+This vignette provides a brief introduction to the `transclust` package, which is designed for analysis of transmission clusters using a combination of whole genome sequencing (WGS) data and epidemiological information. The package includes functions for clustering, visualization, and statistical analysis of transmission clusters. To get started, we will first load the package. Visualization functions are provided by the companion package [`transclustVisualize`](https://github.com/theabhirath/transclustVisualize). We will also load the `ape` package, which is used for phylogenetic analysis with the package and in the vignette, and `tidyr`, `ggplot2` and `paletteer` for data manipulation and visualization.
 
 ```{r setup}
 library(transclust)
+devtools::load_all("~/Code/transclustVisualize")
 library(ape)
 library(tidyr)
 library(ggplot2)
@@ -32,7 +33,7 @@ library(paletteer)
 The `transclust` package comes with a sample dataset that can be used for demonstration purposes. The dataset contains epidemiological information for a set of isolates. To load the dataset, we can use the following command:
 
 ```{r load_data}
-load(system.file("extdata", "example.Rdata", package = "transclust"))
+load(system.file("extdata", "example.RData", package = "transclust"))
 ```
 
 We first read in the sequence file which has been prepared using the procedure described in @Hawken2022. We can read in the sequence file using `ape`'s `read.dna` function:
@@ -41,13 +42,13 @@ We first read in the sequence file which has been prepared using the procedure d
 dna_aln <- read.dna(system.file("extdata", "example.fasta", package = "transclust"), format = "fasta")
 ```
 
-Now that the sequence file is loaded, we can extract the variable positions in the alignment. The `dna_var_pos` variable contains a logical vector indicating which columns in the alignment are variable. The `dna_pt_labels` variable contains the labels for the sequences in the alignment, and `trace_mat` is a matrix containing the trace data for the isolates. The valid set of labels is determined by checking which labels in the `dna_pt_labels` variable are present in the `trace_mat` matrix.
+Now that the sequence file is loaded, we can extract the variable positions in the alignment. The `var_pos` variable contains a logical vector indicating which columns in the alignment are variable. The `dna_pt_labels` variable contains the labels for the sequences in the alignment, and `facility_trace` is a matrix containing the trace data for the isolates. The valid set of labels is determined by checking which labels in the `dna_pt_labels` variable are present in the `facility_trace` matrix.
 
 ```{r var_pos}
 # Get all variable positions in the alignment
 var_pos <- apply(dna_aln, 2, function(x) sum(x == x[1]) < nrow(dna_aln))
 # Only keep those labels that are in the trace matrix
-valid_labels <- dna_pt_labels[labels(dna_aln)] %in% colnames(trace_mat)
+valid_labels <- dna_pt_labels[labels(dna_aln)] %in% row.names(facility_trace)
 ```
 
 We can then subset the alignment to include only the variable positions from the isolates with valid labels:
@@ -93,7 +94,7 @@ In addition to the hard SNP threshold approach, we can also use a threshold-free
 
 ```{r sv_clusters, message = FALSE}
 clusters_sv <- get_tn_clusters_sv_index(
-    dna_var, snp_dist, ip_seqs_3days, ip_seqs,
+    dna_var, snp_dist, adm_seqs, adm_pos_pt_seqs,
     dna_pt_labels, dates, phylo_tree
 )
 ```
@@ -133,7 +134,7 @@ compare_clusters(clusters_snp, clusters_sv) +
 The `transclust` package also provides functions for statistical analysis of the clustering results. For example, we can use the `intra_cluster_genetic_var_analysis()` function to calculate the genetic variation within each cluster:
 
 ```{r cluster_stats}
-mut_var_df <- intra_cluster_genetic_var_analysis(clusters_sv, dna_aln, var_pos)
+mut_var_df <- intra_cluster_genetic_var_analysis(clusters_sv, dna_aln)
 ```
 
 This dataframe has columns for the total number of variable sites, and also the proportions of each of the six types of base substitutions present in each cluster. But this isn't very intuitive to just look at, so we can plot this. First, we drop any possible NA values. For this plot, we only want to compare relative frequencies of the different types of base substitutions, so we also exclude the first column - the total number of variable sites. We further subset the data frame to only include the first few rows for clarity in the plot:
