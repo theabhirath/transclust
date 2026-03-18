@@ -8,11 +8,11 @@ fraction_converts_with_overlap(cluster_overlap_df, isolate_lookup)
 }
 \arguments{
 \item{cluster_overlap_df}{A data frame with overlap information for isolate pairs. For more
-information, see \code{\link{cluster_isolate_overlap}}.}
+information, see \code{\link[=cluster_isolate_overlap]{cluster_isolate_overlap()}}.}
 
 \item{isolate_lookup}{A lookup table for isolates and their clusters assignments which has
 other relevant epidemiological information. For more information, see
-\code{\link{get_isolate_lookup}}.}
+\code{\link[=get_isolate_lookup]{get_isolate_lookup()}}.}
 }
 \value{
 A named vector with the fraction of converts with overlap for each cluster.

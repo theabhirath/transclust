@@ -2,12 +2,14 @@
 #'
 #' @description
 #' This function creates a lookup table for isolates. The columns are:
-#'  - cluster: the cluster assignment for the isolate.
-#'  - isolate_id: the isolate ID.
-#'  - patient_id: the patient ID.
-#'  - date: the date of the isolate.
-#'  - adm_pos: a logical value indicating if the isolate is admission positive.
-#'  - prev_surv: the previous surveillance date for the patient.
+#' \itemize{
+#'   \item cluster: the cluster assignment for the isolate.
+#'   \item isolate_id: the isolate ID.
+#'   \item patient_id: the patient ID.
+#'   \item date: the date of the isolate.
+#'   \item adm_pos: a logical value indicating if the isolate is admission positive.
+#'   \item prev_surv: the previous surveillance date for the patient.
+#' }
 #'
 #' @param clusters A numeric vector of cluster assignments.
 #' @param dna_aln A DNA alignment object of class `DNAbin`.
@@ -65,7 +67,7 @@ get_isolate_lookup <- function(clusters, dna_aln, seq2pt, adm_seqs, dates, surv_
 #'
 #' @param isolate_lookup A lookup table for isolates and their clusters assignments which has
 #'                       other relevant epidemiological information. For more information, see
-#'                       [`get_isolate_lookup`].
+#'                       [get_isolate_lookup()].
 #'
 #' @returns A numeric vector of cluster assignments with the non-single patient clusters.
 #'

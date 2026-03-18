@@ -18,8 +18,8 @@ A numeric value representing the Adjusted Rand Index.
 }
 \description{
 Computes the Adjusted Rand Index (ARI) between two cluster assignments.
-This is a convenience wrapper around \code{\link{ari_from_contingency}}.
+This is a convenience wrapper around \code{\link[=ari_from_contingency]{ari_from_contingency()}}.
 }
 \seealso{
-\code{\link{ari_from_contingency}}, \code{\link{cluster_contingency_table}}
+\code{\link[=ari_from_contingency]{ari_from_contingency()}}, \code{\link[=cluster_contingency_table]{cluster_contingency_table()}}
 }

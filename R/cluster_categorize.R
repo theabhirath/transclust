@@ -4,28 +4,30 @@
 #' This function categorizes the overlap of isolates in a cluster, based on the earliest collected isolate
 #' from all patients deemed to be in the cluster (hereafter referred to as the "index isolate"), and overlap
 #' explanations for other isolates in the cluster. The categories are:
-#'  - "patient-to-patient": if the index isolate is admission-positive and there is overlap explanation for
-#'    all other converts in the cluster.
-#'  - "weak-index": if the index isolate is not admission-positive but is the first surveillance for the patient
-#'    after admission and there is overlap explanation for all other isolates in the cluster.
-#'  - "missing-intermediate": if the index isolate is admission-positive but at least one other convert
-#'    in the cluster has no overlap explanation.
-#'  - "false-negative-index": if the index isolate is not admission-positive but there is overlap explanation for
-#'    all other converts in the cluster barring one (deemed to be the false negative index).
-#'  - "missing-source": if the index isolate is not admission-positive and there is no overlap explanation for
-#'    more than one convert in the cluster.
-#'  - "multiply-colonized-index": if the index isolate is not in the cluster but is admission-positive, this is
-#'    a "multiply-colonized index" if there is overlap explanation for all other isolates in the cluster.
-#'  - "multiply-colonized-index-missing-intermediate": if the index isolate is not in the cluster but is
-#'    admission-positive, and at least one other convert in the cluster has no overlap explanation.
-#'  - "inexplicable": catch-all category for cases that do not fit into the other categories. Currently,
-#'    index and overlap explanations are not enough to explain these clusters.
+#' \itemize{
+#'   \item "patient-to-patient": if the index isolate is admission-positive and there is overlap explanation for
+#'     all other converts in the cluster.
+#'   \item "weak-index": if the index isolate is not admission-positive but is the first surveillance for the patient
+#'     after admission and there is overlap explanation for all other isolates in the cluster.
+#'   \item "missing-intermediate": if the index isolate is admission-positive but at least one other convert
+#'     in the cluster has no overlap explanation.
+#'   \item "false-negative-index": if the index isolate is not admission-positive but there is overlap explanation for
+#'     all other converts in the cluster barring one (deemed to be the false negative index).
+#'   \item "missing-source": if the index isolate is not admission-positive and there is no overlap explanation for
+#'     more than one convert in the cluster.
+#'   \item "multiply-colonized-index": if the index isolate is not in the cluster but is admission-positive, this is
+#'     a "multiply-colonized index" if there is overlap explanation for all other isolates in the cluster.
+#'   \item "multiply-colonized-index-missing-intermediate": if the index isolate is not in the cluster but is
+#'     admission-positive, and at least one other convert in the cluster has no overlap explanation.
+#'   \item "inexplicable": catch-all category for cases that do not fit into the other categories. Currently,
+#'     index and overlap explanations are not enough to explain these clusters.
+#' }
 #'
 #' @param isolate_lookup A lookup table for isolates and their clusters assignments which has
 #'                       other relevant epidemiological information. For more information, see
-#'                       [`get_isolate_lookup`].
+#'                       [get_isolate_lookup()].
 #' @param cluster_overlap_df A data frame with overlap information for isolate pairs. For more information, see
-#'                   [`cluster_isolate_overlap`].
+#'                   [cluster_isolate_overlap()].
 #' @param surv_df A data frame with surveillance information for isolates.
 #'
 #' @return A vector with the categorization of the overlap for each cluster.
@@ -120,13 +122,15 @@ categorize_cluster_overlap <- function(isolate_lookup, cluster_overlap_df, surv_
 #'
 #' @description
 #' Categorizes each patient in a cluster based on their role in transmission:
-#' - index: admission positive, earliest isolate, isolate in cluster
-#' - multiply-colonized-index: admission positive, earliest isolate, isolate not in cluster
-#' - weak-index: not admission positive, but first surveillance is positive and in cluster
-#' - convert: had surveillance before first positive
-#' - adm-pos: first positive is in cluster and is first surveillance
-#' - adm-pos-convert: first positive is not in cluster but is first surveillance
-#' - secondary-convert: first positive is not in cluster and had prior surveillance
+#' \itemize{
+#'   \item index: admission positive, earliest isolate, isolate in cluster
+#'   \item multiply-colonized-index: admission positive, earliest isolate, isolate not in cluster
+#'   \item weak-index: not admission positive, but first surveillance is positive and in cluster
+#'   \item convert: had surveillance before first positive
+#'   \item adm-pos: first positive is in cluster and is first surveillance
+#'   \item adm-pos-convert: first positive is not in cluster but is first surveillance
+#'   \item secondary-convert: first positive is not in cluster and had prior surveillance
+#' }
 #'
 #' @param isolate_lookup A lookup table from [get_isolate_lookup()].
 #' @param surv_df A data frame with surveillance data (patient_id, genome_id, surv_date, result).

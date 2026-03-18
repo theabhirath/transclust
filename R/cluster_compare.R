@@ -64,13 +64,13 @@ cluster_contingency_table <- function(clusters1, clusters2) {
 #'
 #' @details
 #' The Adjusted Rand Index is calculated as:
-#' $$ARI = \frac{Index - Expected}{MaxIndex - Expected}$$
+#' \deqn{ARI = \frac{Index - Expected}{MaxIndex - Expected}}
 #'
-#' where Index is the sum of $\binom{n_{ij}}{2}$ over all cells,
+#' where Index is the sum of \eqn{\binom{n_{ij}}{2}} over all cells,
 #' Expected is derived from the row and column marginals, and MaxIndex
 #' is the average of row and column sum contributions. The values
-#' $n_{ij}$ are from the contingency table, $a_i$ are row sums,
-#' $b_j$ are column sums, and $n$ is the total number of isolates.
+#' \eqn{n_{ij}} are from the contingency table, \eqn{a_i} are row sums,
+#' \eqn{b_j} are column sums, and \eqn{n} is the total number of isolates.
 #'
 #' @references
 #' Hubert, L. and Arabie, P. (1985). Comparing partitions. Journal of
@@ -121,7 +121,7 @@ ari_from_contingency <- function(cont_table) {
 #'
 #' @description
 #' Computes the Adjusted Rand Index (ARI) between two cluster assignments.
-#' This is a convenience wrapper around [`ari_from_contingency`].
+#' This is a convenience wrapper around [ari_from_contingency()].
 #'
 #' @param clusters1 A named vector of cluster assignments where names are isolate
 #'   IDs and values are cluster numbers.
@@ -130,7 +130,7 @@ ari_from_contingency <- function(cont_table) {
 #'
 #' @return A numeric value representing the Adjusted Rand Index.
 #'
-#' @seealso [`ari_from_contingency`], [`cluster_contingency_table`]
+#' @seealso [ari_from_contingency()], [cluster_contingency_table()]
 #'
 #' @export
 adjusted_rand_index <- function(clusters1, clusters2) {
@@ -153,10 +153,10 @@ adjusted_rand_index <- function(clusters1, clusters2) {
 #'
 #' @details
 #' The Adjusted Mutual Information is calculated as:
-#' $$AMI = \frac{MI - E\[MI\]}{\max(H(U), H(V)) - E\[MI\]}$$
+#' \deqn{AMI = \frac{MI - E[MI]}{\max(H(U), H(V)) - E[MI]}}
 #'
-#' where $MI$ is the mutual information, $E\[MI\]$ is the expected mutual
-#' information under random permutation, and $H(U)$ and $H(V)$ are the
+#' where \eqn{MI} is the mutual information, \eqn{E[MI]} is the expected mutual
+#' information under random permutation, and \eqn{H(U)} and \eqn{H(V)} are the
 #' entropies of the two clusterings.
 #'
 #' @references
@@ -248,7 +248,7 @@ ami_from_contingency <- function(cont_table) {
 #'
 #' @description
 #' Computes the Adjusted Mutual Information (AMI) between two cluster assignments.
-#' This is a convenience wrapper around [`ami_from_contingency`].
+#' This is a convenience wrapper around [ami_from_contingency()].
 #'
 #' @param clusters1 A named vector of cluster assignments where names are isolate
 #'   IDs and values are cluster numbers.
@@ -257,7 +257,7 @@ ami_from_contingency <- function(cont_table) {
 #'
 #' @return A numeric value representing the Adjusted Mutual Information.
 #'
-#' @seealso [`ami_from_contingency`], [`cluster_contingency_table`]
+#' @seealso [ami_from_contingency()], [cluster_contingency_table()]
 #'
 #' @export
 adjusted_mutual_information <- function(clusters1, clusters2) {
@@ -416,5 +416,7 @@ fraction_convert_same_source_from_lookups <- function(
         },
         logical(1)
     )
+    print(matches)
+    print(length(common_converts))
     sum(matches) / length(common_converts)
 }

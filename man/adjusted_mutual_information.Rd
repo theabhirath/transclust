@@ -18,8 +18,8 @@ A numeric value representing the Adjusted Mutual Information.
 }
 \description{
 Computes the Adjusted Mutual Information (AMI) between two cluster assignments.
-This is a convenience wrapper around \code{\link{ami_from_contingency}}.
+This is a convenience wrapper around \code{\link[=ami_from_contingency]{ami_from_contingency()}}.
 }
 \seealso{
-\code{\link{ami_from_contingency}}, \code{\link{cluster_contingency_table}}
+\code{\link[=ami_from_contingency]{ami_from_contingency()}}, \code{\link[=cluster_contingency_table]{cluster_contingency_table()}}
 }

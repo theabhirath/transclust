@@ -9,7 +9,7 @@ get_non_single_patient_clusters(isolate_lookup)
 \arguments{
 \item{isolate_lookup}{A lookup table for isolates and their clusters assignments which has
 other relevant epidemiological information. For more information, see
-\code{\link{get_isolate_lookup}}.}
+\code{\link[=get_isolate_lookup]{get_isolate_lookup()}}.}
 }
 \value{
 A numeric vector of cluster assignments with the non-single patient clusters.

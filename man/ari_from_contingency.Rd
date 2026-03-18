@@ -22,13 +22,13 @@ by chance.
 }
 \details{
 The Adjusted Rand Index is calculated as:
-$$ARI = \frac{Index - Expected}{MaxIndex - Expected}$$
+\deqn{ARI = \frac{Index - Expected}{MaxIndex - Expected}}
 
-where Index is the sum of $\binom{n_{ij}}{2}$ over all cells,
+where Index is the sum of \eqn{\binom{n_{ij}}{2}} over all cells,
 Expected is derived from the row and column marginals, and MaxIndex
 is the average of row and column sum contributions. The values
-$n_{ij}$ are from the contingency table, $a_i$ are row sums,
-$b_j$ are column sums, and $n$ is the total number of isolates.
+\eqn{n_{ij}} are from the contingency table, \eqn{a_i} are row sums,
+\eqn{b_j} are column sums, and \eqn{n} is the total number of isolates.
 }
 \references{
 Hubert, L. and Arabie, P. (1985). Comparing partitions. Journal of

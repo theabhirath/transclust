@@ -10,7 +10,7 @@ get_phylo_tree(dna_aln, snp_dist, method = c("nj", "pars"))
 \item{dna_aln}{A DNA alignment object of class \code{DNAbin}.}
 
 \item{snp_dist}{A numeric matrix representing the SNP distance between sequences.
-See \code{\link{get_snp_dist_matrix}} for a useful function to generate this.}
+See \code{\link[=get_snp_dist_matrix]{get_snp_dist_matrix()}} for a useful function to generate this.}
 
 \item{method}{A string indicating the method to use for tree construction. Options are
 "nj" (neighbor-joining) or "pars" (maximum parsimony).}

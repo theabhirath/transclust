@@ -46,10 +46,12 @@ cluster_overlap_perm_test(
 }
 \value{
 A list containing:
-- \code{observed}: Named list with facility, floor, room, seq_facility, seq_floor,
+\itemize{
+\item \code{observed}: A named list with facility, floor, room, seq_facility, seq_floor,
 seq_room fractions for observed data
-- \code{permuted}: Array of dimensions (n_clusters, 6 trace_types, nperm)
-- \code{valid_clusters}: Vector of cluster IDs that have more than one patient
+\item \code{permuted}: A numeric array of dimensions (n_clusters, 6 trace_types, nperm)
+\item \code{valid_clusters}: A numeric vector of cluster IDs that have more than one patient
+}
 }
 \description{
 Performs a permutation test to assess whether the observed fraction of converts
