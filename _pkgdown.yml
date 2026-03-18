@@ -16,12 +16,6 @@ reference:
     contents:
       - get_tn_clusters_snp_thresh
       - get_tn_clusters_sv_index
-  - subtitle: Rcpp helper functions
-    desc: >
-      A collection of helper functions used internally by `get_tn_clusters_sv_index()` written in Rcpp for performance.
-    contents:
-      - computeSharedMatrix
-      - computeDefiningVariants
 
     desc: >
     contents:

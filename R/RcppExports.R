@@ -8,6 +8,7 @@
 #'
 #' @return A `NumericMatrix` of shared variants, where each element represents the
 #'         number of shared variants between two isolates, with the diagonal set to Inf.
+#' @noRd
 computeSharedMatrix <- function(dna_character_matrix, out_group) {
     .Call(`_transclust_computeSharedMatrix`, dna_character_matrix, out_group)
 }
@@ -20,6 +21,7 @@ computeSharedMatrix <- function(dna_character_matrix, out_group) {
 #'
 #' @return An `IntegerVector` of integers representing the number of defining
 #'         variants for each subtree.
+#' @noRd
 computeDefiningVariants <- function(dna_character_matrix, isolate_names, subtrees) {
     .Call(`_transclust_computeDefiningVariants`, dna_character_matrix, isolate_names, subtrees)
 }
