@@ -25,10 +25,6 @@ that other isolates don't have."></head><body>
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../articles/transclust.html">Get started</a></li>
 <li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
-<li class="nav-item dropdown">
-  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/permtests.html">Permutation tests for statistical significance</a></li>
-  </ul></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
 <li class="nav-item"><a class="external-link nav-link" href="https://github.com/theabhirath/transclust/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
@@ -64,8 +60,8 @@ that other isolates don't have.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">get_tn_clusters_sv_index</span><span class="op">(</span></span>
 <span>  <span class="va">dna_aln</span>,</span>
 <span>  <span class="va">snp_dist</span>,</span>
-<span>  <span class="va">ip_seqs</span>,</span>
-<span>  <span class="va">ip_pt_seqs</span>,</span>
+<span>  <span class="va">adm_seqs</span>,</span>
+<span>  <span class="va">adm_pos_pt_seqs</span>,</span>
 <span>  <span class="va">seq2pt</span>,</span>
 <span>  <span class="va">dates</span>,</span>
 <span>  <span class="va">tree</span></span>
@@ -82,16 +78,16 @@ that other isolates don't have.</p>
 
 <dt id="arg-snp-dist">snp_dist<a class="anchor" aria-label="anchor" href="#arg-snp-dist"></a></dt>
 <dd><p>A matrix of SNP distances between isolates constructed using a model of DNA evolution.
-See <code><a href="get_snp_dist_matrix.html">get_snp_dist_matrix</a></code> for a useful function to generate this.</p></dd>
+See <code><a href="get_snp_dist_matrix.html">get_snp_dist_matrix()</a></code> for a useful function to generate this.</p></dd>
 
 
-<dt id="arg-ip-seqs">ip_seqs<a class="anchor" aria-label="anchor" href="#arg-ip-seqs"></a></dt>
-<dd><p>A vector of sequence IDs which correspond to intake patient sequences presumed to be imported.</p></dd>
+<dt id="arg-adm-seqs">adm_seqs<a class="anchor" aria-label="anchor" href="#arg-adm-seqs"></a></dt>
+<dd><p>A vector of sequence IDs which correspond to admission positive patient sequences.</p></dd>
 
 
-<dt id="arg-ip-pt-seqs">ip_pt_seqs<a class="anchor" aria-label="anchor" href="#arg-ip-pt-seqs"></a></dt>
-<dd><p>A vector of all sequence IDs which correspond to intake-positive patients, imported or
-collected later. This will be a superset of <code>ip_seqs</code> by definition.</p></dd>
+<dt id="arg-adm-pos-pt-seqs">adm_pos_pt_seqs<a class="anchor" aria-label="anchor" href="#arg-adm-pos-pt-seqs"></a></dt>
+<dd><p>A vector of all sequence IDs which correspond to admission-positive patients, either at
+intake or collected later. This will be a superset of <code>adm_seqs</code> by definition.</p></dd>
 
 
 <dt id="arg-seq-pt">seq2pt<a class="anchor" aria-label="anchor" href="#arg-seq-pt"></a></dt>
@@ -104,7 +100,7 @@ collected later. This will be a superset of <code>ip_seqs</code> by definition.<
 
 <dt id="arg-tree">tree<a class="anchor" aria-label="anchor" href="#arg-tree"></a></dt>
 <dd><p>A phylogenetic tree object of class <code>phylo</code> constructed from the DNA alignment. This can be constructed
-using the <code><a href="get_phylo_tree.html">get_phylo_tree</a></code> or can be any other tree object constructed from the same isolates.</p></dd>
+using the <code><a href="get_phylo_tree.html">get_phylo_tree()</a></code> or can be any other tree object constructed from the same isolates.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -128,7 +124,7 @@ health-care settings: A genomic epidemiology analysis. The Lancet Microbe, 3(9),
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer></div>
