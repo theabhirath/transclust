@@ -5,7 +5,7 @@
 #'
 #' @param isolate_lookup A lookup table for isolates and their clusters assignments which has
 #'                       other relevant epidemiological information. For more information, see
-#'                       [`get_isolate_lookup`].
+#'                       [get_isolate_lookup()].
 #' @param trace_mat A matrix with rows representing days and columns representing patients.
 #'
 #' @return A data frame with columns: iso_donor, iso_recipient, overlap_days.
@@ -92,7 +92,7 @@ isolate_isolate_overlap <- function(isolate_lookup, trace_mat) {
 #'
 #' @param isolate_lookup A lookup table for isolates and their clusters assignments which has
 #'                       other relevant epidemiological information. For more information, see
-#'                       [`get_isolate_lookup`].
+#'                       [get_isolate_lookup()].
 #' @param trace_mat A matrix with rows representing days and columns representing patients.
 #'
 #' @return A data frame with columns: iso_donor, iso_recipient, overlap_days.
@@ -195,9 +195,9 @@ isolate_isolate_sequential_overlap <- function(isolate_lookup, trace_mat) {
 #'
 #' @param isolate_lookup A lookup table for isolates and their clusters assignments which has
 #'                       other relevant epidemiological information. For more information, see
-#'                       [`get_isolate_lookup`].
-#' @param overlap_df A data frame with overlap information for isolate pairs. For more information, see
-#'                   [`isolate_isolate_overlap`].
+#'                       [get_isolate_lookup()].
+#' @param iso_overlap_df A data frame with overlap information for isolate pairs. For more information, see
+#'                   [isolate_isolate_overlap()].
 #'
 #' @return A data frame with columns: cluster, isolate_id, overlap.
 #'
@@ -252,10 +252,10 @@ cluster_isolate_overlap <- function(isolate_lookup, iso_overlap_df) {
 #' This function calculates the fraction of converts with overlap for each cluster.
 #'
 #' @param cluster_overlap_df A data frame with overlap information for isolate pairs. For more
-#'                            information, see [`cluster_isolate_overlap`].
+#'                            information, see [cluster_isolate_overlap()].
 #' @param isolate_lookup A lookup table for isolates and their clusters assignments which has
 #'                        other relevant epidemiological information. For more information, see
-#'                        [`get_isolate_lookup`].
+#'                        [get_isolate_lookup()].
 #'
 #' @return A named vector with the fraction of converts with overlap for each cluster.
 #'

@@ -9,7 +9,7 @@ isolate_isolate_overlap(isolate_lookup, trace_mat)
 \arguments{
 \item{isolate_lookup}{A lookup table for isolates and their clusters assignments which has
 other relevant epidemiological information. For more information, see
-\code{\link{get_isolate_lookup}}.}
+\code{\link[=get_isolate_lookup]{get_isolate_lookup()}}.}
 
 \item{trace_mat}{A matrix with rows representing days and columns representing patients.}
 }

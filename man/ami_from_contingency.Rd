@@ -21,10 +21,10 @@ and 0 indicates independence.
 }
 \details{
 The Adjusted Mutual Information is calculated as:
-$$AMI = \frac{MI - E[MI]}{\max(H(U), H(V)) - E[MI]}$$
+\deqn{AMI = \frac{MI - E[MI]}{\max(H(U), H(V)) - E[MI]}}
 
-where $MI$ is the mutual information, $E[MI]$ is the expected mutual
-information under random permutation, and $H(U)$ and $H(V)$ are the
+where \eqn{MI} is the mutual information, \eqn{E[MI]} is the expected mutual
+information under random permutation, and \eqn{H(U)} and \eqn{H(V)} are the
 entropies of the two clusterings.
 }
 \references{

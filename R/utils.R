@@ -23,7 +23,7 @@ get_snp_dist_matrix <- function(dna_aln, core = TRUE) {
 #'
 #' @param dna_aln A DNA alignment object of class `DNAbin`.
 #' @param snp_dist A numeric matrix representing the SNP distance between sequences.
-#'                 See [`get_snp_dist_matrix`] for a useful function to generate this.
+#'                 See [get_snp_dist_matrix()] for a useful function to generate this.
 #' @param method A string indicating the method to use for tree construction. Options are
 #'               "nj" (neighbor-joining) or "pars" (maximum parsimony).
 #'

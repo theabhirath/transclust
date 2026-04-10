@@ -9,10 +9,10 @@ cluster_isolate_overlap(isolate_lookup, iso_overlap_df)
 \arguments{
 \item{isolate_lookup}{A lookup table for isolates and their clusters assignments which has
 other relevant epidemiological information. For more information, see
-\code{\link{get_isolate_lookup}}.}
+\code{\link[=get_isolate_lookup]{get_isolate_lookup()}}.}
 
-\item{overlap_df}{A data frame with overlap information for isolate pairs. For more information, see
-\code{\link{isolate_isolate_overlap}}.}
+\item{iso_overlap_df}{A data frame with overlap information for isolate pairs. For more information, see
+\code{\link[=isolate_isolate_overlap]{isolate_isolate_overlap()}}.}
 }
 \value{
 A data frame with columns: cluster, isolate_id, overlap.

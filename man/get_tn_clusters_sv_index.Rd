@@ -18,7 +18,7 @@ get_tn_clusters_sv_index(
 \item{dna_aln}{A DNA alignment object of class \code{DNAbin}.}
 
 \item{snp_dist}{A matrix of SNP distances between isolates constructed using a model of DNA evolution.
-See \code{\link{get_snp_dist_matrix}} for a useful function to generate this.}
+See \code{\link[=get_snp_dist_matrix]{get_snp_dist_matrix()}} for a useful function to generate this.}
 
 \item{adm_seqs}{A vector of sequence IDs which correspond to admission positive patient sequences.}
 
@@ -30,7 +30,7 @@ intake or collected later. This will be a superset of \code{adm_seqs} by definit
 \item{dates}{A vector of isolate dates named by sequence IDs.}
 
 \item{tree}{A phylogenetic tree object of class \code{phylo} constructed from the DNA alignment. This can be constructed
-using the \code{\link{get_phylo_tree}} or can be any other tree object constructed from the same isolates.}
+using the \code{\link[=get_phylo_tree]{get_phylo_tree()}} or can be any other tree object constructed from the same isolates.}
 }
 \value{
 A numeric vector indicating the cluster that each isolate belongs to.

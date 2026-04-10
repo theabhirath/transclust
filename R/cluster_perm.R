@@ -19,10 +19,12 @@
 #' @param num_cores Number of cores for parallel processing. Default is `detectCores() - 1`.
 #'
 #' @returns A list containing:
-#'     - `observed`: Named list with facility, floor, room, seq_facility, seq_floor,
+#'     \itemize{
+#'     \item `observed`: A named list with facility, floor, room, seq_facility, seq_floor,
 #'       seq_room fractions for observed data
-#'     - `permuted`: Array of dimensions (n_clusters, 6 trace_types, nperm)
-#'     - `valid_clusters`: Vector of cluster IDs that have more than one patient
+#'     \item `permuted`: A numeric array of dimensions (n_clusters, 6 trace_types, nperm)
+#'     \item `valid_clusters`: A numeric vector of cluster IDs that have more than one patient
+#'     }
 #'
 #' @importFrom parallel detectCores
 #' @importFrom pbmcapply pbmclapply

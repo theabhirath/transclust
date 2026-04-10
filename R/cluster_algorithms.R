@@ -5,10 +5,10 @@
 #' the phylogenetic tree.
 #'
 #' @param snp_dist A matrix of SNP distances between isolates constructed using a model of DNA evolution.
-#'                 See [`get_snp_dist_matrix`] for a useful function to generate this.
+#'                 See [get_snp_dist_matrix()] for a useful function to generate this.
 #' @param snp_thresh A threshold for defining clusters.
 #' @param hclust_method A string indicating the method to use for hierarchical clustering.
-#'                     See [`\link[stats]{hclust}`] for more details. Default is "complete".
+#'                     See [stats::hclust()] for more details. Default is "complete".
 #'
 #' @return A numeric vector indicating the cluster that each isolate belongs to.
 #'
@@ -32,14 +32,14 @@ get_tn_clusters_snp_thresh <- function(snp_dist, snp_thresh, hclust_method = "co
 #'
 #' @param dna_aln A DNA alignment object of class `DNAbin`.
 #' @param snp_dist A matrix of SNP distances between isolates constructed using a model of DNA evolution.
-#'                 See [`get_snp_dist_matrix`] for a useful function to generate this.
+#'                 See [get_snp_dist_matrix()] for a useful function to generate this.
 #' @param adm_seqs A vector of sequence IDs which correspond to admission positive patient sequences.
 #' @param adm_pos_pt_seqs A vector of all sequence IDs which correspond to admission-positive patients, either at
 #'                        intake or collected later. This will be a superset of `adm_seqs` by definition.
 #' @param seq2pt A named vector mapping sequence IDs to patient IDs.
 #' @param dates A vector of isolate dates named by sequence IDs.
 #' @param tree A phylogenetic tree object of class `phylo` constructed from the DNA alignment. This can be constructed
-#'             using the [`get_phylo_tree`] or can be any other tree object constructed from the same isolates.
+#'             using the [get_phylo_tree()] or can be any other tree object constructed from the same isolates.
 #'
 #' @return A numeric vector indicating the cluster that each isolate belongs to.
 #'
@@ -67,14 +67,11 @@ get_tn_clusters_sv_index <- function(
     #   c. the base is not a gap ('-') or ambiguous ('n'),
     # and then we convert this similarity count to a distance-like measure.
     ####################################################################################
-    # get root of the tree, which is the out-group
-    parents <- unique(tree$edge[, 1])
-    children <- unique(tree$edge[, 2])
-    out_group <- setdiff(parents, children)
     # convert the DNA alignment object to a character matrix
     dna_char <- as.character(dna_aln)
     # call the Rcpp function to compute the shared variant matrix
-    dna_shared_mat <- computeSharedMatrix(dna_char, out_group)
+    # the out-group is assumed to be the first tip in the tree and the first sequence in the alignment
+    dna_shared_mat <- computeSharedMatrix(dna_char, 1)
 
     isolate_names <- row.names(dna_aln)
     row.names(dna_shared_mat) <- isolate_names
@@ -92,6 +89,8 @@ get_tn_clusters_sv_index <- function(
     # The total count of such sites is stored for each subtree.
     ##############################################################################
     # get subtrees from the provided phylogenetic tree
+    # drop the out-group from the tree to avoid it including it in the subtrees
+    tree <- drop.tip(tree, tree$tip.label[1])
     sub_trees <- subtrees(tree)
     # call the Rcpp function to compute defining variants
     sub_trees_dv <- computeDefiningVariants(dna_char, isolate_names, sub_trees)
@@ -144,7 +143,7 @@ get_tn_clusters_sv_index <- function(
             },
             character(1)
         )
-        # get the distance from the representative to all other isolates in the subtree
+        # get the distance from representative sequences to all other isolates in the subtree
         shared_counts_rep <- vapply(
             ip_rep,
             function(ip) {
@@ -153,7 +152,7 @@ get_tn_clusters_sv_index <- function(
             numeric(1)
         )
         # compute cluster score if there are defining variants and index isolates are not overly
-        # distant from the representative sequence (i.e. their shared variant counts are nearly identical)
+        # distant from all other sequences in the subtree (i.e. their shared variant counts are nearly identical)
         score <- if (sub_trees_dv[st_i] > 0 && length(unique(shared_counts_rep)) <= 1) {
             # all patients that are not represented in this subtree by an intake-positive
             patients_non_rep <- setdiff(unique(seq2pt), seq2pt[unlist(ip_rep)])

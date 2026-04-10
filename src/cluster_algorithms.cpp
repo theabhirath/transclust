@@ -14,6 +14,7 @@ using namespace Rcpp;
 //'
 //' @return A `NumericMatrix` of shared variants, where each element represents the
 //'         number of shared variants between two isolates, with the diagonal set to Inf.
+//' @noRd
 // [[Rcpp::export]]
 NumericMatrix computeSharedMatrix(CharacterMatrix dna_character_matrix, int out_group) {
     int n_isolates = dna_character_matrix.nrow();
@@ -90,6 +91,7 @@ NumericMatrix computeSharedMatrix(CharacterMatrix dna_character_matrix, int out_
 //'
 //' @return An `IntegerVector` of integers representing the number of defining
 //'         variants for each subtree.
+//' @noRd
 // [[Rcpp::export]]
 std::vector<int> computeDefiningVariants(CharacterMatrix dna_character_matrix, CharacterVector isolate_names, List subtrees) {
     int n_isolates = dna_character_matrix.nrow();
