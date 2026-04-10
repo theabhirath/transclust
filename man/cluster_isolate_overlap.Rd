@@ -11,7 +11,7 @@ cluster_isolate_overlap(isolate_lookup, iso_overlap_df)
 other relevant epidemiological information. For more information, see
 \code{\link[=get_isolate_lookup]{get_isolate_lookup()}}.}
 
-\item{overlap_df}{A data frame with overlap information for isolate pairs. For more information, see
+\item{iso_overlap_df}{A data frame with overlap information for isolate pairs. For more information, see
 \code{\link[=isolate_isolate_overlap]{isolate_isolate_overlap()}}.}
 }
 \value{

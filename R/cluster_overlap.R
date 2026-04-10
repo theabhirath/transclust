@@ -196,7 +196,7 @@ isolate_isolate_sequential_overlap <- function(isolate_lookup, trace_mat) {
 #' @param isolate_lookup A lookup table for isolates and their clusters assignments which has
 #'                       other relevant epidemiological information. For more information, see
 #'                       [get_isolate_lookup()].
-#' @param overlap_df A data frame with overlap information for isolate pairs. For more information, see
+#' @param iso_overlap_df A data frame with overlap information for isolate pairs. For more information, see
 #'                   [isolate_isolate_overlap()].
 #'
 #' @return A data frame with columns: cluster, isolate_id, overlap.
