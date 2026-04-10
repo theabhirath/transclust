@@ -3,7 +3,7 @@ pkgdown: 2.2.0
 pkgdown_sha: ~
 articles:
   transclust: transclust.html
-last_built: 2026-04-10T18:33Z
+last_built: 2026-04-10T19:49Z
 urls:
   reference: https://theabhirath.github.io/transclust/reference
   article: https://theabhirath.github.io/transclust/articles

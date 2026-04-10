@@ -29,10 +29,15 @@ fraction_convert_same_source_from_lookups(
   [`get_isolate_lookup()`](https://theabhirath.github.io/transclust/reference/get_isolate_lookup.md)
   for the second cluster assignment.
 
-- surv_df:
+- surv_df_1:
 
   A data frame with surveillance data containing columns: patient_id,
-  genome_id, surv_date, result.
+  genome_id, surv_date, result for the first cluster assignment.
+
+- surv_df_2:
+
+  A data frame with surveillance data containing columns: patient_id,
+  genome_id, surv_date, result for the second cluster assignment.
 
 ## Value
 

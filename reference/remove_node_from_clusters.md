@@ -14,7 +14,7 @@ remove_node_from_clusters(clusters, node)
 
   A numeric vector of cluster assignments.
 
-- out_group:
+- node:
 
   The node to remove.
 
