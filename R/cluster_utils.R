@@ -145,7 +145,7 @@ remap_cluster_values <- function(x, special_val = 0) {
 #' This function removes a node from a vector of cluster assignments.
 #'
 #' @param clusters A numeric vector of cluster assignments.
-#' @param out_group The node to remove.
+#' @param node The node to remove.
 #'
 #' @returns A numeric vector of cluster assignments with the node removed.
 #'

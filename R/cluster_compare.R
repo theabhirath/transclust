@@ -343,8 +343,10 @@ fraction_convert_same_source <- function(
 #'   cluster assignment.
 #' @param isolate_lookup2 A data frame from [get_isolate_lookup()] for the second
 #'   cluster assignment.
-#' @param surv_df A data frame with surveillance data containing columns:
-#'   patient_id, genome_id, surv_date, result.
+#' @param surv_df_1 A data frame with surveillance data containing columns:
+#'   patient_id, genome_id, surv_date, result for the first cluster assignment.
+#' @param surv_df_2 A data frame with surveillance data containing columns:
+#'   patient_id, genome_id, surv_date, result for the second cluster assignment.
 #'
 #' @return A numeric value between 0 and 1 representing the fraction of convert
 #'   patients whose source (index or weak-index) is the same in both cluster
