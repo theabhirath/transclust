@@ -9,7 +9,7 @@ remove_node_from_clusters(clusters, node)
 \arguments{
 \item{clusters}{A numeric vector of cluster assignments.}
 
-\item{out_group}{The node to remove.}
+\item{node}{The node to remove.}
 }
 \value{
 A numeric vector of cluster assignments with the node removed.
