@@ -1,5 +1,5 @@
 library(ape)
-load(system.file("extdata", "example.Rdata", package = "transclust"))
+load(system.file("extdata", "example.RData", package = "transclust"))
 
 # Read in sequence file
 dna_aln <- read.dna(
@@ -8,7 +8,7 @@ dna_aln <- read.dna(
 )
 
 # Only keep those sequences that are in the trace matrix
-dna_aln <- dna_aln[dna_pt_labels[labels(dna_aln)] %in% colnames(trace_mat), ]
+dna_aln <- dna_aln[dna_pt_labels[labels(dna_aln)] %in% row.names(facility_trace), ]
 
 # Get all variable positions in the alignment
 var_pos <- apply(dna_aln, 2, function(x) sum(x == x[1]) < nrow(dna_aln))
@@ -36,8 +36,8 @@ test_that("get_tn_clusters_sv_index works", {
     clusters <- get_tn_clusters_sv_index(
         dna_var,
         snp_dist,
-        ip_seqs_3days,
-        ip_seqs,
+        adm_seqs,
+        adm_pos_pt_seqs,
         dna_pt_labels,
         dates,
         tree

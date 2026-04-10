@@ -1,5 +1,5 @@
 library(ape)
-load(system.file("extdata", "example.Rdata", package = "transclust"))
+load(system.file("extdata", "example.RData", package = "transclust"))
 
 # Read in sequence file
 dna_aln <- read.dna(
@@ -8,7 +8,7 @@ dna_aln <- read.dna(
 )
 
 # Only keep those sequences that are in the trace matrix
-dna_aln <- dna_aln[dna_pt_labels[labels(dna_aln)] %in% colnames(trace_mat), ]
+dna_aln <- dna_aln[dna_pt_labels[labels(dna_aln)] %in% row.names(facility_trace), ]
 
 # Get variable positions in the alignment
 dna_var <- dna_aln[, apply(dna_aln, 2, function(x) sum(x == x[1]) < nrow(dna_aln))]

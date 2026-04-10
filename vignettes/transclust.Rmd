@@ -20,7 +20,7 @@ This vignette provides a brief introduction to the `transclust` package, which i
 
 ```{r setup}
 library(transclust)
-devtools::load_all("~/Code/transclustVisualize")
+library(transclustVisualize)
 library(ape)
 library(tidyr)
 library(ggplot2)

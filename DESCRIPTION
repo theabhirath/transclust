@@ -5,7 +5,7 @@ Date: 2025-02-14
 Authors@R:
     c(
         person(
-            "Abhirath", "Anand", 
+            "Abhirath", "Anand",
             email = "abhirath@umich.edu",
             role = c("aut", "cre"),
             comment = c(ORCID = "0009-0008-6985-9266")
@@ -22,8 +22,7 @@ Imports:
     phangorn,
     Rcpp,
     parallel,
-    pbmcapply,
-    rlang
+    pbmcapply
 Suggests:
     transclustVisualize,
     knitr,
