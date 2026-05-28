@@ -46,7 +46,7 @@ isolate_isolate_overlap <- function(isolate_lookup, trace_mat) {
             # skip if:
             # - the donor and recipient are the same patient
             # - the donor window starts after the recipient collection date
-            if (pt_i == pt_j || last_surv > recipient_date) {
+            if (pt_i == pt_j || last_surv >= recipient_date) {
                 next
             }
             # get the time range between the donor and recipient

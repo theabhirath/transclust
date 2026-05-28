@@ -46,10 +46,13 @@ categorize_cluster_overlap <- function(isolate_lookup, cluster_overlap_df, surv_
             lookup_sub <- isolate_lookup[isolate_lookup$patient_id %in% cluster_patients, ]
             index_lookup <- find_index_isolate(cl, cluster_patients, isolate_lookup)
 
-            # overlap explanation for all isolates except the index
+            # overlap explanation for all isolates except those from the index patient
             # we ignore other admission-positive isolates
+            index_patient_isolates <- lookup_sub$isolate_id[
+                lookup_sub$patient_id == index_lookup$patient_id
+            ]
             overlap_expl_sub <- cluster_overlap_sub$overlap[
-                cluster_overlap_sub$isolate_id != index_lookup$isolate_id
+                !(cluster_overlap_sub$isolate_id %in% index_patient_isolates)
             ]
             # if overlap_expl_sub is all NA
             if (all(is.na(overlap_expl_sub))) {
@@ -80,7 +83,7 @@ categorize_cluster_overlap <- function(isolate_lookup, cluster_overlap_df, surv_
                     surv_index_pt <- surv_df[surv_df$patient_id == index_lookup$patient_id, ]
                     # this is a "weak index" if the earliest surveillance date is the same as the isolate date
                     # and we have overlap explanation for all other isolates
-                    if (min(surv_index_pt$surv_date) == index_lookup$date && cluster_overlap_expl) {
+                    if (min(surv_index_pt$surv_date, na.rm = TRUE) == index_lookup$date && cluster_overlap_expl) {
                         "weak-index"
                     } else {
                         # if we have overlap explanations for all isolates except one convert,
@@ -236,7 +239,7 @@ categorize_non_index_patient <- function(patient, cluster_id, isolate_lookup, su
     }
 
     # Filter to positive surveillances with minimum date
-    min_date <- min(pos_survs$surv_date)
+    min_date <- min(pos_survs$surv_date, na.rm = TRUE)
     first_pos <- pos_survs[pos_survs$surv_date == min_date, ]
 
     # If multiple on same date, prefer one in cluster
