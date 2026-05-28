@@ -11,7 +11,8 @@ fraction_convert_same_source(
   seq2pt,
   adm_seqs,
   dates,
-  surv_df
+  surv_df,
+  converts_without_assigned_source = FALSE
 )
 }
 \arguments{
@@ -31,6 +32,9 @@ IDs and values are cluster numbers.}
 
 \item{surv_df}{A data frame with surveillance data containing columns:
 patient_id, genome_id, surv_date, result.}
+
+\item{converts_without_assigned_source}{A logical value (default: FALSE) indicating
+whether to include patients that are converts but have no assigned source in the lookup.}
 }
 \value{
 A numeric value between 0 and 1 representing the fraction of convert
