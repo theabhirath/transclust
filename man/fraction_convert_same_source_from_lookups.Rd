@@ -8,7 +8,8 @@ fraction_convert_same_source_from_lookups(
   isolate_lookup1,
   isolate_lookup2,
   surv_df_1,
-  surv_df_2
+  surv_df_2,
+  converts_without_assigned_source = FALSE
 )
 }
 \arguments{
@@ -23,6 +24,9 @@ patient_id, genome_id, surv_date, result for the first cluster assignment.}
 
 \item{surv_df_2}{A data frame with surveillance data containing columns:
 patient_id, genome_id, surv_date, result for the second cluster assignment.}
+
+\item{converts_without_assigned_source}{A logical value (default: FALSE) indicating
+whether to include patients that are converts but have no assigned source in the lookup.}
 }
 \value{
 A numeric value between 0 and 1 representing the fraction of convert
@@ -31,7 +35,8 @@ assignments. Returns NA if there are no common converts.
 }
 \description{
 Compares two isolate lookups by examining patients categorized as "convert".
-This is the internal implementation that works directly with isolate lookups.
+This works directly with isolate lookups and is useful when the two cluster
+assignments do not share the same epidemiological information.
 }
 \seealso{
 \code{\link[=fraction_convert_same_source]{fraction_convert_same_source()}}, \code{\link[=cluster_patient_categorization]{cluster_patient_categorization()}}

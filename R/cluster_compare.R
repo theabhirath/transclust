@@ -16,6 +16,12 @@
 #'
 #' @export
 cluster_contingency_table <- function(clusters1, clusters2) {
+    # if the names of the clusters are not the same, or if their lengths differ
+    # warn that the cluster assignments will be subset to the common isolates
+    if (!all(names(clusters1) == names(clusters2)) || length(clusters1) != length(clusters2)) {
+        warning("The cluster assignments do not match exactly. They will be subset to the common isolates.")
+    }
+
     # find isolates common to both assignments
     common_isolates <- intersect(names(clusters1), names(clusters2))
 
@@ -283,6 +289,8 @@ adjusted_mutual_information <- function(clusters1, clusters2) {
 #' @param dates A named vector mapping sequence IDs to dates.
 #' @param surv_df A data frame with surveillance data containing columns:
 #'   patient_id, genome_id, surv_date, result.
+#' @param converts_without_assigned_source A logical value (default: FALSE) indicating
+#'   whether to include patients that are converts but have no assigned source in the lookup.
 #'
 #' @return A numeric value between 0 and 1 representing the fraction of convert
 #'   patients whose source (index or weak-index) is the same in both cluster
@@ -308,7 +316,8 @@ fraction_convert_same_source <- function(
     seq2pt,
     adm_seqs,
     dates,
-    surv_df
+    surv_df,
+    converts_without_assigned_source = FALSE
 ) {
     # Create isolate lookups for both cluster assignments
     isolate_lookup1 <- get_isolate_lookup(
@@ -330,14 +339,21 @@ fraction_convert_same_source <- function(
     )
 
     # Delegate to the lookup-based version
-    fraction_convert_same_source_from_lookups(isolate_lookup1, isolate_lookup2, surv_df, surv_df)
+    fraction_convert_same_source_from_lookups(
+        isolate_lookup1,
+        isolate_lookup2,
+        surv_df,
+        surv_df,
+        converts_without_assigned_source
+    )
 }
 
 #' Fraction of Converts with Same Source from Isolate Lookups
 #'
 #' @description
 #' Compares two isolate lookups by examining patients categorized as "convert".
-#' This is the internal implementation that works directly with isolate lookups.
+#' This works directly with isolate lookups and is useful when the two cluster
+#' assignments do not share the same epidemiological information.
 #'
 #' @param isolate_lookup1 A data frame from [get_isolate_lookup()] for the first
 #'   cluster assignment.
@@ -347,6 +363,8 @@ fraction_convert_same_source <- function(
 #'   patient_id, genome_id, surv_date, result for the first cluster assignment.
 #' @param surv_df_2 A data frame with surveillance data containing columns:
 #'   patient_id, genome_id, surv_date, result for the second cluster assignment.
+#' @param converts_without_assigned_source A logical value (default: FALSE) indicating
+#' whether to include patients that are converts but have no assigned source in the lookup.
 #'
 #' @return A numeric value between 0 and 1 representing the fraction of convert
 #'   patients whose source (index or weak-index) is the same in both cluster
@@ -359,7 +377,8 @@ fraction_convert_same_source_from_lookups <- function(
     isolate_lookup1,
     isolate_lookup2,
     surv_df_1,
-    surv_df_2
+    surv_df_2,
+    converts_without_assigned_source = FALSE
 ) {
     # Helper: build convert -> sources mapping from isolate_lookup
     # Returns a named list: names are convert patient IDs, values are character
@@ -383,6 +402,9 @@ fraction_convert_same_source_from_lookups <- function(
             # Skip clusters where all patients are converts or adm-pos.
             sources <- names(cats)[cats %in% c("index", "weak-index", "multiply-colonized-index")]
             if (length(sources) == 0) {
+                for (convert in converts) {
+                    convert_to_sources[[convert]] <- c(convert_to_sources[[convert]], NA)
+                }
                 next
             }
 
@@ -396,6 +418,19 @@ fraction_convert_same_source_from_lookups <- function(
                 convert_to_sources[[conv]] <- c(convert_to_sources[[conv]], source)
             }
         }
+
+        if (converts_without_assigned_source) {
+            # For all patients that are singletons AND not adm_pos in the lookup
+            # we need an "NA" source to be added to the convert_to_sources list
+            single_non_adm_pos <- as.character(unique(isolate_lookup$patient_id[
+                !(isolate_lookup$cluster %in% non_single) & !isolate_lookup$adm_pos
+            ]))
+            print(single_non_adm_pos)
+            for (patient in single_non_adm_pos) {
+                convert_to_sources[[patient]] <- c(convert_to_sources[[patient]], NA)
+            }
+        }
+
         convert_to_sources
     }
 
@@ -403,8 +438,20 @@ fraction_convert_same_source_from_lookups <- function(
     map1 <- get_convert_source_map(isolate_lookup1, surv_df_1)
     map2 <- get_convert_source_map(isolate_lookup2, surv_df_2)
 
-    # Find common converts
-    common_converts <- intersect(names(map1), names(map2))
+    # Find whichever is the smaller set of converts
+    common_converts <- if (length(map1) < length(map2)) {
+        names(map1)
+    } else {
+        names(map2)
+    }
+    # check if the smaller set is a subset of the larger set and
+    # print a warning if not
+    if (!all(common_converts %in% names(map1)) || !all(common_converts %in% names(map2))) {
+        # print those patients that are in the smaller set but not the larger set
+        print(setdiff(common_converts, names(map1)))
+        print(setdiff(common_converts, names(map2)))
+        warning("The smaller set of converts is not a subset of the larger set")
+    }
 
     if (length(common_converts) == 0) {
         return(NA_real_)
@@ -418,7 +465,6 @@ fraction_convert_same_source_from_lookups <- function(
         },
         logical(1)
     )
-    print(matches)
-    print(length(common_converts))
+
     sum(matches) / length(common_converts)
 }
