@@ -198,18 +198,39 @@ intra_cluster_genetic_distances <- function(seqs, snp_dist) {
     genetic_stats
 }
 
-#' Compute Cluster Duration Metrics
+#' Compute genetic distances by cluster
 #'
 #' @description
-#' Calculate temporal metrics for cluster spread
+#' Calculate genetic distances for a set of cluster assignments.
+#'
+#' @param isolate_lookup Data frame with isolate lookup information.
+#' @param snp_dist Matrix of SNP distances between isolates.
+#'
+#' @return Data frame with genetic distances by cluster
+#' @export
+compute_genetic_distances_by_cluster <- function(isolate_lookup, snp_dist) {
+    cluster_ids <- get_non_single_patient_clusters(isolate_lookup)
+    genetic_distances_list <- lapply(cluster_ids, function(cluster) {
+        cluster_seqs <- isolate_lookup$isolate_id[isolate_lookup$cluster == cluster]
+        intra_cluster_genetic_distances(cluster_seqs, snp_dist)
+    })
+    genetic_distances_df <- as.data.frame(do.call(rbind, genetic_distances_list))
+    genetic_distances_df$cluster <- cluster_ids
+    genetic_distances_df
+}
+
+#' Compute intra-cluster duration metrics
+#'
+#' @description
+#' Calculate temporal metrics for spread of a single cluster.
 #'
 #' @param seqs Vector of sequence IDs in the cluster
 #' @param seq2pt Named vector mapping sequence IDs to patient IDs
 #' @param dates Vector of isolate dates named by sequence IDs
 #'
-#' @return List with cluster duration properties and earliest positive date for each patient
+#' @return Vector with cluster duration properties
 #' @export
-compute_cluster_duration_metrics <- function(seqs, seq2pt, dates) {
+intra_cluster_duration_metrics <- function(seqs, seq2pt, dates) {
     # calculate earliest positive date for each patient in the cluster
     earliest_pos_by_pt <- vapply(
         unique(seq2pt[seqs]),
@@ -225,8 +246,9 @@ compute_cluster_duration_metrics <- function(seqs, seq2pt, dates) {
     )
     earliest_pos_by_pt <- sort(setNames(earliest_pos_by_pt, unique(seq2pt[seqs])))
 
-    duration_stats <- numeric(3)
+    duration_stats <- numeric(4)
     names(duration_stats) <- c(
+        "cluster_start_date",
         "time_to_first_acquisition",
         "time_to_last_acquisition",
         "median_time_to_acquisition"
@@ -234,6 +256,9 @@ compute_cluster_duration_metrics <- function(seqs, seq2pt, dates) {
 
     # check if we have any patients
     if (length(earliest_pos_by_pt) > 0) {
+        # cluster start date = earliest positive date among all patients in the cluster
+        duration_stats["cluster_start_date"] <- earliest_pos_by_pt[1]
+
         # time to first acquisition = difference between the earliest two patients' dates
         if (length(earliest_pos_by_pt) >= 2) {
             duration_stats["time_to_first_acquisition"] <- earliest_pos_by_pt[2] -
@@ -258,10 +283,41 @@ compute_cluster_duration_metrics <- function(seqs, seq2pt, dates) {
         }
     } else {
         # no patients in cluster
-        duration_stats["time_to_first_acquisition"] <- 0
-        duration_stats["time_to_last_acquisition"] <- 0
-        duration_stats["median_time_to_acquisition"] <- 0
+        duration_stats["cluster_start_date"] <- NA
+        duration_stats["time_to_first_acquisition"] <- NA
+        duration_stats["time_to_last_acquisition"] <- NA
+        duration_stats["median_time_to_acquisition"] <- NA
     }
 
-    list(stats = duration_stats, earliest_pos_by_pt = earliest_pos_by_pt)
+    duration_stats
+}
+
+#' Compute Duration Metrics by Cluster
+#'
+#' @description
+#' Calculate temporal metrics for cluster spread for a set of cluster assignments.
+#'
+#' @param isolate_lookup Data frame with isolate lookup information.
+#'
+#' @return Data frame with duration metrics by cluster
+#' @export
+compute_duration_metrics_by_cluster <- function(isolate_lookup) {
+    cluster_ids <- get_non_single_patient_clusters(isolate_lookup)
+
+    duration_stats_list <- lapply(cluster_ids, function(cluster) {
+        cluster_seqs <- isolate_lookup$isolate_id[isolate_lookup$cluster == cluster]
+        cluster_dates <- setNames(
+            isolate_lookup$date[isolate_lookup$cluster == cluster],
+            cluster_seqs
+        )
+        cluster_seq2pt <- setNames(
+            isolate_lookup$patient_id[isolate_lookup$cluster == cluster],
+            cluster_seqs
+        )
+        intra_cluster_duration_metrics(cluster_seqs, cluster_seq2pt, cluster_dates)
+    })
+
+    duration_stats_df <- as.data.frame(do.call(rbind, duration_stats_list))
+    duration_stats_df$cluster <- cluster_ids
+    duration_stats_df
 }
