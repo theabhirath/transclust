@@ -19,6 +19,8 @@
 #'     a "multiply-colonized index" if there is overlap explanation for all other isolates in the cluster.
 #'   \item "multiply-colonized-index-missing-intermediate": if the index isolate is not in the cluster but is
 #'     admission-positive, and at least one other convert in the cluster has no overlap explanation.
+#'   \item "all-admission-positive": if all isolates in the cluster are admission positive, this is a special category
+#'    that may indicate a common source or multiple colonization events, but is not explained
 #'   \item "inexplicable": catch-all category for cases that do not fit into the other categories. Currently,
 #'     index and overlap explanations are not enough to explain these clusters.
 #' }
@@ -83,7 +85,10 @@ categorize_cluster_overlap <- function(isolate_lookup, cluster_overlap_df, surv_
                     surv_index_pt <- surv_df[surv_df$patient_id == index_lookup$patient_id, ]
                     # this is a "weak index" if the earliest surveillance date is the same as the isolate date
                     # and we have overlap explanation for all other isolates
-                    if (min(surv_index_pt$surv_date, na.rm = TRUE) == index_lookup$date && cluster_overlap_expl) {
+                    if (
+                        min(surv_index_pt$surv_date, na.rm = TRUE) == index_lookup$date &&
+                            cluster_overlap_expl
+                    ) {
                         "weak-index"
                     } else {
                         # if we have overlap explanations for all isolates except one convert,

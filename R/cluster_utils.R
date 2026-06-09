@@ -205,3 +205,25 @@ flatten_cluster_patient_categorization <- function(categorization) {
     })
     do.call(rbind, rows)
 }
+
+#' Flatten cluster-overlap categorization to a data frame
+#'
+#' @description
+#' Converts the named vector output of [categorize_cluster_overlap()] into a
+#' flat data frame with one row per cluster. The patient-level counterpart is
+#' [flatten_cluster_patient_categorization()].
+#'
+#' @param categorization A named vector as returned by
+#'   [categorize_cluster_overlap()], mapping each cluster ID to its overlap
+#'   category.
+#'
+#' @returns A data frame with columns `cluster` and `category`.
+#'
+#' @export
+flatten_cluster_overlap_categorization <- function(categorization) {
+    data.frame(
+        cluster = names(categorization),
+        category = unname(categorization),
+        stringsAsFactors = FALSE
+    )
+}
