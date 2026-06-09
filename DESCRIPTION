@@ -1,4 +1,4 @@
-Package: transclust
+Package: hospitraceR
 Title: An R package for transmission cluster analysis for pathogens
 Version: 0.0.1
 Date: 2025-02-14
@@ -12,8 +12,8 @@ Authors@R:
         )
     )
 Description: An R package for transmission cluster analysis for pathogens.
-URL: https://theabhirath.github.io/transclust, https://github.com/theabhirath/transclust
-BugReports: https://github.com/theabhirath/transclust/issues
+URL: https://theabhirath.github.io/hospitraceR, https://github.com/theabhirath/hospitraceR
+BugReports: https://github.com/theabhirath/hospitraceR/issues
 License: MIT + file LICENSE
 Depends:
     R (>= 4.5)
@@ -24,17 +24,17 @@ Imports:
     parallel,
     pbmcapply
 Suggests:
-    transclustVisualize,
+    hospitraceRVisualize,
     knitr,
     rmarkdown,
     testthat (>= 3.0.0)
 Remotes:
-    theabhirath/transclustVisualize
+    theabhirath/hospitraceRVisualize
 Config/testthat/edition: 3
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.3.3
 Roxygen: list(markdown = TRUE)
 LinkingTo:
     Rcpp
 VignetteBuilder: knitr
+Config/roxygen2/version: 8.0.0

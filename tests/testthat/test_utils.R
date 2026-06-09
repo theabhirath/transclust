@@ -1,9 +1,9 @@
 library(ape)
-load(system.file("extdata", "example.RData", package = "transclust"))
+load(system.file("extdata", "example.RData", package = "hospitraceR"))
 
 # Read in sequence file
 dna_aln <- read.dna(
-    system.file("extdata", "example.fasta", package = "transclust"),
+    system.file("extdata", "example.fasta", package = "hospitraceR"),
     format = "fasta"
 )
 

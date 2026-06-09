@@ -1,4 +1,4 @@
-url: https://theabhirath.github.io/transclust
+url: https://theabhirath.github.io/hospitraceR
 
 authors:
   Abhirath Anand:
@@ -23,8 +23,10 @@ reference:
     contents:
       - intra_cluster_genetic_var_analysis
       - intra_cluster_genetic_distances
-      - compute_cluster_duration_metrics
-      - cluster_overlap_perm_test
+      - compute_genetic_distances_by_cluster
+      - intra_cluster_duration_metrics
+      - compute_duration_metrics_by_cluster
+      - assign_study_half
 
   - title: Cluster comparison
     desc: >
@@ -47,8 +49,10 @@ reference:
       - isolate_isolate_overlap
       - isolate_isolate_sequential_overlap
       - cluster_isolate_overlap
-      - fraction_converts_with_overlap
+      - fraction_convert_events_with_overlap
       - categorize_cluster_overlap
+      - flatten_cluster_overlap_categorization
+      - cluster_overlap_perm_test
       - cluster_patient_categorization
       - flatten_cluster_patient_categorization
 

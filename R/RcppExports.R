@@ -10,7 +10,7 @@
 #'         number of shared variants between two isolates, with the diagonal set to Inf.
 #' @noRd
 computeSharedMatrix <- function(dna_character_matrix, out_group) {
-    .Call(`_transclust_computeSharedMatrix`, dna_character_matrix, out_group)
+    .Call(`_hospitraceR_computeSharedMatrix`, dna_character_matrix, out_group)
 }
 
 #' Compute the defining variants for each subtree
@@ -23,6 +23,6 @@ computeSharedMatrix <- function(dna_character_matrix, out_group) {
 #'         variants for each subtree.
 #' @noRd
 computeDefiningVariants <- function(dna_character_matrix, isolate_names, subtrees) {
-    .Call(`_transclust_computeDefiningVariants`, dna_character_matrix, isolate_names, subtrees)
+    .Call(`_hospitraceR_computeDefiningVariants`, dna_character_matrix, isolate_names, subtrees)
 }
 
