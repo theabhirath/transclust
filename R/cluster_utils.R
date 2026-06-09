@@ -9,6 +9,9 @@
 #'   \item date: the date of the isolate.
 #'   \item adm_pos: a logical value indicating if the isolate is admission positive.
 #'   \item prev_surv: the previous surveillance date for the patient.
+#'   \item prev_surv_neg: a logical value indicating whether the patient had a prior
+#'     surveillance before this isolate and none of those prior surveillances were
+#'     positive (i.e. a genuine previous-negative -> current-positive conversion).
 #' }
 #'
 #' @param clusters A numeric vector of cluster assignments.
@@ -18,7 +21,8 @@
 #' @param dates A named vector mapping sequence IDs to dates.
 #' @param surv_df A data frame with surveillance information for isolates.
 #'
-#' @returns A data frame with columns: isolate_id, patient_id, date.
+#' @returns A data frame with columns: isolate_id, patient_id, date, cluster, adm_pos, prev_surv,
+#'   prev_surv_neg.
 #'
 #' @export
 get_isolate_lookup <- function(clusters, dna_aln, seq2pt, adm_seqs, dates, surv_df) {
@@ -32,30 +36,54 @@ get_isolate_lookup <- function(clusters, dna_aln, seq2pt, adm_seqs, dates, surv_
     ) |>
         na.omit()
 
-    # pre-split surveillance dates by patient_id once
-    surv_by_patient <- with(surv_df, split(surv_date, patient_id))
+    # nothing to annotate if no isolates survived the na.omit()
+    if (nrow(lookup) == 0L) {
+        lookup$prev_surv <- numeric(0)
+        lookup$prev_surv_neg <- logical(0)
+        return(lookup)
+    }
 
-    # for each isolate: find previous surv date if it exists,
-    # otherwise return the isolate date provided there is a surveillance date for the patient
-    lookup$prev_surv <- mapply(
+    # pre-split surveillance dates and results by patient_id once
+    surv_dates_by_pt <- with(surv_df, split(surv_date, patient_id))
+    surv_results_by_pt <- with(surv_df, split(result, patient_id))
+
+    # for each isolate compute:
+    # - prev_surv: the latest surveillance date strictly before the isolate (else the
+    #   isolate date when surveillance exists only on/after it, else NA).
+    # - prev_surv_neg: whether the patient had a prior surveillance and none of the
+    #   surveillances before this isolate were positive (result == 1). This marks a
+    #   genuine previous-negative -> current-positive conversion; a prior positive
+    #   means the patient was already colonized, so it is not a conversion. The date
+    #   alone (prev_surv < date) cannot distinguish these, since a prior surveillance
+    #   may itself have been positive.
+    surv_info <- mapply(
         FUN = function(pid, iso_date) {
-            surv_dates <- surv_by_patient[[as.character(pid)]]
+            key <- as.character(pid)
+            surv_dates <- surv_dates_by_pt[[key]]
             # no surveillance at all for this patient
             if (is.null(surv_dates) || length(surv_dates) == 0L) {
-                return(NA)
+                return(c(prev_surv = NA_real_, prev_surv_neg = NA))
             }
-            prior_surv_dates <- surv_dates[surv_dates < iso_date]
-            if (length(prior_surv_dates) > 0L) {
-                # latest surveillance strictly before isolate
-                max(prior_surv_dates)
+            prior <- surv_dates < iso_date
+            if (any(prior)) {
+                surv_results <- surv_results_by_pt[[key]]
+                c(
+                    # latest surveillance strictly before isolate
+                    prev_surv = max(surv_dates[prior]),
+                    # negative only if no prior surveillance was positive
+                    prev_surv_neg = !any(surv_results[prior] == 1, na.rm = TRUE)
+                )
             } else {
-                # surveillance exists but all on/after isolate date
-                iso_date
+                # surveillance exists but all on/after isolate date (no prior screen)
+                c(prev_surv = iso_date, prev_surv_neg = FALSE)
             }
         },
         pid = lookup$patient_id,
         iso_date = lookup$date
     )
+
+    lookup$prev_surv <- unname(surv_info["prev_surv", ])
+    lookup$prev_surv_neg <- as.logical(unname(surv_info["prev_surv_neg", ]))
 
     lookup
 }

@@ -20,7 +20,8 @@ get_isolate_lookup(clusters, dna_aln, seq2pt, adm_seqs, dates, surv_df)
 \item{surv_df}{A data frame with surveillance information for isolates.}
 }
 \value{
-A data frame with columns: isolate_id, patient_id, date.
+A data frame with columns: isolate_id, patient_id, date, cluster, adm_pos, prev_surv,
+prev_surv_neg.
 }
 \description{
 This function creates a lookup table for isolates. The columns are:
@@ -31,5 +32,8 @@ This function creates a lookup table for isolates. The columns are:
 \item date: the date of the isolate.
 \item adm_pos: a logical value indicating if the isolate is admission positive.
 \item prev_surv: the previous surveillance date for the patient.
+\item prev_surv_neg: a logical value indicating whether the patient had a prior
+surveillance before this isolate and none of those prior surveillances were
+positive (i.e. a genuine previous-negative -> current-positive conversion).
 }
 }

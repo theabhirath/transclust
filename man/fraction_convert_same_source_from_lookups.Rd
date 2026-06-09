@@ -9,7 +9,7 @@ fraction_convert_same_source_from_lookups(
   isolate_lookup2,
   surv_df_1,
   surv_df_2,
-  converts_without_assigned_source = FALSE
+  converts_without_assigned_source = TRUE
 )
 }
 \arguments{
@@ -25,8 +25,8 @@ patient_id, genome_id, surv_date, result for the first cluster assignment.}
 \item{surv_df_2}{A data frame with surveillance data containing columns:
 patient_id, genome_id, surv_date, result for the second cluster assignment.}
 
-\item{converts_without_assigned_source}{A logical value (default: FALSE) indicating
-whether to include patients that are converts but have no assigned source in the lookup.}
+\item{converts_without_assigned_source}{A logical value (default: TRUE) indicating
+whether to include patients that are converts but have no assigned source.}
 }
 \value{
 A numeric value between 0 and 1 representing the fraction of convert
