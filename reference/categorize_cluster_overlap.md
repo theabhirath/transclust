@@ -31,6 +31,10 @@ explanations for other isolates in the cluster. The categories are:
   is not in the cluster but is admission-positive, and at least one
   other convert in the cluster has no overlap explanation.
 
+- "all-admission-positive": if all isolates in the cluster are admission
+  positive, this is a special category that may indicate a common source
+  or multiple colonization events, but is not explained
+
 - "inexplicable": catch-all category for cases that do not fit into the
   other categories. Currently, index and overlap explanations are not
   enough to explain these clusters.
@@ -47,13 +51,13 @@ categorize_cluster_overlap(isolate_lookup, cluster_overlap_df, surv_df)
 
   A lookup table for isolates and their clusters assignments which has
   other relevant epidemiological information. For more information, see
-  [`get_isolate_lookup()`](https://theabhirath.github.io/transclust/reference/get_isolate_lookup.md).
+  [`get_isolate_lookup()`](https://theabhirath.github.io/hospitraceR/reference/get_isolate_lookup.md).
 
 - cluster_overlap_df:
 
   A data frame with overlap information for isolate pairs. For more
   information, see
-  [`cluster_isolate_overlap()`](https://theabhirath.github.io/transclust/reference/cluster_isolate_overlap.md).
+  [`cluster_isolate_overlap()`](https://theabhirath.github.io/hospitraceR/reference/cluster_isolate_overlap.md).
 
 - surv_df:
 

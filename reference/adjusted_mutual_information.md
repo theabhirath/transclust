@@ -2,7 +2,7 @@
 
 Computes the Adjusted Mutual Information (AMI) between two cluster
 assignments. This is a convenience wrapper around
-[`ami_from_contingency()`](https://theabhirath.github.io/transclust/reference/ami_from_contingency.md).
+[`ami_from_contingency()`](https://theabhirath.github.io/hospitraceR/reference/ami_from_contingency.md).
 
 ## Usage
 
@@ -28,5 +28,5 @@ A numeric value representing the Adjusted Mutual Information.
 
 ## See also
 
-[`ami_from_contingency()`](https://theabhirath.github.io/transclust/reference/ami_from_contingency.md),
-[`cluster_contingency_table()`](https://theabhirath.github.io/transclust/reference/cluster_contingency_table.md)
+[`ami_from_contingency()`](https://theabhirath.github.io/hospitraceR/reference/ami_from_contingency.md),
+[`cluster_contingency_table()`](https://theabhirath.github.io/hospitraceR/reference/cluster_contingency_table.md)

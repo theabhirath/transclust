@@ -15,6 +15,11 @@ This function creates a lookup table for isolates. The columns are:
 
 - prev_surv: the previous surveillance date for the patient.
 
+- prev_surv_neg: a logical value indicating whether the patient had a
+  prior surveillance before this isolate and none of those prior
+  surveillances were positive (i.e. a genuine previous-negative -\>
+  current-positive conversion).
+
 ## Usage
 
 ``` r
@@ -50,4 +55,5 @@ get_isolate_lookup(clusters, dna_aln, seq2pt, adm_seqs, dates, surv_df)
 
 ## Value
 
-A data frame with columns: isolate_id, patient_id, date.
+A data frame with columns: isolate_id, patient_id, date, cluster,
+adm_pos, prev_surv, prev_surv_neg.

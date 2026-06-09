@@ -15,7 +15,7 @@ get_tn_clusters_snp_thresh(snp_dist, snp_thresh, hclust_method = "complete")
 
   A matrix of SNP distances between isolates constructed using a model
   of DNA evolution. See
-  [`get_snp_dist_matrix()`](https://theabhirath.github.io/transclust/reference/get_snp_dist_matrix.md)
+  [`get_snp_dist_matrix()`](https://theabhirath.github.io/hospitraceR/reference/get_snp_dist_matrix.md)
   for a useful function to generate this.
 
 - snp_thresh:

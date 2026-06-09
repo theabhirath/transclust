@@ -8,16 +8,16 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/theabhirath/transclust/blob/main/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/theabhirath/hospitraceR/blob/main/DESCRIPTION)
 
-Anand A (2026). *transclust: An R package for transmission cluster
+Anand A (2026). *hospitraceR: An R package for transmission cluster
 analysis for pathogens*. R package version 0.0.1,
-<https://theabhirath.github.io/transclust>.
+<https://theabhirath.github.io/hospitraceR>.
 
     @Manual{,
-      title = {transclust: An R package for transmission cluster analysis for pathogens},
+      title = {hospitraceR: An R package for transmission cluster analysis for pathogens},
       author = {Abhirath Anand},
       year = {2026},
       note = {R package version 0.0.1},
-      url = {https://theabhirath.github.io/transclust},
+      url = {https://theabhirath.github.io/hospitraceR},
     }

@@ -2,5 +2,7 @@
 
 ### All vignettes
 
+- [Comparing cluster
+  assignments](https://theabhirath.github.io/hospitraceR/articles/cluster_comparison.md):
 - [Introduction to
-  transclust](https://theabhirath.github.io/transclust/articles/transclust.md):
+  hospitraceR](https://theabhirath.github.io/hospitraceR/articles/hospitraceR.md):

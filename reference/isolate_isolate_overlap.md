@@ -15,7 +15,7 @@ isolate_isolate_overlap(isolate_lookup, trace_mat)
 
   A lookup table for isolates and their clusters assignments which has
   other relevant epidemiological information. For more information, see
-  [`get_isolate_lookup()`](https://theabhirath.github.io/transclust/reference/get_isolate_lookup.md).
+  [`get_isolate_lookup()`](https://theabhirath.github.io/hospitraceR/reference/get_isolate_lookup.md).
 
 - trace_mat:
 

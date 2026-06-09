@@ -2,7 +2,7 @@
 
 Computes the Adjusted Rand Index (ARI) between two cluster assignments.
 This is a convenience wrapper around
-[`ari_from_contingency()`](https://theabhirath.github.io/transclust/reference/ari_from_contingency.md).
+[`ari_from_contingency()`](https://theabhirath.github.io/hospitraceR/reference/ari_from_contingency.md).
 
 ## Usage
 
@@ -28,5 +28,5 @@ A numeric value representing the Adjusted Rand Index.
 
 ## See also
 
-[`ari_from_contingency()`](https://theabhirath.github.io/transclust/reference/ari_from_contingency.md),
-[`cluster_contingency_table()`](https://theabhirath.github.io/transclust/reference/cluster_contingency_table.md)
+[`ari_from_contingency()`](https://theabhirath.github.io/hospitraceR/reference/ari_from_contingency.md),
+[`cluster_contingency_table()`](https://theabhirath.github.io/hospitraceR/reference/cluster_contingency_table.md)

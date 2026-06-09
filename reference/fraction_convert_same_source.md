@@ -15,7 +15,8 @@ fraction_convert_same_source(
   seq2pt,
   adm_seqs,
   dates,
-  surv_df
+  surv_df,
+  converts_without_assigned_source = FALSE
 )
 ```
 
@@ -52,6 +53,11 @@ fraction_convert_same_source(
   A data frame with surveillance data containing columns: patient_id,
   genome_id, surv_date, result.
 
+- converts_without_assigned_source:
+
+  A logical value (default: FALSE) indicating whether to include
+  patients that are converts but have no assigned source in the lookup.
+
 ## Value
 
 A numeric value between 0 and 1 representing the fraction of convert
@@ -65,7 +71,7 @@ The function:
 1.  Creates isolate lookups for both cluster assignments
 
 2.  Categorizes patients in both using
-    [`cluster_patient_categorization()`](https://theabhirath.github.io/transclust/reference/cluster_patient_categorization.md)
+    [`cluster_patient_categorization()`](https://theabhirath.github.io/hospitraceR/reference/cluster_patient_categorization.md)
 
 3.  Identifies patients categorized as "convert" in both assignments
 
@@ -76,6 +82,6 @@ The function:
 
 ## See also
 
-[`fraction_convert_same_source_from_lookups()`](https://theabhirath.github.io/transclust/reference/fraction_convert_same_source_from_lookups.md),
-[`cluster_patient_categorization()`](https://theabhirath.github.io/transclust/reference/cluster_patient_categorization.md),
-[`get_isolate_lookup()`](https://theabhirath.github.io/transclust/reference/get_isolate_lookup.md)
+[`fraction_convert_same_source_from_lookups()`](https://theabhirath.github.io/hospitraceR/reference/fraction_convert_same_source_from_lookups.md),
+[`cluster_patient_categorization()`](https://theabhirath.github.io/hospitraceR/reference/cluster_patient_categorization.md),
+[`get_isolate_lookup()`](https://theabhirath.github.io/hospitraceR/reference/get_isolate_lookup.md)

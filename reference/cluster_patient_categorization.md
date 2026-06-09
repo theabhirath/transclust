@@ -32,7 +32,7 @@ cluster_patient_categorization(isolate_lookup, surv_df)
 - isolate_lookup:
 
   A lookup table from
-  [`get_isolate_lookup()`](https://theabhirath.github.io/transclust/reference/get_isolate_lookup.md).
+  [`get_isolate_lookup()`](https://theabhirath.github.io/hospitraceR/reference/get_isolate_lookup.md).
 
 - surv_df:
 

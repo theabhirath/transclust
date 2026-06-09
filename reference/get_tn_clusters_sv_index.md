@@ -32,7 +32,7 @@ get_tn_clusters_sv_index(
 
   A matrix of SNP distances between isolates constructed using a model
   of DNA evolution. See
-  [`get_snp_dist_matrix()`](https://theabhirath.github.io/transclust/reference/get_snp_dist_matrix.md)
+  [`get_snp_dist_matrix()`](https://theabhirath.github.io/hospitraceR/reference/get_snp_dist_matrix.md)
   for a useful function to generate this.
 
 - adm_seqs:
@@ -58,7 +58,7 @@ get_tn_clusters_sv_index(
 
   A phylogenetic tree object of class `phylo` constructed from the DNA
   alignment. This can be constructed using the
-  [`get_phylo_tree()`](https://theabhirath.github.io/transclust/reference/get_phylo_tree.md)
+  [`get_phylo_tree()`](https://theabhirath.github.io/hospitraceR/reference/get_phylo_tree.md)
   or can be any other tree object constructed from the same isolates.
 
 ## Value

@@ -1,8 +1,9 @@
 # Fraction of Converts with Same Source from Isolate Lookups
 
 Compares two isolate lookups by examining patients categorized as
-"convert". This is the internal implementation that works directly with
-isolate lookups.
+"convert". This works directly with isolate lookups and is useful when
+the two cluster assignments do not share the same epidemiological
+information.
 
 ## Usage
 
@@ -11,7 +12,8 @@ fraction_convert_same_source_from_lookups(
   isolate_lookup1,
   isolate_lookup2,
   surv_df_1,
-  surv_df_2
+  surv_df_2,
+  converts_without_assigned_source = TRUE
 )
 ```
 
@@ -20,13 +22,13 @@ fraction_convert_same_source_from_lookups(
 - isolate_lookup1:
 
   A data frame from
-  [`get_isolate_lookup()`](https://theabhirath.github.io/transclust/reference/get_isolate_lookup.md)
+  [`get_isolate_lookup()`](https://theabhirath.github.io/hospitraceR/reference/get_isolate_lookup.md)
   for the first cluster assignment.
 
 - isolate_lookup2:
 
   A data frame from
-  [`get_isolate_lookup()`](https://theabhirath.github.io/transclust/reference/get_isolate_lookup.md)
+  [`get_isolate_lookup()`](https://theabhirath.github.io/hospitraceR/reference/get_isolate_lookup.md)
   for the second cluster assignment.
 
 - surv_df_1:
@@ -39,6 +41,11 @@ fraction_convert_same_source_from_lookups(
   A data frame with surveillance data containing columns: patient_id,
   genome_id, surv_date, result for the second cluster assignment.
 
+- converts_without_assigned_source:
+
+  A logical value (default: TRUE) indicating whether to include patients
+  that are converts but have no assigned source.
+
 ## Value
 
 A numeric value between 0 and 1 representing the fraction of convert
@@ -47,5 +54,5 @@ assignments. Returns NA if there are no common converts.
 
 ## See also
 
-[`fraction_convert_same_source()`](https://theabhirath.github.io/transclust/reference/fraction_convert_same_source.md),
-[`cluster_patient_categorization()`](https://theabhirath.github.io/transclust/reference/cluster_patient_categorization.md)
+[`fraction_convert_same_source()`](https://theabhirath.github.io/hospitraceR/reference/fraction_convert_same_source.md),
+[`cluster_patient_categorization()`](https://theabhirath.github.io/hospitraceR/reference/cluster_patient_categorization.md)

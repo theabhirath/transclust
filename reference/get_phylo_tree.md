@@ -18,7 +18,7 @@ get_phylo_tree(dna_aln, snp_dist, method = c("nj", "pars"))
 - snp_dist:
 
   A numeric matrix representing the SNP distance between sequences. See
-  [`get_snp_dist_matrix()`](https://theabhirath.github.io/transclust/reference/get_snp_dist_matrix.md)
+  [`get_snp_dist_matrix()`](https://theabhirath.github.io/hospitraceR/reference/get_snp_dist_matrix.md)
   for a useful function to generate this.
 
 - method:
