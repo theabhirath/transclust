@@ -246,10 +246,28 @@ cluster_isolate_overlap <- function(isolate_lookup, iso_overlap_df) {
     do.call(rbind, out_list)
 }
 
-#' Calculate the fraction of converts with overlap
+#' Calculate the fraction of convert events with overlap
 #'
 #' @description
-#' This function calculates the fraction of converts with overlap for each cluster.
+#' This function calculates the fraction of convert events with overlap for each cluster.
+#'
+#' A convert event is an isolate where (1) the patient has no admission-positive
+#' isolates, and (2) the patient had a prior negative surveillance before this
+#' positive isolate. Criterion (2) is taken from the `prev_surv_neg` flag in the
+#' lookup (see [get_isolate_lookup()]): TRUE only when a surveillance exists before
+#' the isolate date and none of those prior surveillances were positive. Checking
+#' the previous surveillance date alone is not enough, since that prior surveillance
+#' may itself have been positive (meaning the patient was already colonized rather
+#' than converting). Each qualifying isolate counts as one convert event, and a
+#' convert event with an overlap explanation is a convert event with overlap. The
+#' per-cluster fraction is `convert_events_with_overlap / convert_events`.
+#'
+#' The per-cluster counts that make up each fraction are also returned, as the
+#' attributes `n_overlap` (convert events with overlap, the numerator) and
+#' `n_converts` (convert events, the denominator). These let callers aggregate a
+#' pooled, convert-weighted fraction across clusters
+#' (`sum(n_overlap) / sum(n_converts)`) instead of averaging the per-cluster
+#' fractions, which would ignore how many convert events each cluster contributes.
 #'
 #' @param cluster_overlap_df A data frame with overlap information for isolate pairs. For more
 #'                            information, see [cluster_isolate_overlap()].
@@ -257,33 +275,60 @@ cluster_isolate_overlap <- function(isolate_lookup, iso_overlap_df) {
 #'                        other relevant epidemiological information. For more information, see
 #'                        [get_isolate_lookup()].
 #'
-#' @return A named vector with the fraction of converts with overlap for each cluster.
+#' @return A named numeric vector with the fraction of convert events with overlap for each
+#'   cluster (`NA` for clusters with no convert events), carrying the per-cluster `n_overlap`
+#'   and `n_converts` counts as attributes.
 #'
 #' @export
-fraction_converts_with_overlap <- function(cluster_overlap_df, isolate_lookup) {
-    setNames(
-        vapply(
-            unique(cluster_overlap_df$cluster),
-            function(cl) {
-                lookup_sub <- isolate_lookup[isolate_lookup$cluster == cl, ]
-                convert_isolates <- lookup_sub$isolate_id[
-                    lookup_sub$adm_pos == FALSE
-                ]
-                num_converts <- length(unique(lookup_sub$isolate_id[!lookup_sub$adm_pos]))
-                num_converts_with_overlap <- sum(
-                    cluster_overlap_df$overlap[
-                        cluster_overlap_df$isolate_id %in% convert_isolates
-                    ],
-                    na.rm = TRUE
-                )
-                if (num_converts > 0) {
-                    num_converts_with_overlap / num_converts
-                } else {
-                    NA
-                }
-            },
-            numeric(1)
-        ),
-        unique(cluster_overlap_df$cluster)
+fraction_convert_events_with_overlap <- function(cluster_overlap_df, isolate_lookup) {
+    clusters <- unique(cluster_overlap_df$cluster)
+
+    # Patients with any admission-positive isolate. A convert event requires the
+    # patient to have none of these (they were not colonized at admission).
+    adm_pos_patients <- unique(isolate_lookup$patient_id[isolate_lookup$adm_pos])
+
+    # For each cluster, count its convert events (the denominator) and the convert
+    # events that have overlap (the numerator). A convert event is an isolate where
+    # (1) the patient has no admission-positive isolates, and (2) the patient had a
+    # prior negative surveillance before this (positive) isolate -- captured by the
+    # prev_surv_neg flag, which is TRUE only when a prior surveillance exists and
+    # none of the surveillances before the isolate were positive (a prior positive
+    # would mean the patient was already colonized, not a conversion). An event
+    # counts as "with overlap" when that isolate has an overlap explanation. Both
+    # counts are kept so callers can pool them rather than averaging per-cluster
+    # fractions.
+    counts <- vapply(
+        clusters,
+        function(cl) {
+            lookup_sub <- isolate_lookup[isolate_lookup$cluster == cl, ]
+            convert_events <- !(lookup_sub$patient_id %in% adm_pos_patients) &
+                !is.na(lookup_sub$prev_surv_neg) &
+                lookup_sub$prev_surv_neg
+            convert_isolates <- lookup_sub$isolate_id[convert_events]
+            num_converts <- length(convert_isolates)
+            num_converts_with_overlap <- sum(
+                cluster_overlap_df$overlap[
+                    cluster_overlap_df$isolate_id %in% convert_isolates
+                ],
+                na.rm = TRUE
+            )
+            c(n_overlap = num_converts_with_overlap, n_converts = num_converts)
+        },
+        numeric(2)
     )
+
+    cluster_chr <- as.character(clusters)
+    n_overlap <- setNames(counts["n_overlap", ], cluster_chr)
+    n_converts <- setNames(counts["n_converts", ], cluster_chr)
+
+    # Per-cluster fraction; NA when a cluster has no convert events.
+    fractions <- setNames(
+        ifelse(n_converts > 0, n_overlap / n_converts, NA_real_),
+        cluster_chr
+    )
+
+    # Attach the underlying counts so downstream aggregation can pool them.
+    attr(fractions, "n_overlap") <- n_overlap
+    attr(fractions, "n_converts") <- n_converts
+    fractions
 }

@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/articles/special-files.html
 
 library(testthat)
-library(transclust)
+library(hospitraceR)
 
-test_check("transclust")
+test_check("hospitraceR")

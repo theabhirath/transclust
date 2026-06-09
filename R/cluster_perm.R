@@ -21,10 +21,23 @@
 #' @returns A list containing:
 #'     \itemize{
 #'     \item `observed`: A named list with facility, floor, room, seq_facility, seq_floor,
-#'       seq_room fractions for observed data
-#'     \item `permuted`: A numeric array of dimensions (n_clusters, 6 trace_types, nperm)
+#'       seq_room per-cluster fractions for observed data
+#'     \item `observed_n_overlap`: A named list (same trace types) of per-cluster converts-with-overlap
+#'       counts (numerators) behind the observed fractions
+#'     \item `observed_n_converts`: A named list (same trace types) of per-cluster convert counts
+#'       (denominators) behind the observed fractions
+#'     \item `permuted`: A numeric array of dimensions (n_clusters, 6 trace_types, nperm) of
+#'       per-cluster fractions
+#'     \item `permuted_n_overlap`: A numeric array (same dimensions) of per-cluster converts-with-overlap
+#'       counts (numerators)
+#'     \item `permuted_n_converts`: A numeric array (same dimensions) of per-cluster convert counts
+#'       (denominators)
 #'     \item `valid_clusters`: A numeric vector of cluster IDs that have more than one patient
 #'     }
+#'
+#'   The numerator/denominator components let callers compute a pooled,
+#'   convert-weighted fraction (`sum(n_overlap) / sum(n_converts)`) across clusters
+#'   and sequence types, rather than averaging the per-cluster fractions.
 #'
 #' @importFrom parallel detectCores
 #' @importFrom pbmcapply pbmclapply
@@ -78,7 +91,9 @@ cluster_overlap_perm_test <- function(
     seq_overlap_room <- isolate_isolate_sequential_overlap(observed_lookup, room_trace)
 
     # Precompute a base lookup without cluster dependency (for fast updates)
-    base_lookup <- observed_lookup[, c("isolate_id", "patient_id", "date", "adm_pos", "prev_surv")]
+    base_lookup <- observed_lookup[,
+        c("isolate_id", "patient_id", "date", "adm_pos", "prev_surv", "prev_surv_neg")
+    ]
 
     # Calculate observed overlap fractions using precomputed overlaps
     observed_fractions <- calculate_overlap_fractions_fast(
@@ -91,6 +106,12 @@ cluster_overlap_perm_test <- function(
         seq_overlap_floor,
         seq_overlap_room
     )
+
+    # Per-cluster numerator/denominator counts behind each observed fraction.
+    # Aggregation pools these (sum of overlaps / sum of converts) rather than
+    # averaging the per-cluster fractions.
+    observed_n_overlap <- lapply(observed_fractions, attr, "n_overlap")
+    observed_n_converts <- lapply(observed_fractions, attr, "n_converts")
 
     # Create eligibility matrices for permutation
     elig_mats <- create_eligibility_matrices(clusters, seq2pt, adm_seqs, adm_pos_pt_seqs)
@@ -151,28 +172,37 @@ cluster_overlap_perm_test <- function(
     trace_types <- c("facility", "floor", "room", "seq_facility", "seq_floor", "seq_room")
     n_clusters <- length(valid_clusters)
 
-    perm_array <- array(
-        dim = c(n_clusters, length(trace_types), nperm),
-        dimnames = list(
-            as.character(valid_clusters),
-            trace_types,
-            seq_len(nperm)
-        )
+    arr_dim <- c(n_clusters, length(trace_types), nperm)
+    arr_dimnames <- list(
+        as.character(valid_clusters),
+        trace_types,
+        seq_len(nperm)
     )
+    perm_array <- array(dim = arr_dim, dimnames = arr_dimnames)
+    # Numerator (converts with overlap) and denominator (converts) behind each
+    # permuted per-cluster fraction, kept so aggregation can pool them.
+    perm_n_overlap_array <- array(dim = arr_dim, dimnames = arr_dimnames)
+    perm_n_converts_array <- array(dim = arr_dim, dimnames = arr_dimnames)
 
+    vc_chr <- as.character(valid_clusters)
     for (i in seq_len(nperm)) {
         for (j in seq_along(trace_types)) {
             trace <- trace_types[j]
             perm_frac <- perm_results[[i]][[trace]]
             # Match clusters - permuted may have different valid clusters
-            matched <- perm_frac[as.character(valid_clusters)]
-            perm_array[, j, i] <- matched
+            perm_array[, j, i] <- perm_frac[vc_chr]
+            perm_n_overlap_array[, j, i] <- attr(perm_frac, "n_overlap")[vc_chr]
+            perm_n_converts_array[, j, i] <- attr(perm_frac, "n_converts")[vc_chr]
         }
     }
 
     list(
         observed = observed_fractions,
+        observed_n_overlap = observed_n_overlap,
+        observed_n_converts = observed_n_converts,
         permuted = perm_array,
+        permuted_n_overlap = perm_n_overlap_array,
+        permuted_n_converts = perm_n_converts_array,
         valid_clusters = valid_clusters
     )
 }
@@ -205,9 +235,9 @@ calculate_overlap_fractions <- function(
 
     # Calculate fraction of converts with overlap
     list(
-        facility = fraction_converts_with_overlap(cluster_overlap_facility, lookup_filtered),
-        floor = fraction_converts_with_overlap(cluster_overlap_floor, lookup_filtered),
-        room = fraction_converts_with_overlap(cluster_overlap_room, lookup_filtered)
+        facility = fraction_convert_events_with_overlap(cluster_overlap_facility, lookup_filtered),
+        floor = fraction_convert_events_with_overlap(cluster_overlap_floor, lookup_filtered),
+        room = fraction_convert_events_with_overlap(cluster_overlap_room, lookup_filtered)
     )
 }
 
@@ -233,9 +263,9 @@ calculate_overlap_fractions_fast <- function(
 
     # Calculate fraction of converts with overlap
     result <- list(
-        facility = fraction_converts_with_overlap(cluster_overlap_facility, lookup_filtered),
-        floor = fraction_converts_with_overlap(cluster_overlap_floor, lookup_filtered),
-        room = fraction_converts_with_overlap(cluster_overlap_room, lookup_filtered)
+        facility = fraction_convert_events_with_overlap(cluster_overlap_facility, lookup_filtered),
+        floor = fraction_convert_events_with_overlap(cluster_overlap_floor, lookup_filtered),
+        room = fraction_convert_events_with_overlap(cluster_overlap_room, lookup_filtered)
     )
 
     # Calculate sequential overlap fractions if provided
@@ -244,9 +274,12 @@ calculate_overlap_fractions_fast <- function(
         seq_cl_floor <- cluster_isolate_overlap(lookup_filtered, seq_overlap_floor)
         seq_cl_room <- cluster_isolate_overlap(lookup_filtered, seq_overlap_room)
 
-        result$seq_facility <- fraction_converts_with_overlap(seq_cl_facility, lookup_filtered)
-        result$seq_floor <- fraction_converts_with_overlap(seq_cl_floor, lookup_filtered)
-        result$seq_room <- fraction_converts_with_overlap(seq_cl_room, lookup_filtered)
+        result$seq_facility <- fraction_convert_events_with_overlap(
+            seq_cl_facility,
+            lookup_filtered
+        )
+        result$seq_floor <- fraction_convert_events_with_overlap(seq_cl_floor, lookup_filtered)
+        result$seq_room <- fraction_convert_events_with_overlap(seq_cl_room, lookup_filtered)
     }
 
     result

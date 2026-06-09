@@ -19,7 +19,9 @@ cluster_contingency_table <- function(clusters1, clusters2) {
     # if the names of the clusters are not the same, or if their lengths differ
     # warn that the cluster assignments will be subset to the common isolates
     if (!all(names(clusters1) == names(clusters2)) || length(clusters1) != length(clusters2)) {
-        warning("The cluster assignments do not match exactly. They will be subset to the common isolates.")
+        warning(
+            "The cluster assignments do not match exactly. They will be subset to the common isolates."
+        )
     }
 
     # find isolates common to both assignments
@@ -363,8 +365,8 @@ fraction_convert_same_source <- function(
 #'   patient_id, genome_id, surv_date, result for the first cluster assignment.
 #' @param surv_df_2 A data frame with surveillance data containing columns:
 #'   patient_id, genome_id, surv_date, result for the second cluster assignment.
-#' @param converts_without_assigned_source A logical value (default: FALSE) indicating
-#' whether to include patients that are converts but have no assigned source in the lookup.
+#' @param converts_without_assigned_source A logical value (default: TRUE) indicating
+#' whether to include patients that are converts but have no assigned source.
 #'
 #' @return A numeric value between 0 and 1 representing the fraction of convert
 #'   patients whose source (index or weak-index) is the same in both cluster
@@ -378,7 +380,7 @@ fraction_convert_same_source_from_lookups <- function(
     isolate_lookup2,
     surv_df_1,
     surv_df_2,
-    converts_without_assigned_source = FALSE
+    converts_without_assigned_source = TRUE
 ) {
     # Helper: build convert -> sources mapping from isolate_lookup
     # Returns a named list: names are convert patient IDs, values are character
@@ -398,24 +400,29 @@ fraction_convert_same_source_from_lookups <- function(
                 next
             }
 
-            # The source must be an index, weak-index, or multiply-colonized-index.
-            # Skip clusters where all patients are converts or adm-pos.
+            # The source must be an index, weak-index, or multiply-colonized-index
             sources <- names(cats)[cats %in% c("index", "weak-index", "multiply-colonized-index")]
-            if (length(sources) == 0) {
-                for (convert in converts) {
-                    convert_to_sources[[convert]] <- c(convert_to_sources[[convert]], NA)
+            if (converts_without_assigned_source) {
+                # If the flag is set, we will allow converts with no assigned source to be included
+                # in the mapping with an NA source. This means that if there are no sources, we will
+                # add an NA source for each convert in this cluster.
+                if (length(sources) == 0) {
+                    for (convert in converts) {
+                        convert_to_sources[[convert]] <- c(convert_to_sources[[convert]], NA)
+                    }
+                    next
                 }
-                next
-            }
+            } else {
+                # If the flag is not set, we will skip converts with no assigned source
+                source <- sources[1]
+                converts <- setdiff(converts, source)
+                if (length(converts) == 0) {
+                    next
+                }
 
-            source <- sources[1]
-            converts <- setdiff(converts, source)
-            if (length(converts) == 0) {
-                next
-            }
-
-            for (conv in converts) {
-                convert_to_sources[[conv]] <- c(convert_to_sources[[conv]], source)
+                for (conv in converts) {
+                    convert_to_sources[[conv]] <- c(convert_to_sources[[conv]], source)
+                }
             }
         }
 
@@ -425,7 +432,6 @@ fraction_convert_same_source_from_lookups <- function(
             single_non_adm_pos <- as.character(unique(isolate_lookup$patient_id[
                 !(isolate_lookup$cluster %in% non_single) & !isolate_lookup$adm_pos
             ]))
-            print(single_non_adm_pos)
             for (patient in single_non_adm_pos) {
                 convert_to_sources[[patient]] <- c(convert_to_sources[[patient]], NA)
             }

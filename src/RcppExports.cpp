@@ -12,7 +12,7 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 
 // computeSharedMatrix
 NumericMatrix computeSharedMatrix(CharacterMatrix dna_character_matrix, int out_group);
-RcppExport SEXP _transclust_computeSharedMatrix(SEXP dna_character_matrixSEXP, SEXP out_groupSEXP) {
+RcppExport SEXP _hospitraceR_computeSharedMatrix(SEXP dna_character_matrixSEXP, SEXP out_groupSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -24,7 +24,7 @@ END_RCPP
 }
 // computeDefiningVariants
 std::vector<int> computeDefiningVariants(CharacterMatrix dna_character_matrix, CharacterVector isolate_names, List subtrees);
-RcppExport SEXP _transclust_computeDefiningVariants(SEXP dna_character_matrixSEXP, SEXP isolate_namesSEXP, SEXP subtreesSEXP) {
+RcppExport SEXP _hospitraceR_computeDefiningVariants(SEXP dna_character_matrixSEXP, SEXP isolate_namesSEXP, SEXP subtreesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -37,12 +37,12 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_transclust_computeSharedMatrix", (DL_FUNC) &_transclust_computeSharedMatrix, 2},
-    {"_transclust_computeDefiningVariants", (DL_FUNC) &_transclust_computeDefiningVariants, 3},
+    {"_hospitraceR_computeSharedMatrix", (DL_FUNC) &_hospitraceR_computeSharedMatrix, 2},
+    {"_hospitraceR_computeDefiningVariants", (DL_FUNC) &_hospitraceR_computeDefiningVariants, 3},
     {NULL, NULL, 0}
 };
 
-RcppExport void R_init_transclust(DllInfo *dll) {
+RcppExport void R_init_hospitraceR(DllInfo *dll) {
     R_registerRoutines(dll, NULL, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
 }

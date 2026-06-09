@@ -48,10 +48,23 @@ cluster_overlap_perm_test(
 A list containing:
 \itemize{
 \item \code{observed}: A named list with facility, floor, room, seq_facility, seq_floor,
-seq_room fractions for observed data
-\item \code{permuted}: A numeric array of dimensions (n_clusters, 6 trace_types, nperm)
+seq_room per-cluster fractions for observed data
+\item \code{observed_n_overlap}: A named list (same trace types) of per-cluster converts-with-overlap
+counts (numerators) behind the observed fractions
+\item \code{observed_n_converts}: A named list (same trace types) of per-cluster convert counts
+(denominators) behind the observed fractions
+\item \code{permuted}: A numeric array of dimensions (n_clusters, 6 trace_types, nperm) of
+per-cluster fractions
+\item \code{permuted_n_overlap}: A numeric array (same dimensions) of per-cluster converts-with-overlap
+counts (numerators)
+\item \code{permuted_n_converts}: A numeric array (same dimensions) of per-cluster convert counts
+(denominators)
 \item \code{valid_clusters}: A numeric vector of cluster IDs that have more than one patient
 }
+
+The numerator/denominator components let callers compute a pooled,
+convert-weighted fraction (\code{sum(n_overlap) / sum(n_converts)}) across clusters
+and sequence types, rather than averaging the per-cluster fractions.
 }
 \description{
 Performs a permutation test to assess whether the observed fraction of converts

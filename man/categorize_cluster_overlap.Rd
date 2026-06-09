@@ -38,6 +38,8 @@ more than one convert in the cluster.
 a "multiply-colonized index" if there is overlap explanation for all other isolates in the cluster.
 \item "multiply-colonized-index-missing-intermediate": if the index isolate is not in the cluster but is
 admission-positive, and at least one other convert in the cluster has no overlap explanation.
+\item "all-admission-positive": if all isolates in the cluster are admission positive, this is a special category
+that may indicate a common source or multiple colonization events, but is not explained
 \item "inexplicable": catch-all category for cases that do not fit into the other categories. Currently,
 index and overlap explanations are not enough to explain these clusters.
 }
