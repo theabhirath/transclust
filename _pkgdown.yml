@@ -5,9 +5,7 @@ authors:
     href: https://theabhirath.github.io
 
 template:
-  bootstrap: 5
-  math-rendering: katex
-  light-switch: true
+  package: sleekblue
 
 reference:
   - title: Transmission cluster detection algorithms
