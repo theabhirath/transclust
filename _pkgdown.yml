@@ -7,6 +7,14 @@ authors:
 template:
   package: sleekblue
 
+navbar:
+  structure:
+    left: [intro, reference, articles, tutorials, news, visualization]
+  components:
+    visualization:
+      text: Visualization
+      href: https://theabhirath.github.io/hospitraceRVisualize
+
 reference:
   - title: Transmission cluster detection algorithms
     desc: >
