@@ -6,7 +6,13 @@ naïvely, without using the phylogenetic tree.
 ## Usage
 
 ``` r
-get_tn_clusters_snp_thresh(snp_dist, snp_thresh, hclust_method = "complete")
+get_tn_clusters_snp_thresh(
+  snp_dist,
+  snp_thresh,
+  hclust_method = "complete",
+  tree = NULL,
+  monophyly_method = c("expand", "break_down")
+)
 ```
 
 ## Arguments
@@ -27,6 +33,24 @@ get_tn_clusters_snp_thresh(snp_dist, snp_thresh, hclust_method = "complete")
   A string indicating the method to use for hierarchical clustering. See
   [`stats::hclust()`](https://rdrr.io/r/stats/hclust.html) for more
   details. Default is "complete".
+
+- tree:
+
+  An optional phylogenetic tree of class `phylo` covering the same
+  isolates. When supplied, clusters are forced to be monophyletic with
+  respect to this tree (e.g. an NJ or maximum-parsimony tree from
+  [`get_phylo_tree()`](https://theabhirath.github.io/hospitraceR/reference/get_phylo_tree.md));
+  otherwise monophyly is enforced on the dendrogram implied by the SNP
+  distances themselves. Default is `NULL`.
+
+- monophyly_method:
+
+  How to make a non-monophyletic cluster monophyletic. `"expand"` (the
+  default) grows the cluster to the smallest clade of the tree that
+  contains all of its members, absorbing any intervening isolates.
+  `"break_down"` instead splits the cluster into the largest
+  monophyletic clades it already contains, without pulling in foreign
+  isolates.
 
 ## Value
 

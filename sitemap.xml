@@ -13,11 +13,14 @@
 <url><loc>https://theabhirath.github.io/hospitraceR/reference/ari_from_contingency.html</loc></url>
 <url><loc>https://theabhirath.github.io/hospitraceR/reference/categorize_cluster_overlap.html</loc></url>
 <url><loc>https://theabhirath.github.io/hospitraceR/reference/cluster_contingency_table.html</loc></url>
+<url><loc>https://theabhirath.github.io/hospitraceR/reference/cluster_inter_distances.html</loc></url>
 <url><loc>https://theabhirath.github.io/hospitraceR/reference/cluster_isolate_overlap.html</loc></url>
 <url><loc>https://theabhirath.github.io/hospitraceR/reference/cluster_overlap_perm_test.html</loc></url>
+<url><loc>https://theabhirath.github.io/hospitraceR/reference/cluster_pairwise_distances.html</loc></url>
 <url><loc>https://theabhirath.github.io/hospitraceR/reference/cluster_patient_categorization.html</loc></url>
 <url><loc>https://theabhirath.github.io/hospitraceR/reference/compute_duration_metrics_by_cluster.html</loc></url>
 <url><loc>https://theabhirath.github.io/hospitraceR/reference/compute_genetic_distances_by_cluster.html</loc></url>
+<url><loc>https://theabhirath.github.io/hospitraceR/reference/enforce_monophyly.html</loc></url>
 <url><loc>https://theabhirath.github.io/hospitraceR/reference/flatten_cluster_overlap_categorization.html</loc></url>
 <url><loc>https://theabhirath.github.io/hospitraceR/reference/flatten_cluster_patient_categorization.html</loc></url>
 <url><loc>https://theabhirath.github.io/hospitraceR/reference/fraction_convert_events_with_overlap.html</loc></url>
@@ -32,8 +35,6 @@
 <url><loc>https://theabhirath.github.io/hospitraceR/reference/hospitraceR-package.html</loc></url>
 <url><loc>https://theabhirath.github.io/hospitraceR/reference/index.html</loc></url>
 <url><loc>https://theabhirath.github.io/hospitraceR/reference/intra_cluster_duration_metrics.html</loc></url>
-<url><loc>https://theabhirath.github.io/hospitraceR/reference/intra_cluster_genetic_distances.html</loc></url>
-<url><loc>https://theabhirath.github.io/hospitraceR/reference/intra_cluster_genetic_var_analysis.html</loc></url>
 <url><loc>https://theabhirath.github.io/hospitraceR/reference/isolate_isolate_overlap.html</loc></url>
 <url><loc>https://theabhirath.github.io/hospitraceR/reference/isolate_isolate_sequential_overlap.html</loc></url>
 <url><loc>https://theabhirath.github.io/hospitraceR/reference/remap_cluster_values.html</loc></url>

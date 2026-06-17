@@ -8,8 +8,8 @@ transmission:
 - multiply-colonized-index: admission positive, earliest isolate,
   isolate not in cluster
 
-- weak-index: not admission positive, but first surveillance is positive
-  and in cluster
+- weak-index-patient-to-patient: not admission positive, but first
+  surveillance is positive and in cluster
 
 - convert: had surveillance before first positive
 

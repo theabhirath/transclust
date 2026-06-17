@@ -18,7 +18,8 @@ get_tn_clusters_sv_index(
   adm_pos_pt_seqs,
   seq2pt,
   dates,
-  tree
+  tree,
+  monophyly_method = c("expand", "break_down")
 )
 ```
 
@@ -60,6 +61,16 @@ get_tn_clusters_sv_index(
   alignment. This can be constructed using the
   [`get_phylo_tree()`](https://theabhirath.github.io/hospitraceR/reference/get_phylo_tree.md)
   or can be any other tree object constructed from the same isolates.
+
+- monophyly_method:
+
+  How to make a non-monophyletic cluster monophyletic. The cluster
+  assignment can leave a cluster non-monophyletic when a higher-scoring
+  nested clade claims some of its isolates. `"expand"` (the default)
+  grows the cluster to the smallest clade of the tree that contains all
+  of its members, absorbing any intervening isolates. `"break_down"`
+  instead splits the cluster into the largest monophyletic clades it
+  already contains, without pulling in foreign isolates.
 
 ## Value
 

@@ -41,6 +41,7 @@
 <li><a class="dropdown-item" href="../articles/cluster_comparison.html">Comparing cluster assignments</a></li>
   </ul>
 </li>
+<li class="nav-item"><a class="nav-link" href="https://theabhirath.github.io/hospitraceRVisualize">Visualization</a></li>
       </ul>
 <ul class="navbar-nav">
 <li class="nav-item"><form class="form-inline" role="search">
@@ -88,7 +89,7 @@ complementary ways of comparing two cluster assignments:</p>
 <ul>
 <li>a <strong>visual</strong> comparison of the isolates shared between
 clusters, via
-<code>[hospitraceRVisualize::plot_jaccard_similarity_heatmap()]</code>;</li>
+<code><a href="https://theabhirath.github.io/hospitraceRVisualize/reference/plot_jaccard_similarity_heatmap.html">hospitraceRVisualize::plot_jaccard_similarity_heatmap()</a></code>;</li>
 <li>two <strong>partition-similarity</strong> statistics that summarise
 the agreement between two clusterings in a single number, the
 <strong>Adjusted Rand Index</strong> (ARI) and the <strong>Adjusted
@@ -100,7 +101,7 @@ asks whether the two clusterings agree on <em>who infected whom</em>,
 not just on how the isolates are grouped.</li>
 </ul>
 <p>Throughout, we compare the two clusterings produced in the
-introductory vignette (<code><a href="../articles/hospitraceR.html">vignette("hospitraceR")</a></code>):
+introductory vignette <code><a href="../articles/hospitraceR.html">vignette("hospitraceR")</a></code>:
 <code>clusters_snp</code>, from the hard 10-SNP threshold method, and
 <code>clusters_sv</code>, from the threshold-free shared-variant method
 of <span class="citation">Hawken et al. (2022)</span>.</p>
@@ -110,7 +111,7 @@ of <span class="citation">Hawken et al. (2022)</span>.</p>
 <p>One of the simplest ways to compare two cluster assignments is to
 visualize the fraction of isolates that are shared between the two
 clusters. This can be done using the
-<code>[hospitraceRVisualize::plot_jaccard_similarity_heatmap()]</code>
+<code><a href="https://theabhirath.github.io/hospitraceRVisualize/reference/plot_jaccard_similarity_heatmap.html">hospitraceRVisualize::plot_jaccard_similarity_heatmap()</a></code>
 function. This function takes in two cluster assignments and returns a
 heatmap showing the overlap between the clusters by indicating the
 proportion of isolates in each cluster that are also present in the
@@ -289,7 +290,7 @@ data frame:</p>
 <span>    <span class="op">)</span></span>
 <span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">fss</span></span>
-<span><span class="co">#&gt; [1] 0.85</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 0.8867925</span></span></code></pre></div>
 <p>So even where the two methods carve up the isolates slightly
 differently, they agree on the inferred source for a large majority of
 converts.</p>
@@ -299,10 +300,10 @@ an all-isolates clustering, where the dates and admission-positive
 sequences differ between the two – the convenience wrapper is not
 appropriate, because it would categorize both clusterings against a
 single set of epidemiological inputs. In that case, build an isolate
-lookup for each clustering with <code>[get_isolate_lookup()]</code>
+lookup for each clustering with <code><a href="../reference/get_isolate_lookup.html">get_isolate_lookup()</a></code>
 (passing each its own <code>seq2pt</code>, <code>dates</code>, and
 <code>surv_df</code>) and pass the two lookups to
-<code>[fraction_convert_same_source_from_lookups()]</code>. The
+<code><a href="../reference/fraction_convert_same_source_from_lookups.html">fraction_convert_same_source_from_lookups()</a></code>. The
 convenience wrapper used above is simply the special case where both
 clusterings share the same epidemiological inputs.</p>
 </div>
@@ -355,12 +356,12 @@ entry points are convenient here:</p>
 <span></span>
 <span><span class="va">sweep_df</span></span>
 <span><span class="co">#&gt;   threshold        ARI       AMI       FSS</span></span>
-<span><span class="co">#&gt; 1         5 0.58987526 0.5963013 0.8250000</span></span>
-<span><span class="co">#&gt; 2        10 0.62623648 0.7094371 0.8500000</span></span>
-<span><span class="co">#&gt; 3        15 0.58351390 0.6379677 0.7000000</span></span>
-<span><span class="co">#&gt; 4        20 0.46115498 0.5591713 0.6410256</span></span>
-<span><span class="co">#&gt; 5        25 0.40765118 0.5112008 0.6470588</span></span>
-<span><span class="co">#&gt; 6        50 0.06263084 0.1851676 0.0000000</span></span></code></pre></div>
+<span><span class="co">#&gt; 1         5 0.58987526 0.5963013 0.8679245</span></span>
+<span><span class="co">#&gt; 2        10 0.62623648 0.7094371 0.8867925</span></span>
+<span><span class="co">#&gt; 3        15 0.58351390 0.6379677 0.7735849</span></span>
+<span><span class="co">#&gt; 4        20 0.46115498 0.5591713 0.7450980</span></span>
+<span><span class="co">#&gt; 5        25 0.40765118 0.5112008 0.7500000</span></span>
+<span><span class="co">#&gt; 6        50 0.06263084 0.1851676 0.2000000</span></span></code></pre></div>
 <p>To plot all three metrics together, we reshape the results into long
 format and draw one line per metric:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
@@ -416,7 +417,7 @@ Analysis.”</span> <em>The Lancet Microbe</em> 3 (9): e652–62. <a href="https
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by <a href="https://theabhirath.github.io" class="external-link">Abhirath Anand</a>.</p>
+  <p>Developed by <a href="https://theabhirath.com" class="external-link">Abhirath Anand</a>.</p>
 </div>
 
 <div class="pkgdown-footer-right">

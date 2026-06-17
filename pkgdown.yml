@@ -4,7 +4,7 @@ pkgdown_sha: ~
 articles:
   cluster_comparison: cluster_comparison.html
   hospitraceR: hospitraceR.html
-last_built: 2026-06-09T18:52Z
+last_built: 2026-06-17T16:38Z
 urls:
   reference: https://theabhirath.github.io/hospitraceR/reference
   article: https://theabhirath.github.io/hospitraceR/articles

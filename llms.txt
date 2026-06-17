@@ -34,10 +34,10 @@ epidemiological data.
 
 Functions for statistical analysis of transmission clustering results.
 
-- [`intra_cluster_genetic_var_analysis()`](https://theabhirath.github.io/hospitraceR/reference/intra_cluster_genetic_var_analysis.md)
-  : Analyze Intra-Cluster Genetic Variation
-- [`intra_cluster_genetic_distances()`](https://theabhirath.github.io/hospitraceR/reference/intra_cluster_genetic_distances.md)
-  : Compute Genetic Distances
+- [`cluster_pairwise_distances()`](https://theabhirath.github.io/hospitraceR/reference/cluster_pairwise_distances.md)
+  : Compute intra-cluster SNP-distance summaries
+- [`cluster_inter_distances()`](https://theabhirath.github.io/hospitraceR/reference/cluster_inter_distances.md)
+  : Compute per-cluster nearest-neighbour SNP distances
 - [`compute_genetic_distances_by_cluster()`](https://theabhirath.github.io/hospitraceR/reference/compute_genetic_distances_by_cluster.md)
   : Compute genetic distances by cluster
 - [`intra_cluster_duration_metrics()`](https://theabhirath.github.io/hospitraceR/reference/intra_cluster_duration_metrics.md)

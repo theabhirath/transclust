@@ -8,9 +8,10 @@ explanations for other isolates in the cluster. The categories are:
 - "patient-to-patient": if the index isolate is admission-positive and
   there is overlap explanation for all other converts in the cluster.
 
-- "weak-index": if the index isolate is not admission-positive but is
-  the first surveillance for the patient after admission and there is
-  overlap explanation for all other isolates in the cluster.
+- "weak-index-patient-to-patient": if the index isolate is not
+  admission-positive but is the first surveillance for the patient after
+  admission and there is overlap explanation for all other isolates in
+  the cluster.
 
 - "missing-intermediate": if the index isolate is admission-positive but
   at least one other convert in the cluster has no overlap explanation.

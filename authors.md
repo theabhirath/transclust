@@ -2,8 +2,8 @@
 
 ## Authors
 
-- **[Abhirath Anand](https://theabhirath.github.io)**. Author,
-  maintainer. [](https://orcid.org/0009-0008-6985-9266)
+- **[Abhirath Anand](https://theabhirath.com)**. Author, maintainer.
+  [](https://orcid.org/0009-0008-6985-9266)
 
 ## Citation
 

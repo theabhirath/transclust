@@ -24,4 +24,6 @@ intra_cluster_duration_metrics(seqs, seq2pt, dates)
 
 ## Value
 
-Vector with cluster duration properties
+Named numeric vector with `cluster_start_date`,
+`time_to_first_acquisition`, `time_to_last_acquisition` and
+`median_time_to_acquisition`.
