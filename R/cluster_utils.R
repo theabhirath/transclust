@@ -122,10 +122,13 @@ get_non_single_patient_clusters <- function(isolate_lookup) {
 #'
 #' @export
 remove_singleton_clusters <- function(clusters) {
-    # every cluster with only one sequence is a singleton
-    singleton_clusters <- which(table(clusters) == 1)
-    # remove the singleton clusters
-    clusters[!(clusters %in% singleton_clusters)]
+    # cluster sizes, keyed by the (character) cluster label
+    cluster_sizes <- table(clusters)
+    # a singleton is any label occurring exactly once; key by label, not table
+    # position, so non-contiguous labels (e.g. 1, 5, 8) are handled correctly
+    singleton_labels <- names(cluster_sizes)[cluster_sizes == 1]
+    # remove the singleton clusters, preserving the original values and names
+    clusters[!(as.character(clusters) %in% singleton_labels)]
 }
 
 #' Remap cluster values: each unique value (including each special value) gets its own number
