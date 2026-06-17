@@ -1,5 +1,5 @@
-#ifndef CLUSTER_ALGORITHMS_HPP
-#define CLUSTER_ALGORITHMS_HPP
+#ifndef CLUSTER_ALGORITHMS_H
+#define CLUSTER_ALGORITHMS_H
 
 #include <vector>
 

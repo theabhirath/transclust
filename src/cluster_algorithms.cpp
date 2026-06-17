@@ -3,7 +3,7 @@
 #include <vector>
 #include <Rcpp.h>
 
-#include "cluster_algorithms.hpp"
+#include "cluster_algorithms.h"
 
 using namespace Rcpp;
 
