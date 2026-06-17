@@ -26,8 +26,8 @@ explanations for other isolates in the cluster. The categories are:
 \itemize{
 \item "patient-to-patient": if the index isolate is admission-positive and there is overlap explanation for
 all other converts in the cluster.
-\item "weak-index": if the index isolate is not admission-positive but is the first surveillance for the patient
-after admission and there is overlap explanation for all other isolates in the cluster.
+\item "weak-index-patient-to-patient": if the index isolate is not admission-positive but is the first surveillance
+for the patient after admission and there is overlap explanation for all other isolates in the cluster.
 \item "missing-intermediate": if the index isolate is admission-positive but at least one other convert
 in the cluster has no overlap explanation.
 \item "false-negative-index": if the index isolate is not admission-positive but there is overlap explanation for

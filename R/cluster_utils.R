@@ -24,6 +24,7 @@
 #' @returns A data frame with columns: isolate_id, patient_id, date, cluster, adm_pos, prev_surv,
 #'   prev_surv_neg.
 #'
+#' @importFrom stats na.omit
 #' @export
 get_isolate_lookup <- function(clusters, dna_aln, seq2pt, adm_seqs, dates, surv_df) {
     # core lookup table
