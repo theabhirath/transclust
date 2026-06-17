@@ -7,8 +7,8 @@
 #' \itemize{
 #'   \item "patient-to-patient": if the index isolate is admission-positive and there is overlap explanation for
 #'     all other converts in the cluster.
-#'   \item "weak-index": if the index isolate is not admission-positive but is the first surveillance for the patient
-#'     after admission and there is overlap explanation for all other isolates in the cluster.
+#'   \item "weak-index-patient-to-patient": if the index isolate is not admission-positive but is the first surveillance
+#'     for the patient after admission and there is overlap explanation for all other isolates in the cluster.
 #'   \item "missing-intermediate": if the index isolate is admission-positive but at least one other convert
 #'     in the cluster has no overlap explanation.
 #'   \item "false-negative-index": if the index isolate is not admission-positive but there is overlap explanation for
@@ -34,6 +34,7 @@
 #'
 #' @return A vector with the categorization of the overlap for each cluster.
 #'
+#' @importFrom stats setNames
 #' @export
 categorize_cluster_overlap <- function(isolate_lookup, cluster_overlap_df, surv_df) {
     unique_clusters <- as.character(unique(cluster_overlap_df$cluster))
@@ -89,7 +90,7 @@ categorize_cluster_overlap <- function(isolate_lookup, cluster_overlap_df, surv_
                         min(surv_index_pt$surv_date, na.rm = TRUE) == index_lookup$date &&
                             cluster_overlap_expl
                     ) {
-                        "weak-index"
+                        "weak-index-patient-to-patient"
                     } else {
                         # if we have overlap explanations for all isolates except one convert,
                         # this is a "false negative index"
@@ -133,7 +134,7 @@ categorize_cluster_overlap <- function(isolate_lookup, cluster_overlap_df, surv_
 #' \itemize{
 #'   \item index: admission positive, earliest isolate, isolate in cluster
 #'   \item multiply-colonized-index: admission positive, earliest isolate, isolate not in cluster
-#'   \item weak-index: not admission positive, but first surveillance is positive and in cluster
+#'   \item weak-index-patient-to-patient: not admission positive, but first surveillance is positive and in cluster
 #'   \item convert: had surveillance before first positive
 #'   \item adm-pos: first positive is in cluster and is first surveillance
 #'   \item adm-pos-convert: first positive is not in cluster but is first surveillance
@@ -225,7 +226,7 @@ categorize_index_patient <- function(index_row, cluster_id) {
     if (index_row$adm_pos) {
         if (is_in_cluster) "index" else "multiply-colonized-index"
     } else if (is_first_surv && is_in_cluster) {
-        "weak-index"
+        "weak-index-patient-to-patient"
     } else {
         "convert"
     }

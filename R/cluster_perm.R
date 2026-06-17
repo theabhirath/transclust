@@ -316,6 +316,7 @@ create_eligibility_matrices <- function(clusters, seq2pt, adm_seqs, adm_pos_pt_s
 }
 
 #' Count clusters per patient from eligibility matrix
+#' @importFrom stats setNames
 #' @noRd
 cluster_per_patient <- function(elig_mat) {
     if (nrow(elig_mat) == 0) {
@@ -377,6 +378,7 @@ assign_pt_clusters <- function(elig_vec, cluster_per_pt, pt_per_cluster, rand_cl
 }
 
 #' Assign permuted clusters
+#' @importFrom stats setNames
 #' @noRd
 assign_permuted_clusters <- function(cluster_names, elig_mats, cluster_per_pt, pt_per_clust) {
     perm_clust <- setNames(rep(-1, length(cluster_names)), cluster_names)

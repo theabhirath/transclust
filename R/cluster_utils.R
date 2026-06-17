@@ -24,6 +24,7 @@
 #' @returns A data frame with columns: isolate_id, patient_id, date, cluster, adm_pos, prev_surv,
 #'   prev_surv_neg.
 #'
+#' @importFrom stats na.omit
 #' @export
 get_isolate_lookup <- function(clusters, dna_aln, seq2pt, adm_seqs, dates, surv_df) {
     # core lookup table
@@ -121,10 +122,13 @@ get_non_single_patient_clusters <- function(isolate_lookup) {
 #'
 #' @export
 remove_singleton_clusters <- function(clusters) {
-    # every cluster with only one sequence is a singleton
-    singleton_clusters <- which(table(clusters) == 1)
-    # remove the singleton clusters
-    clusters[!(clusters %in% singleton_clusters)]
+    # cluster sizes, keyed by the (character) cluster label
+    cluster_sizes <- table(clusters)
+    # a singleton is any label occurring exactly once; key by label, not table
+    # position, so non-contiguous labels (e.g. 1, 5, 8) are handled correctly
+    singleton_labels <- names(cluster_sizes)[cluster_sizes == 1]
+    # remove the singleton clusters, preserving the original values and names
+    clusters[!(as.character(clusters) %in% singleton_labels)]
 }
 
 #' Remap cluster values: each unique value (including each special value) gets its own number
@@ -165,6 +169,171 @@ remap_cluster_values <- function(x, special_val = 0) {
     }
     names(out) <- names(x) # keep original names (if any)
     out
+}
+
+#' Force cluster assignments to be monophyletic with respect to a tree.
+#'
+#' @description
+#' Checks each multi-isolate cluster for monophyly on `tree` and reconciles those that are not
+#' monophyletic using the chosen strategy. The result is renumbered sequentially with
+#' [remap_cluster_values()], and each reconciled cluster is reported via [message()] against its
+#' final (remapped) cluster id, listing the isolates that make it up.
+#'
+#' @param clusters A named numeric vector of cluster assignments; the names are the isolate/tip
+#'                 labels used to locate members on the tree.
+#' @param tree A phylogenetic tree of class `phylo`.
+#' @param monophyly_method How to make a non-monophyletic cluster monophyletic. `"expand"` grows the
+#'                 cluster to the smallest clade of the tree that contains all of its members,
+#'                 absorbing any intervening isolates. `"break_down"` instead splits the cluster into
+#'                 the largest monophyletic clades it already contains, without pulling in foreign
+#'                 isolates.
+#' @param special_val An optional cluster value to leave untouched, e.g. `0` for unclustered isolates
+#'                 that should not be treated as a single cluster. Default is `NULL`.
+#'
+#' @returns A numeric vector of cluster assignments that are monophyletic with respect to the tree,
+#'          renumbered sequentially.
+#'
+#' @importFrom ape subtrees is.monophyletic
+#' @keywords internal
+enforce_monophyly <- function(
+    clusters,
+    tree,
+    monophyly_method = c("expand", "break_down"),
+    special_val = NULL
+) {
+    monophyly_method <- match.arg(monophyly_method)
+
+    # enumerate every clade (subtree) of the tree once up front
+    sub_trees <- subtrees(tree)
+    sub_tree_tips <- lapply(sub_trees, function(st) st$tip.label)
+    sub_tree_size <- vapply(sub_tree_tips, length, integer(1))
+
+    # cluster ids to consider; a special value (e.g. unclustered isolates) is left untouched as it
+    # represents many independent isolates rather than a single cluster
+    cluster_ids <- setdiff(unique(clusters), special_val)
+
+    # for each multi-isolate cluster that is not already monophyletic, reconcile it with the tree
+    # using the chosen strategy. a single isolate is trivially monophyletic, so only clusters with
+    # more than one member need checking. "break_down" assigns fresh ids beyond the current maximum.
+    # we record the resulting isolate groups for each reconciled cluster so they can be reported
+    # against the final (remapped) cluster ids once all reconciliation is done.
+    next_id <- max(clusters) + 1
+    reports <- list()
+    for (cl in cluster_ids) {
+        members <- names(clusters)[clusters == cl]
+        # monophyly can only be assessed for members that are tips of the tree
+        if (!all(members %in% tree$tip.label)) {
+            warning(
+                "Cluster ",
+                cl,
+                " contains isolates absent from the provided tree; skipping monophyly enforcement for it."
+            )
+            next
+        }
+        if (length(members) <= 1 || is.monophyletic(tree, members)) {
+            next
+        }
+        if (monophyly_method == "expand") {
+            # clades that contain every member of the cluster; the smallest is the monophyletic
+            # group these isolates belong to. absorbing its tips into the cluster makes the cluster
+            # monophyletic by construction (restricted to isolates we actually clustered, in case
+            # the tree carries extra tips such as an outgroup).
+            contains_all <- vapply(
+                sub_tree_tips,
+                function(tips) all(members %in% tips),
+                logical(1)
+            )
+            smallest <- which(contains_all)[which.min(sub_tree_size[contains_all])]
+            clade_isolates <- intersect(sub_tree_tips[[smallest]], names(clusters))
+            clusters[clade_isolates] <- cl
+            # record the cluster's membership before and after expansion so the change is reportable
+            reports[[length(reports) + 1]] <- list(
+                type = "expand",
+                before = members,
+                groups = list(clade_isolates)
+            )
+        } else {
+            # "pure" clades: subtrees whose tips all belong to this cluster. these are the
+            # monophyletic groups that can be carved out without pulling in foreign isolates.
+            is_pure <- vapply(
+                sub_tree_tips,
+                function(tips) all(tips %in% members),
+                logical(1)
+            )
+            # claim the largest pure clades first; because clades are either nested or disjoint, a
+            # smaller clade nested inside an already-claimed one will have no members left to take,
+            # so this keeps the cluster split into the fewest, largest monophyletic pieces.
+            pure_idx <- which(is_pure)
+            pure_idx <- pure_idx[order(sub_tree_size[pure_idx], decreasing = TRUE)]
+            unassigned <- members
+            # track which isolates land in each new cluster so they can be reported
+            new_pieces <- list()
+            for (pi in pure_idx) {
+                tips <- sub_tree_tips[[pi]]
+                if (all(tips %in% unassigned)) {
+                    clusters[tips] <- next_id
+                    new_pieces[[length(new_pieces) + 1]] <- tips
+                    next_id <- next_id + 1
+                    unassigned <- setdiff(unassigned, tips)
+                }
+            }
+            # any members not contained in a pure multi-tip clade are monophyletic on their own
+            for (m in unassigned) {
+                clusters[m] <- next_id
+                new_pieces[[length(new_pieces) + 1]] <- m
+                next_id <- next_id + 1
+            }
+            reports[[length(reports) + 1]] <- list(
+                type = "break_down",
+                groups = new_pieces
+            )
+        }
+    }
+
+    # renumber clusters sequentially; this assigns the final cluster ids that callers see
+    clusters <- remap_cluster_values(clusters, special_val)
+
+    # report each reconciliation against the final (remapped) cluster ids. every recorded group of
+    # isolates now shares a single final id, looked up from any member of the group.
+    if (length(reports) > 0) {
+        message(
+            "Enforcing monophyly (",
+            monophyly_method,
+            ") reconciled ",
+            length(reports),
+            " non-monophyletic cluster(s):"
+        )
+        for (rep in reports) {
+            if (rep$type == "expand") {
+                grp <- rep$groups[[1]]
+                message(
+                    "  cluster ",
+                    unname(clusters[grp[1]]),
+                    " expanded from {",
+                    paste(sort(rep$before), collapse = ", "),
+                    "} to {",
+                    paste(sort(grp), collapse = ", "),
+                    "}"
+                )
+            } else {
+                pieces <- vapply(
+                    rep$groups,
+                    function(grp) {
+                        paste0(
+                            unname(clusters[grp[1]]),
+                            " {",
+                            paste(sort(grp), collapse = ", "),
+                            "}"
+                        )
+                    },
+                    character(1)
+                )
+                message("  cluster broken into: ", paste(pieces, collapse = "; "))
+            }
+        }
+    }
+
+    clusters
 }
 
 #' Remove a node from a vector of cluster assignments.

@@ -279,6 +279,7 @@ cluster_isolate_overlap <- function(isolate_lookup, iso_overlap_df) {
 #'   cluster (`NA` for clusters with no convert events), carrying the per-cluster `n_overlap`
 #'   and `n_converts` counts as attributes.
 #'
+#' @importFrom stats setNames
 #' @export
 fraction_convert_events_with_overlap <- function(cluster_overlap_df, isolate_lookup) {
     clusters <- unique(cluster_overlap_df$cluster)

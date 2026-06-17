@@ -2,10 +2,18 @@ url: https://theabhirath.github.io/hospitraceR
 
 authors:
   Abhirath Anand:
-    href: https://theabhirath.github.io
+    href: https://theabhirath.com
 
 template:
   package: sleekblue
+
+navbar:
+  structure:
+    left: [intro, reference, articles, tutorials, news, visualization]
+  components:
+    visualization:
+      text: Visualization
+      href: https://theabhirath.github.io/hospitraceRVisualize
 
 reference:
   - title: Transmission cluster detection algorithms
@@ -19,8 +27,8 @@ reference:
     desc: >
       Functions for statistical analysis of transmission clustering results.
     contents:
-      - intra_cluster_genetic_var_analysis
-      - intra_cluster_genetic_distances
+      - cluster_pairwise_distances
+      - cluster_inter_distances
       - compute_genetic_distances_by_cluster
       - intra_cluster_duration_metrics
       - compute_duration_metrics_by_cluster

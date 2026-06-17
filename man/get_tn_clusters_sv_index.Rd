@@ -11,7 +11,8 @@ get_tn_clusters_sv_index(
   adm_pos_pt_seqs,
   seq2pt,
   dates,
-  tree
+  tree,
+  monophyly_method = c("expand", "break_down")
 )
 }
 \arguments{
@@ -31,6 +32,13 @@ intake or collected later. This will be a superset of \code{adm_seqs} by definit
 
 \item{tree}{A phylogenetic tree object of class \code{phylo} constructed from the DNA alignment. This can be constructed
 using the \code{\link[=get_phylo_tree]{get_phylo_tree()}} or can be any other tree object constructed from the same isolates.}
+
+\item{monophyly_method}{How to make a non-monophyletic cluster monophyletic. The cluster
+assignment can leave a cluster non-monophyletic when a higher-scoring nested clade
+claims some of its isolates. \code{"expand"} (the default) grows the cluster to the
+smallest clade of the tree that contains all of its members, absorbing any intervening
+isolates. \code{"break_down"} instead splits the cluster into the largest monophyletic
+clades it already contains, without pulling in foreign isolates.}
 }
 \value{
 A numeric vector indicating the cluster that each isolate belongs to.
