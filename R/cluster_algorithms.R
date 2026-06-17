@@ -9,16 +9,46 @@
 #' @param snp_thresh A threshold for defining clusters.
 #' @param hclust_method A string indicating the method to use for hierarchical clustering.
 #'                     See [stats::hclust()] for more details. Default is "complete".
+#' @param tree An optional phylogenetic tree of class `phylo` covering the same isolates. When
+#'             supplied, clusters are forced to be monophyletic with respect to this tree (e.g. an
+#'             NJ or maximum-parsimony tree from [get_phylo_tree()]); otherwise monophyly is
+#'             enforced on the dendrogram implied by the SNP distances themselves. Default is `NULL`.
+#' @param monophyly_method How to make a non-monophyletic cluster monophyletic. `"expand"` (the
+#'             default) grows the cluster to the smallest clade of the tree that contains all of its
+#'             members, absorbing any intervening isolates. `"break_down"` instead splits the
+#'             cluster into the largest monophyletic clades it already contains, without pulling in
+#'             foreign isolates.
 #'
 #' @return A numeric vector indicating the cluster that each isolate belongs to.
 #'
 #' @importFrom stats hclust as.dist cutree
+#' @importFrom ape as.phylo
 #' @export
-get_tn_clusters_snp_thresh <- function(snp_dist, snp_thresh, hclust_method = "complete") {
+get_tn_clusters_snp_thresh <- function(
+    snp_dist,
+    snp_thresh,
+    hclust_method = "complete",
+    tree = NULL,
+    monophyly_method = c("expand", "break_down")
+) {
+    monophyly_method <- match.arg(monophyly_method)
+
     # convert distance matrix to hclust object
     snp_hclust <- hclust(as.dist(snp_dist), method = hclust_method)
-    # cut at the specified threshold to create clusters and return the clusters
-    cutree(snp_hclust, h = snp_thresh)
+
+    # cut at the specified threshold to obtain an initial clustering
+    clusters <- cutree(snp_hclust, h = snp_thresh)
+
+    # Choose the tree against which monophyly is assessed. By default we use the dendrogram implied
+    # by the SNP distances; when the caller supplies a phylogenetic tree we honour it instead, so
+    # clusters are made consistent with the actual phylogeny rather than the distance dendrogram.
+    if (is.null(tree)) {
+        tree <- as.phylo(snp_hclust)
+    }
+
+    # reconcile any non-monophyletic clusters with the tree using the chosen strategy; this also
+    # renumbers the resulting clusters sequentially
+    enforce_monophyly(clusters, tree, monophyly_method)
 }
 
 #' Identify transmission clusters based on the number of shared variants.
@@ -40,6 +70,12 @@ get_tn_clusters_snp_thresh <- function(snp_dist, snp_thresh, hclust_method = "co
 #' @param dates A vector of isolate dates named by sequence IDs.
 #' @param tree A phylogenetic tree object of class `phylo` constructed from the DNA alignment. This can be constructed
 #'             using the [get_phylo_tree()] or can be any other tree object constructed from the same isolates.
+#' @param monophyly_method How to make a non-monophyletic cluster monophyletic. The cluster
+#'             assignment can leave a cluster non-monophyletic when a higher-scoring nested clade
+#'             claims some of its isolates. `"expand"` (the default) grows the cluster to the
+#'             smallest clade of the tree that contains all of its members, absorbing any intervening
+#'             isolates. `"break_down"` instead splits the cluster into the largest monophyletic
+#'             clades it already contains, without pulling in foreign isolates.
 #'
 #' @return A numeric vector indicating the cluster that each isolate belongs to.
 #'
@@ -48,7 +84,7 @@ get_tn_clusters_snp_thresh <- function(snp_dist, snp_thresh, hclust_method = "co
 #'             health-care settings: A genomic epidemiology analysis. The Lancet Microbe, 3(9), e652–e662.
 #'             \doi{10.1016/S2666-5247(22)00115-X}
 #'
-#' @importFrom ape subtrees
+#' @importFrom ape subtrees drop.tip
 #' @export
 get_tn_clusters_sv_index <- function(
     dna_aln,
@@ -57,8 +93,10 @@ get_tn_clusters_sv_index <- function(
     adm_pos_pt_seqs,
     seq2pt,
     dates,
-    tree
+    tree,
+    monophyly_method = c("expand", "break_down")
 ) {
+    monophyly_method <- match.arg(monophyly_method)
     ####################################################################################
     # 1. Compute the shared variant matrix #####
     # For each pair of isolates, we compute the number of positions where:
@@ -236,6 +274,9 @@ get_tn_clusters_sv_index <- function(
     # log completion of phase to standard output
     message("Phase 4 complete: Cluster assignment.")
 
-    # remap cluster values to ensure that clusters are numbered sequentially starting from 1
-    remap_cluster_values(clusters)
+    # The cluster assignment can leave a cluster non-monophyletic when a higher-scoring nested clade
+    # claims some of its isolates. Reconcile any such clusters with the tree (the out-group has
+    # already been dropped above), leaving the unclustered isolates (value 0) untouched. This also
+    # renumbers the resulting clusters sequentially starting from 1.
+    enforce_monophyly(clusters, tree, monophyly_method, special_val = 0)
 }
