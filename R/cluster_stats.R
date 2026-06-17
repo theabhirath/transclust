@@ -1,222 +1,116 @@
-#' Analyze Intra-Cluster Genetic Variation
+#' Compute intra-cluster SNP-distance summaries
 #'
 #' @description
-#' This function analyzes genetic diversity within clusters by identifying variant sites and calculating
-#' mutational spectra (e.g. transition and transversion rates). It uses a DNA alignment and a vector
-#' of cluster assignments (named by sequence IDs) and returns a data frame summarizing the diversity
-#' measures for each cluster as well as for the overall population.
+#' The single source of truth for intra-cluster genetic-distance summaries. Returns the mean,
+#' median and max pairwise SNP distance within a single cluster (the upper triangle of the
+#' cluster's own submatrix, excluding the diagonal). Inter-cluster / inter-isolate context is
+#' computed separately, over all clusters at once, by [cluster_inter_distances()].
 #'
-#' @param clusters A named vector of cluster assignments (cluster IDs) with names corresponding to sequence IDs.
-#' @param dna_aln A matrix representing the DNA sequence alignment, where rows are sequences (named by sequence IDs)
-#'                and columns represent nucleotide positions.
+#' @param cluster_seqs Vector of sequence IDs in the cluster.
+#' @param snp_dist Matrix of SNP distances between isolates.
 #'
-#' @return A data frame with one row per cluster (plus a row for the overall population) containing the
-#'   number of variable sites and the rates for six mutation types. Mutation rates are rounded to three decimals.
+#' @return A named numeric vector with `mean_genetic_distance`, `median_genetic_distance` and
+#'   `max_genetic_distance`.
 #'
+#' @importFrom stats median
 #' @export
-intra_cluster_genetic_var_analysis <- function(clusters, dna_aln) {
-    # pre-compute a character matrix of the alignment
-    dna_aln_char <- matrix(
-        as.character(dna_aln),
-        nrow = nrow(dna_aln),
-        dimnames = dimnames(dna_aln)
-    )
+cluster_pairwise_distances <- function(cluster_seqs, snp_dist) {
+    # intra-cluster distances: upper triangle of the cluster's submatrix (excludes the diagonal)
+    intra <- snp_dist[cluster_seqs, cluster_seqs, drop = FALSE]
+    intra_vals <- intra[upper.tri(intra)]
 
-    # identify cluster IDs (excluding a potential singleton "1" if present)
-    cluster_ids <- setdiff(sort(unique(clusters)), 1)
-
-    # compute major alleles across the entire alignment
-    major_alleles_all <- apply(dna_aln_char, 2, function(pos_aln) {
-        allele_tab <- table(pos_aln)
-        names(allele_tab)[which.max(allele_tab)]
-    })
-
-    # get all variable positions in the alignment
-    var_pos <- apply(dna_aln_char, 2, function(x) sum(x == x[1]) < nrow(dna_aln_char))
-
-    # filter the alignment to only include variable positions
-    dna_aln_char <- dna_aln_char[, var_pos, drop = FALSE]
-    major_alleles_all <- major_alleles_all[var_pos]
-
-    # pre-allocate vectors for results
-    n_iter <- length(cluster_ids) + 1 # +1 for the overall population
-    num_var_sites <- numeric(n_iter)
-    gc_at_transition_rate <- numeric(n_iter)
-    at_gc_transition_rate <- numeric(n_iter)
-    gc_ta_transversion_rate <- numeric(n_iter)
-    at_cg_transversion_rate <- numeric(n_iter)
-    at_ta_transversion_rate <- numeric(n_iter)
-    gc_cg_transversion_rate <- numeric(n_iter)
-
-    # define row names for the output: overall population and each cluster
-    cluster_labels <- c("Pop. freq.", cluster_ids)
-
-    iter <- 1
-    # loop over overall population (represented by -1) and each cluster
-    for (cluster in c(-1, cluster_ids)) {
-        seq_ids <- if (cluster == -1) {
-            names(clusters)
-        } else {
-            names(clusters)[clusters == cluster]
-        }
-
-        # subset the alignment for the current group
-        aln_subset <- dna_aln_char[seq_ids, , drop = FALSE]
-        # determine variable positions within the current group
-        var_pos_cluster <- apply(aln_subset, 2, function(pos_aln) {
-            sum(pos_aln == pos_aln[1]) < length(seq_ids)
-        })
-        var_idx <- which(var_pos_cluster)
-
-        # compute minor allele for each variable position
-        minor_alleles <- vapply(
-            var_idx,
-            function(j) {
-                pos_aln_full <- dna_aln_char[, j]
-                allele_tab <- table(pos_aln_full)
-                major_allele <- major_alleles_all[j]
-                cluster_alleles <- unique(aln_subset[, j])
-                allele_count <- length(cluster_alleles)
-                # Check if the major allele is present in the cluster
-                is_major_present <- major_allele %in% cluster_alleles
-                if (allele_count == 1) {
-                    # Cluster has a major or minor allele
-                    if (is_major_present) "X" else "Y"
-                } else if (allele_count == 2 && is_major_present) {
-                    # Cluster has a variable minor allele
-                    setdiff(cluster_alleles, major_allele)
-                } else {
-                    "Z" # Cluster has multiple minor alleles
-                }
-            },
-            character(1)
-        )
-        # compute major allele for each variable position
-        major_alleles <- major_alleles_all[var_idx]
-
-        # filter positions to those with valid nucleotide calls (both alleles among a, c, t, g)
-        valid_pos <- which(
-            minor_alleles != major_alleles &
-                major_alleles %in% c("a", "c", "t", "g") &
-                minor_alleles %in% c("a", "c", "t", "g")
-        )
-
-        num_sites <- length(valid_pos)
-        num_var_sites[iter] <- num_sites
-
-        # if no positions are variable or no valid sites are found, assign NA to mutation rates
-        if (num_sites == 0 || !any(var_pos_cluster)) {
-            gc_at_transition_rate[iter] <- NA
-            at_gc_transition_rate[iter] <- NA
-            gc_ta_transversion_rate[iter] <- NA
-            at_cg_transversion_rate[iter] <- NA
-            at_ta_transversion_rate[iter] <- NA
-            gc_cg_transversion_rate[iter] <- NA
-            iter <- iter + 1
-            next
-        }
-
-        major_valid <- major_alleles[valid_pos]
-        minor_valid <- minor_alleles[valid_pos]
-
-        # calculate mutation rates
-        gc_at_transition_rate[iter] <- sum(
-            (major_valid == "g" & minor_valid == "a") |
-                (major_valid == "c" & minor_valid == "t")
-        ) /
-            num_sites
-        at_gc_transition_rate[iter] <- sum(
-            (major_valid == "a" & minor_valid == "g") |
-                (major_valid == "t" & minor_valid == "c")
-        ) /
-            num_sites
-        gc_ta_transversion_rate[iter] <- sum(
-            (major_valid == "g" & minor_valid == "t") |
-                (major_valid == "c" & minor_valid == "a")
-        ) /
-            num_sites
-        at_cg_transversion_rate[iter] <- sum(
-            (major_valid == "a" & minor_valid == "c") |
-                (major_valid == "t" & minor_valid == "g")
-        ) /
-            num_sites
-        at_ta_transversion_rate[iter] <- sum(
-            (major_valid == "a" & minor_valid == "t") |
-                (major_valid == "t" & minor_valid == "a")
-        ) /
-            num_sites
-        gc_cg_transversion_rate[iter] <- sum(
-            (major_valid == "g" & minor_valid == "c") |
-                (major_valid == "c" & minor_valid == "g")
-        ) /
-            num_sites
-
-        iter <- iter + 1
-    }
-
-    data.frame(
-        num_var_sites = num_var_sites,
-        GC_AT_transition_rate = round(gc_at_transition_rate, 3),
-        AT_GC_transition_rate = round(at_gc_transition_rate, 3),
-        GC_TA_transversion_rate = round(gc_ta_transversion_rate, 3),
-        AT_TA_transversion_rate = round(at_ta_transversion_rate, 3),
-        GC_CG_transversion_rate = round(gc_cg_transversion_rate, 3),
-        AT_CG_transversion_rate = round(at_cg_transversion_rate, 3),
-        row.names = cluster_labels,
-        check.names = FALSE
+    c(
+        mean_genetic_distance = mean(intra_vals, na.rm = TRUE),
+        median_genetic_distance = median(intra_vals, na.rm = TRUE),
+        max_genetic_distance = max(intra_vals, na.rm = TRUE)
     )
 }
 
-#' Compute Genetic Distances
+#' Compute per-cluster nearest-neighbour SNP distances
 #'
 #' @description
-#' Calculate genetic distance statistics within a cluster
+#' For every non-singleton cluster, the minimum SNP distance to an isolate in another cluster
+#' (`min_inter_cluster`) and to any isolate outside the cluster (`min_inter_isolate`). Unlike
+#' [cluster_pairwise_distances()], this works over the whole clustering at once: it derives each
+#' cluster's "other cluster" and "non cluster" comparison sets from the full assignment vector.
+#' Singleton clusters are dropped via [remove_singleton_clusters()], so their sequences never form
+#' a cluster of their own but still count as unclustered isolates toward `min_inter_isolate`.
 #'
-#' @param seqs Vector of sequence IDs in the cluster
-#' @param snp_dist Matrix of SNP distances between isolates
+#' @param clusters A vector named by sequence IDs giving the cluster each sequence belongs to.
+#' @param snp_dist A matrix of SNP distances between isolates. Its row/column names define the full
+#'   universe of isolates, including those not assigned to any cluster.
 #'
-#' @return List with genetic distance properties
+#' @return A matrix with one row per cluster (named by cluster ID) and columns `min_inter_cluster`
+#'   and `min_inter_isolate`.
+#'
 #' @export
-intra_cluster_genetic_distances <- function(seqs, snp_dist) {
-    # subset the SNP distance matrix to only the cluster sequences
-    snp_dist_subset <- snp_dist[seqs, seqs, drop = FALSE]
+cluster_inter_distances <- function(clusters, snp_dist) {
+    # The full universe of isolates, including any not assigned to a (multi-isolate) cluster
+    all_seqs <- rownames(snp_dist)
+    # Drop singleton clusters so their sequences count as unclustered isolates
+    clusters <- remove_singleton_clusters(clusters)
+    unique_clusters <- sort(unique(clusters))
 
-    # get the upper triangle of the SNP distance matrix (excluding the diagonal)
-    seq_vals <- snp_dist_subset[upper.tri(snp_dist_subset)]
+    inter <- vapply(
+        unique_clusters,
+        function(cl) {
+            cluster_seqs <- names(clusters[clusters == cl])
+            # Isolates assigned to a different cluster
+            other_cluster_seqs <- names(clusters[clusters != cl])
+            # Any isolate not in this cluster, including unclustered (singleton) isolates
+            non_cluster_seqs <- setdiff(all_seqs, cluster_seqs)
 
-    genetic_stats <- numeric(3)
-    names(genetic_stats) <- c(
-        "mean_genetic_distance",
-        "median_genetic_distance",
-        "max_genetic_distance"
+            c(
+                min_inter_cluster = min(
+                    snp_dist[cluster_seqs, other_cluster_seqs, drop = FALSE],
+                    na.rm = TRUE
+                ),
+                min_inter_isolate = min(
+                    snp_dist[cluster_seqs, non_cluster_seqs, drop = FALSE],
+                    na.rm = TRUE
+                )
+            )
+        },
+        numeric(2)
     )
 
-    genetic_stats["mean_genetic_distance"] <- mean(seq_vals)
-    genetic_stats["median_genetic_distance"] <- median(seq_vals)
-    genetic_stats["max_genetic_distance"] <- max(seq_vals)
+    inter_mat <- t(inter)
+    rownames(inter_mat) <- unique_clusters
+    inter_mat
+}
 
-    genetic_stats
+# Stack a per-cluster reduction over every multi-patient cluster in an isolate
+# lookup. `metric_fn` receives the lookup rows for one cluster and returns a
+# named numeric vector; the results become a data frame with a trailing
+# `cluster` column. Single-patient clusters are excluded throughout, since these
+# metrics describe transmission rather than within-host variation.
+# @keyword internal
+per_cluster_metric_df <- function(isolate_lookup, metric_fn) {
+    cluster_ids <- get_non_single_patient_clusters(isolate_lookup)
+    rows <- lapply(cluster_ids, function(cluster) {
+        metric_fn(isolate_lookup[isolate_lookup$cluster == cluster, , drop = FALSE])
+    })
+    out <- as.data.frame(do.call(rbind, rows))
+    out$cluster <- cluster_ids
+    out
 }
 
 #' Compute genetic distances by cluster
 #'
 #' @description
-#' Calculate genetic distances for a set of cluster assignments.
+#' Summarize intra-cluster SNP distances (mean/median/max) for every multi-patient
+#' cluster in an isolate lookup, via [cluster_pairwise_distances()].
 #'
 #' @param isolate_lookup Data frame with isolate lookup information.
 #' @param snp_dist Matrix of SNP distances between isolates.
 #'
-#' @return Data frame with genetic distances by cluster
+#' @return Data frame with `mean_genetic_distance`, `median_genetic_distance`,
+#'   `max_genetic_distance` and `cluster`, one row per cluster.
 #' @export
 compute_genetic_distances_by_cluster <- function(isolate_lookup, snp_dist) {
-    cluster_ids <- get_non_single_patient_clusters(isolate_lookup)
-    genetic_distances_list <- lapply(cluster_ids, function(cluster) {
-        cluster_seqs <- isolate_lookup$isolate_id[isolate_lookup$cluster == cluster]
-        intra_cluster_genetic_distances(cluster_seqs, snp_dist)
+    per_cluster_metric_df(isolate_lookup, function(cluster_lookup) {
+        cluster_pairwise_distances(cluster_lookup$isolate_id, snp_dist)
     })
-    genetic_distances_df <- as.data.frame(do.call(rbind, genetic_distances_list))
-    genetic_distances_df$cluster <- cluster_ids
-    genetic_distances_df
 }
 
 #' Compute intra-cluster duration metrics
@@ -228,68 +122,38 @@ compute_genetic_distances_by_cluster <- function(isolate_lookup, snp_dist) {
 #' @param seq2pt Named vector mapping sequence IDs to patient IDs
 #' @param dates Vector of isolate dates named by sequence IDs
 #'
-#' @return Vector with cluster duration properties
+#' @return Named numeric vector with `cluster_start_date`,
+#'   `time_to_first_acquisition`, `time_to_last_acquisition` and
+#'   `median_time_to_acquisition`.
+#'
+#' @importFrom stats median
 #' @export
 intra_cluster_duration_metrics <- function(seqs, seq2pt, dates) {
-    # calculate earliest positive date for each patient in the cluster
-    earliest_pos_by_pt <- vapply(
+    # earliest positive date for each patient in the cluster, sorted ascending
+    earliest_by_pt <- sort(vapply(
         unique(seq2pt[seqs]),
-        function(pt_id) {
-            patient_seqs <- seqs[seq2pt[seqs] == pt_id]
-            if (length(patient_seqs) > 0) {
-                min(dates[patient_seqs])
-            } else {
-                Inf
-            }
-        },
+        function(pt_id) min(dates[seqs[seq2pt[seqs] == pt_id]]),
         numeric(1)
-    )
-    earliest_pos_by_pt <- sort(setNames(earliest_pos_by_pt, unique(seq2pt[seqs])))
+    ))
 
-    duration_stats <- numeric(4)
-    names(duration_stats) <- c(
-        "cluster_start_date",
-        "time_to_first_acquisition",
-        "time_to_last_acquisition",
-        "median_time_to_acquisition"
-    )
-
-    # check if we have any patients
-    if (length(earliest_pos_by_pt) > 0) {
-        # cluster start date = earliest positive date among all patients in the cluster
-        duration_stats["cluster_start_date"] <- earliest_pos_by_pt[1]
-
-        # time to first acquisition = difference between the earliest two patients' dates
-        if (length(earliest_pos_by_pt) >= 2) {
-            duration_stats["time_to_first_acquisition"] <- earliest_pos_by_pt[2] -
-                earliest_pos_by_pt[1]
-        } else {
-            duration_stats["time_to_first_acquisition"] <- 0
-        }
-
-        # time to last acquisition = difference between the earliest and latest
-        duration_stats["time_to_last_acquisition"] <-
-            earliest_pos_by_pt[length(earliest_pos_by_pt)] - earliest_pos_by_pt[1]
-
-        # median time to acquisition
-        if (length(earliest_pos_by_pt) >= 2) {
-            duration_stats["median_time_to_acquisition"] <- median(vapply(
-                earliest_pos_by_pt[2:length(earliest_pos_by_pt)],
-                function(x) x - earliest_pos_by_pt[1],
-                numeric(1)
-            ))
-        } else {
-            duration_stats["median_time_to_acquisition"] <- 0
-        }
-    } else {
-        # no patients in cluster
-        duration_stats["cluster_start_date"] <- NA
-        duration_stats["time_to_first_acquisition"] <- NA
-        duration_stats["time_to_last_acquisition"] <- NA
-        duration_stats["median_time_to_acquisition"] <- NA
+    n <- length(earliest_by_pt)
+    if (n == 0) {
+        return(c(
+            cluster_start_date = NA_real_,
+            time_to_first_acquisition = NA_real_,
+            time_to_last_acquisition = NA_real_,
+            median_time_to_acquisition = NA_real_
+        ))
     }
 
-    duration_stats
+    # acquisition gaps relative to the first patient's date (empty when n == 1)
+    since_start <- earliest_by_pt[-1] - earliest_by_pt[[1]]
+    c(
+        cluster_start_date = earliest_by_pt[[1]],
+        time_to_first_acquisition = if (n >= 2) since_start[[1]] else 0,
+        time_to_last_acquisition = earliest_by_pt[[n]] - earliest_by_pt[[1]],
+        median_time_to_acquisition = if (n >= 2) median(since_start) else 0
+    )
 }
 
 #' Compute Duration Metrics by Cluster
@@ -300,24 +164,16 @@ intra_cluster_duration_metrics <- function(seqs, seq2pt, dates) {
 #' @param isolate_lookup Data frame with isolate lookup information.
 #'
 #' @return Data frame with duration metrics by cluster
+#'
+#' @importFrom stats setNames
 #' @export
 compute_duration_metrics_by_cluster <- function(isolate_lookup) {
-    cluster_ids <- get_non_single_patient_clusters(isolate_lookup)
-
-    duration_stats_list <- lapply(cluster_ids, function(cluster) {
-        cluster_seqs <- isolate_lookup$isolate_id[isolate_lookup$cluster == cluster]
-        cluster_dates <- setNames(
-            isolate_lookup$date[isolate_lookup$cluster == cluster],
-            cluster_seqs
+    per_cluster_metric_df(isolate_lookup, function(cluster_lookup) {
+        seqs <- cluster_lookup$isolate_id
+        intra_cluster_duration_metrics(
+            seqs,
+            setNames(cluster_lookup$patient_id, seqs),
+            setNames(cluster_lookup$date, seqs)
         )
-        cluster_seq2pt <- setNames(
-            isolate_lookup$patient_id[isolate_lookup$cluster == cluster],
-            cluster_seqs
-        )
-        intra_cluster_duration_metrics(cluster_seqs, cluster_seq2pt, cluster_dates)
     })
-
-    duration_stats_df <- as.data.frame(do.call(rbind, duration_stats_list))
-    duration_stats_df$cluster <- cluster_ids
-    duration_stats_df
 }

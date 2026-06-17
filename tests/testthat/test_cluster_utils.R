@@ -13,6 +13,14 @@ test_that("remove_singleton_clusters returns empty when all clusters are singlet
     expect_length(remove_singleton_clusters(clusters), 0)
 })
 
+test_that("remove_singleton_clusters handles non-contiguous cluster labels", {
+    # cluster 5 is the singleton; its label does not equal its table position
+    clusters <- c(a = 1, b = 1, c = 5, d = 8, e = 8)
+    out <- remove_singleton_clusters(clusters)
+
+    expect_equal(out, c(a = 1, b = 1, d = 8, e = 8))
+})
+
 test_that("get_non_single_patient_clusters keeps clusters with >1 distinct patient", {
     lookup <- data.frame(
         cluster = c(1, 1, 2, 2, 3),

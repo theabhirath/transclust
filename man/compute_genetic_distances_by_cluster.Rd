@@ -12,8 +12,10 @@ compute_genetic_distances_by_cluster(isolate_lookup, snp_dist)
 \item{snp_dist}{Matrix of SNP distances between isolates.}
 }
 \value{
-Data frame with genetic distances by cluster
+Data frame with \code{mean_genetic_distance}, \code{median_genetic_distance},
+\code{max_genetic_distance} and \code{cluster}, one row per cluster.
 }
 \description{
-Calculate genetic distances for a set of cluster assignments.
+Summarize intra-cluster SNP distances (mean/median/max) for every multi-patient
+cluster in an isolate lookup, via \code{\link[=cluster_pairwise_distances]{cluster_pairwise_distances()}}.
 }

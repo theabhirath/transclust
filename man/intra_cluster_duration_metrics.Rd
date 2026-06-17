@@ -14,7 +14,9 @@ intra_cluster_duration_metrics(seqs, seq2pt, dates)
 \item{dates}{Vector of isolate dates named by sequence IDs}
 }
 \value{
-Vector with cluster duration properties
+Named numeric vector with \code{cluster_start_date},
+\code{time_to_first_acquisition}, \code{time_to_last_acquisition} and
+\code{median_time_to_acquisition}.
 }
 \description{
 Calculate temporal metrics for spread of a single cluster.
