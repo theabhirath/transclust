@@ -1,4 +1,4 @@
-# Compute per-cluster nearest-neighbour SNP distances
+# Compute per-cluster nearest-neighbor SNP distances
 
 For every non-singleton cluster, the minimum SNP distance to an isolate
 in another cluster (`min_inter_cluster`) and to any isolate outside the

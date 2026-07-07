@@ -1,4 +1,4 @@
-# Create Contingency Table from Two Cluster Assignments
+# Create a contingency table from two cluster assignments
 
 Generates a contingency table comparing two cluster assignments. The
 table counts the number of isolates shared between each pair of clusters

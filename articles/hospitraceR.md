@@ -1,7 +1,7 @@
 # Introduction to hospitraceR
 
-This vignette provides a brief introduction to the `hospitraceR`
-package, which is designed for analysis of transmission clusters using a
+This article provides a brief introduction to the `hospitraceR` package,
+which is designed for analysis of transmission clusters using a
 combination of whole genome sequencing (WGS) data and epidemiological
 information. The package includes functions for clustering,
 visualization, and statistical analysis of transmission clusters. To get
@@ -9,7 +9,7 @@ started, we will first load the package. Visualization functions are
 provided by the companion package
 [`hospitraceRVisualize`](https://github.com/theabhirath/hospitraceRVisualize).
 We will also load the `ape` package, which is used for phylogenetic
-analysis with the package and in the vignette, and `tidyr`, `ggplot2`
+analysis with the package and in this article, and `tidyr`, `ggplot2`
 and `paletteer` for data manipulation and visualization.
 
 ``` r
@@ -20,44 +20,36 @@ library(ape)
 library(tidyr)
 library(ggplot2)
 library(ggalign)
-#> ========================================
-#> ggalign version 1.2.0
-#> 
-#> If you use it in published research, please cite: 
-#> Peng, Y.; Jiang, S.; Song, Y.; et al. ggalign: Bridging the Grammar of Graphics and Biological Multilayered Complexity. Advanced Science. 2025. doi:10.1002/advs.202507799
-#> ========================================
 library(paletteer)
 ```
 
 ## Loading and preparing data
 
-The `hospitraceR` package comes with a sample dataset that can be used
-for demonstration purposes. The dataset contains epidemiological
-information for a set of isolates. To load the dataset, we can use the
-following command:
+Throughout, we use an example dataset of carbapenem-resistant
+*Klebsiella pneumoniae* isolates and the epidemiological information for
+the patients they came from. To load it:
 
 ``` r
 
-load(system.file("extdata", "example.RData", package = "hospitraceR"))
+# An example dataset of isolates and their patient epidemiological metadata.
+extdata_dir <- file.path("..", "..", "inst", "extdata")
+load(file.path(extdata_dir, "example.RData"))
 ```
 
-We first read in the sequence file which has been prepared using the
-procedure described in Hawken et al. (2022). We can read in the sequence
-file using `ape`’s `read.dna` function:
+We first read in the sequence file, which is a recombination-filtered
+variant alignment of the isolates (for more information regarding the
+preparation process, see the Methods in Hawken et al. (2022)). We can
+read in the sequence file using `ape`’s `read.dna` function:
 
 ``` r
 
-dna_aln <- read.dna(system.file("extdata", "example.fasta", package = "hospitraceR"), format = "fasta")
+dna_aln <- read.dna(file.path(extdata_dir, "example.fasta"), format = "fasta")
 ```
 
 Now that the sequence file is loaded, we can extract the variable
-positions in the alignment. The `var_pos` variable contains a logical
-vector indicating which columns in the alignment are variable. The
-`dna_pt_labels` variable contains the labels for the sequences in the
-alignment, and `facility_trace` is a matrix containing the trace data
-for the isolates. The valid set of labels is determined by checking
-which labels in the `dna_pt_labels` variable are present in the
-`facility_trace` matrix.
+positions in the alignment. We also drop any isolates that do not have a
+corresponding label in the trace matrix i.e. for which we do not have
+epidemiological information.
 
 ``` r
 
@@ -67,34 +59,28 @@ var_pos <- apply(dna_aln, 2, function(x) sum(x == x[1]) < nrow(dna_aln))
 valid_labels <- dna_pt_labels[labels(dna_aln)] %in% row.names(facility_trace)
 ```
 
-We can then subset the alignment to include only the variable positions
-from the isolates with valid labels:
+We then subset the alignment to include only the variable positions from
+the isolates with valid labels:
 
 ``` r
 
 dna_var <- dna_aln[valid_labels, var_pos]
 ```
 
-We then use the helper function
+The helper function
 [`get_snp_dist_matrix()`](https://theabhirath.github.io/hospitraceR/reference/get_snp_dist_matrix.md)
-to calculate the SNP distance matrix for these isolates:
+calculates the SNP distance matrix for these isolates. This is a wrapper
+around [`ape::dist.dna()`](https://rdrr.io/pkg/ape/man/dist.dna.html):
 
 ``` r
 
 snp_dist <- get_snp_dist_matrix(dna_var)
 ```
 
-The `snp_dist` variable contains the SNP distance matrix, which is a
-square matrix where each entry represents the number of SNP differences
-between two isolates. The diagonal entries are all zero, as they
-represent the distance between an isolate and itself.
-
 ## Clustering isolates using a hard SNP threshold
 
 Now that we’ve loaded our data, we can start clustering the isolates.
-First, we want to use a hard SNP threshold to cluster the isolates.
-
-The
+First, we want to use a hard SNP threshold to cluster the isolates. The
 [`get_tn_clusters_snp_thresh()`](https://theabhirath.github.io/hospitraceR/reference/get_tn_clusters_snp_thresh.md)
 function takes the SNP distance matrix and a threshold value as input
 and returns a list of clusters. We use a threshold of 10 SNPs for this
@@ -110,25 +96,25 @@ We can then visualize the clusters on a phylogenetic tree using the
 function. But for this, we first need to generate a phylogenetic tree.
 We can do this using the
 [`get_phylo_tree()`](https://theabhirath.github.io/hospitraceR/reference/get_phylo_tree.md)
-function. We use the maximum parsimony method for this example:
+helper function. We use the maximum parsimony method for this example:
 
 ``` r
 
 # Generate a parsimony tree
 phylo_tree <- get_phylo_tree(dna_var, snp_dist, "pars")
-```
-
-``` r
-
 plot_clusters_phylo(phylo_tree, clusters_snp)
 ```
 
-![](hospitraceR_files/figure-html/plot_snp_clusters-1.png)
+![](hospitraceR_files/figure-html/phylo_tree_pars-1.png)
 
-But this isn’t the only SNP threshold approach. This method tries to
-preserve clusters to be within the phylogenetic tree structure, but we
-can also cluster the isolates just based on the SNP distance matrix with
-no regard for the
+By default,
+[`get_tn_clusters_snp_thresh()`](https://theabhirath.github.io/hospitraceR/reference/get_tn_clusters_snp_thresh.md)
+reconciles the threshold-based clusters with the phylogenetic tree so
+that each one is monophyletic (passing a `tree` argument uses that tree
+instead). This keeps the clusters consistent with the tree, but the SNP
+cutoff is still a free parameter that has to be chosen. Next, we look at
+the threshold-free approach, which sidesteps that choice by inferring
+clusters directly from the structure of the tree.
 
 ## Clustering isolates using a threshold-free approach
 
@@ -169,7 +155,7 @@ function. This function generates a heatmap showing the overlap between
 the clusters by indicating the proportion of isolates in each cluster
 that are also present in the clusters generated by the other method.
 Before we can use this function, we need to remove any singleton
-clusters, which are clusters that contain only one isolate – these are
+clusters, which are clusters that contain only one isolate — these are
 not very useful for comparison:
 
 ``` r
@@ -197,9 +183,8 @@ plot_jaccard_similarity_heatmap(clusters_snp, clusters_sv) +
 
 ![](hospitraceR_files/figure-html/compare_clusters-1.png)
 
-For more information on comparing clusters, see the cluster comparison
-vignette,
-[`vignette("cluster_comparison")`](https://theabhirath.github.io/hospitraceR/articles/cluster_comparison.md).
+For more information on comparing clusters, see the [cluster comparison
+article](https://theabhirath.github.io/hospitraceR/articles/cluster_comparison.md).
 
 ## Genetic distance context of clusters
 
@@ -227,16 +212,21 @@ plot_intra_vs_inter_cluster_distance(clusters_sv, snp_dist)
 
 ![](hospitraceR_files/figure-html/plot_intra_inter_cluster-1.png)
 
-The second is similar, but compares the within-cluster diameter against
-the minimum distance to *any* other isolate, including isolates that
-were not assigned to a cluster:
+We can also look at the spread of genetic distances within each cluster
+on its own. The
+[`plot_genetic_distance_by_cluster()`](https://theabhirath.github.io/hospitraceRVisualize/reference/plot_genetic_distance_by_cluster.html)
+function places each cluster on the x-axis and shows the distribution of
+intra-cluster pairwise SNP distances on the y-axis, summarised as a
+boxplot with the underlying pairwise distances overlaid as jittered
+points. This makes it easy to spot clusters that are unusually diverse
+internally:
 
 ``` r
 
-plot_intra_vs_inter_isolate_distance(clusters_sv, snp_dist)
+plot_genetic_distance_by_cluster(clusters_sv, snp_dist)
 ```
 
-![](hospitraceR_files/figure-html/plot_intra_inter_isolate-1.png)
+![](hospitraceR_files/figure-html/plot_distance_by_cluster-1.png)
 
 ## References
 

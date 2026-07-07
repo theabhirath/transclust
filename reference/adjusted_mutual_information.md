@@ -1,4 +1,4 @@
-# Adjusted Mutual Information from Cluster Assignments
+# Compute the adjusted mutual information from cluster assignments
 
 Computes the Adjusted Mutual Information (AMI) between two cluster
 assignments. This is a convenience wrapper around

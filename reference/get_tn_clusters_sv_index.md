@@ -1,4 +1,4 @@
-# Identify transmission clusters based on the number of shared variants.
+# Identify transmission clusters based on the number of shared variants
 
 Clustering is performed to identify the maximal clusters containing a
 single intake-positive patient that occurs before all cluster converts.
@@ -18,8 +18,7 @@ get_tn_clusters_sv_index(
   adm_pos_pt_seqs,
   seq2pt,
   dates,
-  tree,
-  monophyly_method = c("expand", "break_down")
+  tree
 )
 ```
 
@@ -27,25 +26,23 @@ get_tn_clusters_sv_index(
 
 - dna_aln:
 
-  A DNA alignment object of class `DNAbin`.
+  A DNA alignment object of class `DNAbin`. Its first sequence is taken
+  as the outgroup.
 
 - snp_dist:
 
-  A matrix of SNP distances between isolates constructed using a model
-  of DNA evolution. See
-  [`get_snp_dist_matrix()`](https://theabhirath.github.io/hospitraceR/reference/get_snp_dist_matrix.md)
-  for a useful function to generate this.
+  A matrix of SNP distances between isolates. See
+  [`get_snp_dist_matrix()`](https://theabhirath.github.io/hospitraceR/reference/get_snp_dist_matrix.md).
 
 - adm_seqs:
 
-  A vector of sequence IDs which correspond to admission positive
-  patient sequences.
+  A vector of sequence IDs for sequences from patients positive at
+  intake.
 
 - adm_pos_pt_seqs:
 
-  A vector of all sequence IDs which correspond to admission-positive
-  patients, either at intake or collected later. This will be a superset
-  of `adm_seqs` by definition.
+  A vector of all sequence IDs from admission-positive patients, whether
+  collected at intake or later; a superset of `adm_seqs`.
 
 - seq2pt:
 
@@ -53,28 +50,17 @@ get_tn_clusters_sv_index(
 
 - dates:
 
-  A vector of isolate dates named by sequence IDs.
+  A named vector of isolate dates, named by sequence ID.
 
 - tree:
 
-  A phylogenetic tree object of class `phylo` constructed from the DNA
-  alignment. This can be constructed using the
-  [`get_phylo_tree()`](https://theabhirath.github.io/hospitraceR/reference/get_phylo_tree.md)
-  or can be any other tree object constructed from the same isolates.
-
-- monophyly_method:
-
-  How to make a non-monophyletic cluster monophyletic. The cluster
-  assignment can leave a cluster non-monophyletic when a higher-scoring
-  nested clade claims some of its isolates. `"expand"` (the default)
-  grows the cluster to the smallest clade of the tree that contains all
-  of its members, absorbing any intervening isolates. `"break_down"`
-  instead splits the cluster into the largest monophyletic clades it
-  already contains, without pulling in foreign isolates.
+  A phylogenetic tree of class `phylo` over the same isolates, e.g. from
+  [`get_phylo_tree()`](https://theabhirath.github.io/hospitraceR/reference/get_phylo_tree.md).
+  Its first tip is taken as the outgroup, matching `dna_aln`.
 
 ## Value
 
-A numeric vector indicating the cluster that each isolate belongs to.
+A numeric vector giving the cluster each isolate belongs to.
 
 ## References
 

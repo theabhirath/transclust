@@ -1,4 +1,4 @@
-# Compute Duration Metrics by Cluster
+# Compute duration metrics by cluster
 
 Calculate temporal metrics for cluster spread for a set of cluster
 assignments.
@@ -13,7 +13,8 @@ compute_duration_metrics_by_cluster(isolate_lookup)
 
 - isolate_lookup:
 
-  Data frame with isolate lookup information.
+  An isolate lookup table from
+  [`get_isolate_lookup()`](https://theabhirath.github.io/hospitraceR/reference/get_isolate_lookup.md).
 
 ## Value
 

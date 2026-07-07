@@ -1,6 +1,6 @@
-# Remove a node from a vector of cluster assignments.
+# Remove a node from a vector of cluster assignments
 
-This function removes a node from a vector of cluster assignments.
+Remove a node from a vector of cluster assignments
 
 ## Usage
 
@@ -16,7 +16,7 @@ remove_node_from_clusters(clusters, node)
 
 - node:
 
-  The node to remove.
+  The node (isolate name) to remove.
 
 ## Value
 

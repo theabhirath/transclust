@@ -1,4 +1,4 @@
-# Fraction of Converts with Same Source from Isolate Lookups
+# Compute the fraction of converts with the same source from isolate lookups
 
 Compares two isolate lookups by examining patients categorized as
 "convert". This works directly with isolate lookups and is useful when
@@ -43,14 +43,16 @@ fraction_convert_same_source_from_lookups(
 
 - converts_without_assigned_source:
 
-  A logical value (default: TRUE) indicating whether to include patients
-  that are converts but have no assigned source.
+  A logical value indicating whether to include singleton converts –
+  patients counted as converts that have no assigned source in the
+  lookup – in the comparison, recording them with no source.
 
 ## Value
 
 A numeric value between 0 and 1 representing the fraction of convert
-patients whose source (index or weak-index) is the same in both cluster
-assignments. Returns NA if there are no common converts.
+patients whose source (index, weak index, or multiply-colonized index)
+is the same in both cluster assignments. Returns NA if there are no
+common converts.
 
 ## See also
 

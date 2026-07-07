@@ -1,6 +1,11 @@
-# hospitraceR: An R package for transmission cluster analysis for pathogens
+# hospitraceR: Detecting and analyzing nosocomial transmission clusters using genomic epidemiology
 
-An R package for transmission cluster analysis for pathogens.
+Detects transmission clusters of healthcare-associated pathogens by
+combining whole-genome single-nucleotide-variant data with patient
+location traces, surveillance cultures and admission status. Also
+provides tools to compare cluster assignments, to test spatial and
+temporal patient overlap within clusters by permutation, and to
+categorize the inferred transmission role of each patient.
 
 ## See also
 

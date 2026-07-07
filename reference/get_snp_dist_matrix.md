@@ -1,7 +1,9 @@
-# Get SNP distance matrix from DNA alignment constructed using a model of DNA evolution.
+# Compute a pairwise SNP distance matrix from a DNA alignment
 
-Get SNP distance matrix from DNA alignment constructed using a model of
-DNA evolution.
+Counts the number of nucleotide differences between every pair of
+sequences, via
+[`ape::dist.dna()`](https://rdrr.io/pkg/ape/man/dist.dna.html) with
+model `"N"`.
 
 ## Usage
 
@@ -17,9 +19,10 @@ get_snp_dist_matrix(dna_aln, core = TRUE)
 
 - core:
 
-  Logical: if `TRUE`, return the core SNP distance matrix, otherwise
-  return the full SNP distance matrix.
+  Logical; if `TRUE`, sites with missing data in any sequence are
+  dropped before counting, giving a core-genome distance. If `FALSE`,
+  missing data are handled per pair of sequences (pairwise deletion).
 
 ## Value
 
-A numeric matrix representing the SNP distance between sequences.
+A numeric matrix of pairwise SNP distances between sequences.

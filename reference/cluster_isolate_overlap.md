@@ -1,8 +1,13 @@
-# Calculate isolate-isolate overlap for clusters
+# Summarize isolate overlap within each cluster
 
-This function considers every isolate in a cluster as a recipient, and
-returns if there is any overlap when other isolates in the cluster are
-the donors.
+For each isolate in a cluster (treated as a recipient), reports whether
+any other isolate in the same cluster (as a donor) overlaps with it,
+using the isolate-pair overlaps from
+[`isolate_isolate_overlap()`](https://theabhirath.github.io/hospitraceR/reference/isolate_isolate_overlap.md)
+or
+[`isolate_isolate_sequential_overlap()`](https://theabhirath.github.io/hospitraceR/reference/isolate_isolate_sequential_overlap.md).
+Admission-positive isolates are reported as `NA`, since they were not
+acquired in the facility.
 
 ## Usage
 
@@ -14,16 +19,15 @@ cluster_isolate_overlap(isolate_lookup, iso_overlap_df)
 
 - isolate_lookup:
 
-  A lookup table for isolates and their clusters assignments which has
-  other relevant epidemiological information. For more information, see
+  A lookup table for isolates and their cluster assignments with other
+  relevant epidemiological information. See
   [`get_isolate_lookup()`](https://theabhirath.github.io/hospitraceR/reference/get_isolate_lookup.md).
 
 - iso_overlap_df:
 
-  A data frame with overlap information for isolate pairs. For more
-  information, see
+  A data frame of isolate-pair overlaps, from
   [`isolate_isolate_overlap()`](https://theabhirath.github.io/hospitraceR/reference/isolate_isolate_overlap.md).
 
 ## Value
 
-A data frame with columns: cluster, isolate_id, overlap.
+A data frame with columns `cluster`, `isolate_id` and `overlap`.

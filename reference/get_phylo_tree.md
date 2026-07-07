@@ -1,7 +1,9 @@
-# Get phylogenetic tree using neighbor-joining or maximum parsimony method.
+# Build a phylogenetic tree by neighbor-joining or maximum parsimony
 
-This function constructs a neighbor-joining or maximum parsimony
-phylogenetic tree from a DNA alignment object and a SNP distance matrix.
+Builds a tree from a DNA alignment and its SNP distance matrix. A
+neighbor-joining tree is computed first and rooted on the most divergent
+isolate (the one with the largest mean SNP distance); with
+`method = "pars"` this is then refined into a maximum-parsimony tree.
 
 ## Usage
 
@@ -17,14 +19,13 @@ get_phylo_tree(dna_aln, snp_dist, method = c("nj", "pars"))
 
 - snp_dist:
 
-  A numeric matrix representing the SNP distance between sequences. See
-  [`get_snp_dist_matrix()`](https://theabhirath.github.io/hospitraceR/reference/get_snp_dist_matrix.md)
-  for a useful function to generate this.
+  A numeric matrix of SNP distances between sequences. See
+  [`get_snp_dist_matrix()`](https://theabhirath.github.io/hospitraceR/reference/get_snp_dist_matrix.md).
 
 - method:
 
-  A string indicating the method to use for tree construction. Options
-  are "nj" (neighbor-joining) or "pars" (maximum parsimony).
+  Tree-construction method: `"nj"` (neighbor-joining) or `"pars"`
+  (maximum parsimony).
 
 ## Value
 

@@ -1,7 +1,11 @@
-# Calculate isolate-isolate overlap
+# Calculate isolate-isolate co-location overlap
 
-This function calculates the overlap between isolates in a given trace
-matrix.
+For every ordered pair of isolates, counts the days on which the two
+patients were in the same place in `trace_mat`, within the window from
+the donor's previous surveillance date up to the recipient's collection
+date. This is the concurrent (spatiotemporal) overlap; for indirect
+overlap via a shared location at different times, see
+[`isolate_isolate_sequential_overlap()`](https://theabhirath.github.io/hospitraceR/reference/isolate_isolate_sequential_overlap.md).
 
 ## Usage
 
@@ -13,15 +17,17 @@ isolate_isolate_overlap(isolate_lookup, trace_mat)
 
 - isolate_lookup:
 
-  A lookup table for isolates and their clusters assignments which has
-  other relevant epidemiological information. For more information, see
+  A lookup table for isolates and their cluster assignments with other
+  relevant epidemiological information. See
   [`get_isolate_lookup()`](https://theabhirath.github.io/hospitraceR/reference/get_isolate_lookup.md).
 
 - trace_mat:
 
-  A matrix with rows representing days and columns representing
-  patients.
+  A patient-by-date matrix of location occupancy (patients in rows,
+  dates in columns); a positive value marks a patient's location on a
+  given day.
 
 ## Value
 
-A data frame with columns: iso_donor, iso_recipient, overlap_days.
+A data frame with columns `iso_donor`, `iso_recipient` and
+`overlap_days`.

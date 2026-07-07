@@ -1,4 +1,4 @@
-# Force cluster assignments to be monophyletic with respect to a tree.
+# Force cluster assignments to be monophyletic with respect to a tree
 
 Checks each multi-isolate cluster for monophyly on `tree` and reconciles
 those that are not monophyletic using the chosen strategy. The result is
@@ -41,8 +41,7 @@ enforce_monophyly(
 - special_val:
 
   An optional cluster value to leave untouched, e.g. `0` for unclustered
-  isolates that should not be treated as a single cluster. Default is
-  `NULL`.
+  isolates that should not be treated as a single cluster.
 
 ## Value
 

@@ -1,10 +1,9 @@
 # Compute intra-cluster SNP-distance summaries
 
-The single source of truth for intra-cluster genetic-distance summaries.
-Returns the mean, median and max pairwise SNP distance within a single
-cluster (the upper triangle of the cluster's own submatrix, excluding
-the diagonal). Inter-cluster / inter-isolate context is computed
-separately, over all clusters at once, by
+Returns the mean, median and maximum pairwise SNP distance within a
+single cluster, taken from the upper triangle of the cluster's own
+submatrix (excluding the diagonal). Inter-cluster and inter-isolate
+distances are computed separately, over all clusters at once, by
 [`cluster_inter_distances()`](https://theabhirath.github.io/hospitraceR/reference/cluster_inter_distances.md).
 
 ## Usage

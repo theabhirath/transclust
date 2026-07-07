@@ -1,4 +1,4 @@
-# Adjusted Rand Index from Cluster Assignments
+# Compute the adjusted Rand index from cluster assignments
 
 Computes the Adjusted Rand Index (ARI) between two cluster assignments.
 This is a convenience wrapper around

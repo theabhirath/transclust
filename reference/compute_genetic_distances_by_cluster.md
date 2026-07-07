@@ -14,7 +14,8 @@ compute_genetic_distances_by_cluster(isolate_lookup, snp_dist)
 
 - isolate_lookup:
 
-  Data frame with isolate lookup information.
+  An isolate lookup table from
+  [`get_isolate_lookup()`](https://theabhirath.github.io/hospitraceR/reference/get_isolate_lookup.md).
 
 - snp_dist:
 

@@ -1,7 +1,10 @@
-# Remap cluster values: each unique value (including each special value) gets its own number in order of appearance.
+# Remap cluster values to sequential IDs in order of appearance
 
-This function remaps cluster values so that each unique value (including
-each special value) gets its own number in order of appearance.
+Renumbers cluster values so that each distinct value becomes a
+sequential ID, assigned in order of first appearance. Each occurrence of
+`special_val` is given its own separate ID rather than being grouped,
+which is useful for values that stand for many independent isolates
+(e.g. unclustered isolates) rather than a single cluster.
 
 ## Usage
 
@@ -17,9 +20,8 @@ remap_cluster_values(x, special_val = 0)
 
 - special_val:
 
-  A value to treat as special i.e. it will get its own number in order
-  of appearance. This is useful for values that are not part of the
-  cluster assignment, such as singleton clusters.
+  A value whose every occurrence gets its own ID instead of being
+  grouped.
 
 ## Value
 

@@ -1,9 +1,9 @@
 # Categorize cluster overlap
 
-This function categorizes the overlap of isolates in a cluster, based on
-the earliest collected isolate from all patients deemed to be in the
-cluster (hereafter referred to as the "index isolate"), and overlap
-explanations for other isolates in the cluster. The categories are:
+Labels each cluster by its likely transmission route, from the earliest
+collected isolate among all patients in the cluster (the "index
+isolate") and whether the cluster's other isolates have an overlap
+explanation. The categories are:
 
 - "patient-to-patient": if the index isolate is admission-positive and
   there is overlap explanation for all other converts in the cluster.
@@ -50,20 +50,20 @@ categorize_cluster_overlap(isolate_lookup, cluster_overlap_df, surv_df)
 
 - isolate_lookup:
 
-  A lookup table for isolates and their clusters assignments which has
-  other relevant epidemiological information. For more information, see
+  A lookup table for isolates and their cluster assignments with other
+  relevant epidemiological information. See
   [`get_isolate_lookup()`](https://theabhirath.github.io/hospitraceR/reference/get_isolate_lookup.md).
 
 - cluster_overlap_df:
 
-  A data frame with overlap information for isolate pairs. For more
-  information, see
+  A data frame of per-isolate cluster overlap, from
   [`cluster_isolate_overlap()`](https://theabhirath.github.io/hospitraceR/reference/cluster_isolate_overlap.md).
 
 - surv_df:
 
-  A data frame with surveillance information for isolates.
+  A data frame of surveillance cultures, with columns `patient_id`,
+  `genome_id`, `surv_date` and `result`.
 
 ## Value
 
-A vector with the categorization of the overlap for each cluster.
+A named character vector giving the overlap category of each cluster.

@@ -1,4 +1,4 @@
-# Adjusted Mutual Information from Contingency Table
+# Compute the adjusted mutual information from a contingency table
 
 Computes the Adjusted Mutual Information (AMI) from a contingency table.
 The AMI measures the mutual information between two clusterings,

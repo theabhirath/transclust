@@ -1,4 +1,4 @@
-# Adjusted Rand Index from Contingency Table
+# Compute the adjusted Rand index from a contingency table
 
 Computes the Adjusted Rand Index (ARI) from a contingency table. The ARI
 measures the similarity between two clusterings, adjusted for chance.

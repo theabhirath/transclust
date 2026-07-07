@@ -70,12 +70,11 @@ cluster_overlap_perm_test(
 
 - nperm:
 
-  Number of permutations to perform. Default 1000.
+  Number of permutations to perform.
 
 - num_cores:
 
-  Number of cores for parallel processing. Default is
-  `detectCores() - 1`.
+  Number of cores for parallel processing.
 
 ## Value
 

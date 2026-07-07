@@ -1,6 +1,7 @@
-# Create a lookup table for isolates along with their cluster assignments.
+# Create a lookup table for isolates along with their cluster assignments
 
-This function creates a lookup table for isolates. The columns are:
+Builds the per-isolate table that most other functions in the package
+consume. Each row is one isolate, with columns:
 
 - cluster: the cluster assignment for the isolate.
 

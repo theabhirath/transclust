@@ -8,8 +8,8 @@ transmission:
 - multiply-colonized-index: admission positive, earliest isolate,
   isolate not in cluster
 
-- weak-index-patient-to-patient: not admission positive, but first
-  surveillance is positive and in cluster
+- weak-index: not admission positive, but first surveillance is positive
+  and in cluster
 
 - convert: had surveillance before first positive
 
@@ -20,6 +20,12 @@ transmission:
 
 - secondary-convert: first positive is not in cluster and had prior
   surveillance
+
+- ambiguous-adm-pos: first positive is culture-only (strain unknown) and
+  is first surveillance
+
+- ambiguous-convert: first positive is culture-only (strain unknown) and
+  had prior surveillance
 
 ## Usage
 
