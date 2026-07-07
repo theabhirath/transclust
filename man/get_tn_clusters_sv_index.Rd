@@ -2,7 +2,7 @@
 % Please edit documentation in R/cluster_algorithms.R
 \name{get_tn_clusters_sv_index}
 \alias{get_tn_clusters_sv_index}
-\title{Identify transmission clusters based on the number of shared variants.}
+\title{Identify transmission clusters based on the number of shared variants}
 \usage{
 get_tn_clusters_sv_index(
   dna_aln,
@@ -11,37 +11,29 @@ get_tn_clusters_sv_index(
   adm_pos_pt_seqs,
   seq2pt,
   dates,
-  tree,
-  monophyly_method = c("expand", "break_down")
+  tree
 )
 }
 \arguments{
-\item{dna_aln}{A DNA alignment object of class \code{DNAbin}.}
+\item{dna_aln}{A DNA alignment object of class \code{DNAbin}. Its first sequence is taken as the
+outgroup.}
 
-\item{snp_dist}{A matrix of SNP distances between isolates constructed using a model of DNA evolution.
-See \code{\link[=get_snp_dist_matrix]{get_snp_dist_matrix()}} for a useful function to generate this.}
+\item{snp_dist}{A matrix of SNP distances between isolates. See \code{\link[=get_snp_dist_matrix]{get_snp_dist_matrix()}}.}
 
-\item{adm_seqs}{A vector of sequence IDs which correspond to admission positive patient sequences.}
+\item{adm_seqs}{A vector of sequence IDs for sequences from patients positive at intake.}
 
-\item{adm_pos_pt_seqs}{A vector of all sequence IDs which correspond to admission-positive patients, either at
-intake or collected later. This will be a superset of \code{adm_seqs} by definition.}
+\item{adm_pos_pt_seqs}{A vector of all sequence IDs from admission-positive patients, whether
+collected at intake or later; a superset of \code{adm_seqs}.}
 
 \item{seq2pt}{A named vector mapping sequence IDs to patient IDs.}
 
-\item{dates}{A vector of isolate dates named by sequence IDs.}
+\item{dates}{A named vector of isolate dates, named by sequence ID.}
 
-\item{tree}{A phylogenetic tree object of class \code{phylo} constructed from the DNA alignment. This can be constructed
-using the \code{\link[=get_phylo_tree]{get_phylo_tree()}} or can be any other tree object constructed from the same isolates.}
-
-\item{monophyly_method}{How to make a non-monophyletic cluster monophyletic. The cluster
-assignment can leave a cluster non-monophyletic when a higher-scoring nested clade
-claims some of its isolates. \code{"expand"} (the default) grows the cluster to the
-smallest clade of the tree that contains all of its members, absorbing any intervening
-isolates. \code{"break_down"} instead splits the cluster into the largest monophyletic
-clades it already contains, without pulling in foreign isolates.}
+\item{tree}{A phylogenetic tree of class \code{phylo} over the same isolates, e.g. from
+\code{\link[=get_phylo_tree]{get_phylo_tree()}}. Its first tip is taken as the outgroup, matching \code{dna_aln}.}
 }
 \value{
-A numeric vector indicating the cluster that each isolate belongs to.
+A numeric vector giving the cluster each isolate belongs to.
 }
 \description{
 Clustering is performed to identify the maximal clusters containing a single intake-positive patient that occurs

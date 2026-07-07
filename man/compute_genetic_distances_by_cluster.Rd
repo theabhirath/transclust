@@ -7,7 +7,7 @@
 compute_genetic_distances_by_cluster(isolate_lookup, snp_dist)
 }
 \arguments{
-\item{isolate_lookup}{Data frame with isolate lookup information.}
+\item{isolate_lookup}{An isolate lookup table from \code{\link[=get_isolate_lookup]{get_isolate_lookup()}}.}
 
 \item{snp_dist}{Matrix of SNP distances between isolates.}
 }

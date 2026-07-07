@@ -1,4 +1,4 @@
-#' Create Contingency Table from Two Cluster Assignments
+#' Create a contingency table from two cluster assignments
 #'
 #' @description
 #' Generates a contingency table comparing two cluster assignments. The table
@@ -35,28 +35,13 @@ cluster_contingency_table <- function(clusters1, clusters2) {
     c1 <- clusters1[common_isolates]
     c2 <- clusters2[common_isolates]
 
-    # get unique cluster labels
-    labels1 <- sort(unique(c1))
-    labels2 <- sort(unique(c2))
-
-    # build contingency table
-    cont_table <- matrix(
-        0L,
-        nrow = length(labels1),
-        ncol = length(labels2),
-        dimnames = list(labels1, labels2)
-    )
-
-    for (isolate in common_isolates) {
-        row_idx <- as.character(c1[isolate])
-        col_idx <- as.character(c2[isolate])
-        cont_table[row_idx, col_idx] <- cont_table[row_idx, col_idx] + 1L
-    }
-
-    cont_table
+    # build contingency table, rows/cols ordered by sorted cluster label
+    cont_table <- table(factor(c1, sort(unique(c1))), factor(c2, sort(unique(c2))))
+    names(dimnames(cont_table)) <- NULL
+    unclass(cont_table)
 }
 
-#' Adjusted Rand Index from Contingency Table
+#' Compute the adjusted Rand index from a contingency table
 #'
 #' @description
 #' Computes the Adjusted Rand Index (ARI) from a contingency table. The ARI
@@ -125,7 +110,7 @@ ari_from_contingency <- function(cont_table) {
     numerator / denominator
 }
 
-#' Adjusted Rand Index from Cluster Assignments
+#' Compute the adjusted Rand index from cluster assignments
 #'
 #' @description
 #' Computes the Adjusted Rand Index (ARI) between two cluster assignments.
@@ -146,7 +131,7 @@ adjusted_rand_index <- function(clusters1, clusters2) {
     ari_from_contingency(cont_table)
 }
 
-#' Adjusted Mutual Information from Contingency Table
+#' Compute the adjusted mutual information from a contingency table
 #'
 #' @description
 #' Computes the Adjusted Mutual Information (AMI) from a contingency table.
@@ -252,7 +237,7 @@ ami_from_contingency <- function(cont_table) {
     (mi - emi) / denominator
 }
 
-#' Adjusted Mutual Information from Cluster Assignments
+#' Compute the adjusted mutual information from cluster assignments
 #'
 #' @description
 #' Computes the Adjusted Mutual Information (AMI) between two cluster assignments.
@@ -273,13 +258,13 @@ adjusted_mutual_information <- function(clusters1, clusters2) {
     ami_from_contingency(cont_table)
 }
 
-#' Fraction of Converts with Same Source Across Cluster Assignments
+#' Compute the fraction of converts with the same source across cluster assignments
 #'
 #' @description
 #' Compares two cluster assignments by examining patients categorized as "convert".
 #' For each patient who is a convert in both assignments, checks whether the
-#' source patient (categorized as "index" or "weak-index") in their respective
-#' clusters is the same across both assignments.
+#' source patient (the cluster's index, weak index, or multiply-colonized index) is
+#' the same across both assignments.
 #'
 #' @param clusters1 A named vector of cluster assignments where names are isolate
 #'   IDs and values are cluster numbers.
@@ -291,20 +276,21 @@ adjusted_mutual_information <- function(clusters1, clusters2) {
 #' @param dates A named vector mapping sequence IDs to dates.
 #' @param surv_df A data frame with surveillance data containing columns:
 #'   patient_id, genome_id, surv_date, result.
-#' @param converts_without_assigned_source A logical value (default: FALSE) indicating
-#'   whether to include patients that are converts but have no assigned source in the lookup.
+#' @param converts_without_assigned_source A logical value indicating
+#'   whether to include singleton converts -- patients counted as converts that have no assigned
+#'   source in the lookup -- in the comparison, recording them with no source.
 #'
 #' @return A numeric value between 0 and 1 representing the fraction of convert
-#'   patients whose source (index or weak-index) is the same in both cluster
-#'   assignments. Returns NA if there are no common converts.
+#'   patients whose source (index, weak index, or multiply-colonized index) is the
+#'   same in both cluster assignments. Returns NA if there are no common converts.
 #'
 #' @details
 #' The function:
 #' 1. Creates isolate lookups for both cluster assignments
 #' 2. Categorizes patients in both using [cluster_patient_categorization()]
 #' 3. Identifies patients categorized as "convert" in both assignments
-#' 4. For each such convert, finds the "index" or "weak-index" patient in their
-#'    cluster for each assignment
+#' 4. For each such convert, finds the source patient (index, weak index, or
+#'    multiply-colonized index) in their cluster for each assignment
 #' 5. Returns the fraction where the source patient matches
 #'
 #' @seealso [fraction_convert_same_source_from_lookups()], [cluster_patient_categorization()],
@@ -319,7 +305,8 @@ fraction_convert_same_source <- function(
     adm_seqs,
     dates,
     surv_df,
-    converts_without_assigned_source = FALSE
+    converts_without_assigned_source = FALSE,
+    debug = FALSE
 ) {
     # Create isolate lookups for both cluster assignments
     isolate_lookup1 <- get_isolate_lookup(
@@ -346,11 +333,12 @@ fraction_convert_same_source <- function(
         isolate_lookup2,
         surv_df,
         surv_df,
-        converts_without_assigned_source
+        converts_without_assigned_source,
+        debug
     )
 }
 
-#' Fraction of Converts with Same Source from Isolate Lookups
+#' Compute the fraction of converts with the same source from isolate lookups
 #'
 #' @description
 #' Compares two isolate lookups by examining patients categorized as "convert".
@@ -365,12 +353,13 @@ fraction_convert_same_source <- function(
 #'   patient_id, genome_id, surv_date, result for the first cluster assignment.
 #' @param surv_df_2 A data frame with surveillance data containing columns:
 #'   patient_id, genome_id, surv_date, result for the second cluster assignment.
-#' @param converts_without_assigned_source A logical value (default: TRUE) indicating
-#' whether to include patients that are converts but have no assigned source.
+#' @param converts_without_assigned_source A logical value indicating
+#'   whether to include singleton converts -- patients counted as converts that have no assigned
+#'   source in the lookup -- in the comparison, recording them with no source.
 #'
 #' @return A numeric value between 0 and 1 representing the fraction of convert
-#'   patients whose source (index or weak-index) is the same in both cluster
-#'   assignments. Returns NA if there are no common converts.
+#'   patients whose source (index, weak index, or multiply-colonized index) is the
+#'   same in both cluster assignments. Returns NA if there are no common converts.
 #'
 #' @seealso [fraction_convert_same_source()], [cluster_patient_categorization()]
 #'
@@ -380,7 +369,8 @@ fraction_convert_same_source_from_lookups <- function(
     isolate_lookup2,
     surv_df_1,
     surv_df_2,
-    converts_without_assigned_source = TRUE
+    converts_without_assigned_source = TRUE,
+    debug = FALSE
 ) {
     # Helper: build convert -> sources mapping from isolate_lookup
     # Returns a named list: names are convert patient IDs, values are character
@@ -394,13 +384,15 @@ fraction_convert_same_source_from_lookups <- function(
         convert_to_sources <- list()
         for (cl in names(categories)) {
             cats <- categories[[cl]]
-            converts <- names(cats)[cats %in% c("convert", "secondary-convert")]
+            converts <- names(cats)[
+                cats %in% c("convert", "secondary-convert", "ambiguous-convert")
+            ]
 
             if (length(converts) == 0) {
                 next
             }
 
-            # The source must be an index, weak-index, or multiply-colonized-index
+            # The source must be an index, weak index, or multiply-colonized index
             sources <- names(cats)[cats %in% c("index", "weak-index", "multiply-colonized-index")]
             if (converts_without_assigned_source) {
                 # If the flag is set, we will allow converts with no assigned source to be included
@@ -414,6 +406,9 @@ fraction_convert_same_source_from_lookups <- function(
                 }
             } else {
                 # If the flag is not set, we will skip converts with no assigned source
+                if (length(sources) == 0) {
+                    next
+                }
                 source <- sources[1]
                 converts <- setdiff(converts, source)
                 if (length(converts) == 0) {
@@ -450,9 +445,11 @@ fraction_convert_same_source_from_lookups <- function(
     } else {
         names(map2)
     }
-    # check if the smaller set is a subset of the larger set and
-    # print a warning if not
-    if (!all(common_converts %in% names(map1)) || !all(common_converts %in% names(map2))) {
+    # print debug information if the smaller set is a subset of the larger set
+    if (
+        debug &&
+            (!all(common_converts %in% names(map1)) || !all(common_converts %in% names(map2)))
+    ) {
         # print those patients that are in the smaller set but not the larger set
         print(setdiff(common_converts, names(map1)))
         print(setdiff(common_converts, names(map2)))

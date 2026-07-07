@@ -15,8 +15,8 @@
 #' @param facility_trace A matrix with patient IDs as row names and dates as column names.
 #' @param floor_trace A matrix with floor-level trace data (same structure as `facility_trace`).
 #' @param room_trace A matrix with room-level trace data (same structure as `facility_trace`).
-#' @param nperm Number of permutations to perform. Default 1000.
-#' @param num_cores Number of cores for parallel processing. Default is `detectCores() - 1`.
+#' @param nperm Number of permutations to perform.
+#' @param num_cores Number of cores for parallel processing.
 #'
 #' @returns A list containing:
 #'     \itemize{
@@ -96,7 +96,7 @@ cluster_overlap_perm_test <- function(
     ]
 
     # Calculate observed overlap fractions using precomputed overlaps
-    observed_fractions <- calculate_overlap_fractions_fast(
+    observed_fractions <- calculate_overlap_fractions(
         observed_lookup,
         valid_clusters,
         iso_overlap_facility,
@@ -154,7 +154,7 @@ cluster_overlap_perm_test <- function(
             perm_valid_clusters <- get_non_single_patient_clusters(perm_lookup)
 
             # Calculate overlap fractions using precomputed overlaps
-            calculate_overlap_fractions_fast(
+            calculate_overlap_fractions(
                 perm_lookup,
                 perm_valid_clusters,
                 iso_overlap_facility,
@@ -211,47 +211,17 @@ cluster_overlap_perm_test <- function(
 # Helper functions for permutation tests
 # =============================================================================
 
-#' Calculate overlap fractions for all three trace types (original version)
+#' Calculate overlap fractions using precomputed isolate-isolate overlaps
 #' @noRd
 calculate_overlap_fractions <- function(
-    isolate_lookup,
-    valid_clusters,
-    facility_trace,
-    floor_trace,
-    room_trace
-) {
-    # Filter lookup to valid clusters for overlap calculation
-    lookup_filtered <- isolate_lookup[isolate_lookup$cluster %in% valid_clusters, ]
-
-    # Calculate isolate-isolate overlap for each trace type
-    iso_overlap_facility <- isolate_isolate_overlap(lookup_filtered, facility_trace)
-    iso_overlap_floor <- isolate_isolate_overlap(lookup_filtered, floor_trace)
-    iso_overlap_room <- isolate_isolate_overlap(lookup_filtered, room_trace)
-
-    # Calculate cluster-isolate overlap
-    cluster_overlap_facility <- cluster_isolate_overlap(lookup_filtered, iso_overlap_facility)
-    cluster_overlap_floor <- cluster_isolate_overlap(lookup_filtered, iso_overlap_floor)
-    cluster_overlap_room <- cluster_isolate_overlap(lookup_filtered, iso_overlap_room)
-
-    # Calculate fraction of converts with overlap
-    list(
-        facility = fraction_convert_events_with_overlap(cluster_overlap_facility, lookup_filtered),
-        floor = fraction_convert_events_with_overlap(cluster_overlap_floor, lookup_filtered),
-        room = fraction_convert_events_with_overlap(cluster_overlap_room, lookup_filtered)
-    )
-}
-
-#' Calculate overlap fractions using precomputed isolate-isolate overlaps (fast version)
-#' @noRd
-calculate_overlap_fractions_fast <- function(
     isolate_lookup,
     valid_clusters,
     iso_overlap_facility,
     iso_overlap_floor,
     iso_overlap_room,
-    seq_overlap_facility = NULL,
-    seq_overlap_floor = NULL,
-    seq_overlap_room = NULL
+    seq_overlap_facility,
+    seq_overlap_floor,
+    seq_overlap_room
 ) {
     # Filter lookup to valid clusters for overlap calculation
     lookup_filtered <- isolate_lookup[isolate_lookup$cluster %in% valid_clusters, ]
@@ -261,28 +231,19 @@ calculate_overlap_fractions_fast <- function(
     cluster_overlap_floor <- cluster_isolate_overlap(lookup_filtered, iso_overlap_floor)
     cluster_overlap_room <- cluster_isolate_overlap(lookup_filtered, iso_overlap_room)
 
+    seq_cl_facility <- cluster_isolate_overlap(lookup_filtered, seq_overlap_facility)
+    seq_cl_floor <- cluster_isolate_overlap(lookup_filtered, seq_overlap_floor)
+    seq_cl_room <- cluster_isolate_overlap(lookup_filtered, seq_overlap_room)
+
     # Calculate fraction of converts with overlap
-    result <- list(
+    list(
         facility = fraction_convert_events_with_overlap(cluster_overlap_facility, lookup_filtered),
         floor = fraction_convert_events_with_overlap(cluster_overlap_floor, lookup_filtered),
-        room = fraction_convert_events_with_overlap(cluster_overlap_room, lookup_filtered)
+        room = fraction_convert_events_with_overlap(cluster_overlap_room, lookup_filtered),
+        seq_facility = fraction_convert_events_with_overlap(seq_cl_facility, lookup_filtered),
+        seq_floor = fraction_convert_events_with_overlap(seq_cl_floor, lookup_filtered),
+        seq_room = fraction_convert_events_with_overlap(seq_cl_room, lookup_filtered)
     )
-
-    # Calculate sequential overlap fractions if provided
-    if (!is.null(seq_overlap_facility)) {
-        seq_cl_facility <- cluster_isolate_overlap(lookup_filtered, seq_overlap_facility)
-        seq_cl_floor <- cluster_isolate_overlap(lookup_filtered, seq_overlap_floor)
-        seq_cl_room <- cluster_isolate_overlap(lookup_filtered, seq_overlap_room)
-
-        result$seq_facility <- fraction_convert_events_with_overlap(
-            seq_cl_facility,
-            lookup_filtered
-        )
-        result$seq_floor <- fraction_convert_events_with_overlap(seq_cl_floor, lookup_filtered)
-        result$seq_room <- fraction_convert_events_with_overlap(seq_cl_room, lookup_filtered)
-    }
-
-    result
 }
 
 #' Create eligibility matrices for permutation

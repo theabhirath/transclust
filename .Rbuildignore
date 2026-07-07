@@ -12,3 +12,5 @@
 ^Meta$
 ^\.vscode$
 ^[.]?air[.]toml$
+^vignettes/articles$
+^inst/extdata$

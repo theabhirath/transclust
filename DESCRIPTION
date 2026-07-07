@@ -1,7 +1,7 @@
 Package: hospitraceR
-Title: An R package for transmission cluster analysis for pathogens
-Version: 0.0.1
-Date: 2025-02-14
+Title: Detecting and analyzing nosocomial transmission clusters using genomic epidemiology
+Version: 0.1.0
+Date: 2026-06-21
 Authors@R:
     c(
         person(
@@ -11,7 +11,11 @@ Authors@R:
             comment = c(ORCID = "0009-0008-6985-9266")
         )
     )
-Description: An R package for transmission cluster analysis for pathogens.
+Description: Detects transmission clusters of healthcare-associated pathogens by
+    combining whole-genome single-nucleotide-variant data with patient location
+    traces, surveillance cultures and admission status. Also provides tools to compare
+    cluster assignments, to test spatial and temporal patient overlap within clusters by
+    permutation, and to categorize the inferred transmission role of each patient.
 URL: https://theabhirath.github.io/hospitraceR, https://github.com/theabhirath/hospitraceR
 BugReports: https://github.com/theabhirath/hospitraceR/issues
 License: MIT + file LICENSE
@@ -38,5 +42,5 @@ LazyData: true
 Roxygen: list(markdown = TRUE)
 LinkingTo:
     Rcpp
-VignetteBuilder: knitr
 Config/roxygen2/version: 8.0.0
+Language: en-US

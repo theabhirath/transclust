@@ -5,14 +5,25 @@
 [![R-CMD-check](https://github.com/theabhirath/hospitraceR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/theabhirath/hospitraceR/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-The project will involve the implementation and evaluation of algorithms for detecting transmission clusters in healthcare settings using genomic data.
+**hospitraceR** detects transmission clusters of healthcare-associated pathogens by combining
+whole-genome sequencing data with patient location traces, surveillance cultures, and admission status.
 
-> [!WARNING]
-> This project is still in the early stages of development and the API may change without notice.
+Beyond clustering, the package can:
+
+- compare two cluster assignments, both structurally and epidemiologically;
+- categorize each patient's transmission role and attempt to "explain" transmission scenarios
+  in clusters using spatiotemporal overlap information;
+- summarize per-cluster genetic distances and acquisition timing;
+
+and more. See the [introductory article](https://theabhirath.github.io/hospitraceR/articles/hospitraceR.html)
+for a guided introduction.
+
+Plotting lives in the companion package
+[hospitraceRVisualize](https://github.com/theabhirath/hospitraceRVisualize).
 
 ## Installation
 
-`hospitraceR` is not available on CRAN yet, but you can install it from GitHub using `devtools`:
+`hospitraceR` is not on CRAN yet. Install the development version from GitHub with `devtools`:
 
 ```r
 devtools::install_github("theabhirath/hospitraceR")

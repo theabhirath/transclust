@@ -1,25 +1,24 @@
-#' Perform clustering of isolates using a hard SNP distance cutoff.
+#' Cluster isolates using a hard SNP distance cutoff
 #'
 #' @description
-#' This function uses a hard SNP distance cutoff to define clusters naïvely, without using
-#' the phylogenetic tree.
+#' Defines clusters with a hard SNP distance cutoff, via hierarchical clustering of the distance
+#' matrix cut at `snp_thresh`. This is the naive baseline to the threshold-free
+#' [get_tn_clusters_sv_index()]. The resulting clusters are then reconciled with a phylogenetic
+#' tree so that each is monophyletic.
 #'
-#' @param snp_dist A matrix of SNP distances between isolates constructed using a model of DNA evolution.
-#'                 See [get_snp_dist_matrix()] for a useful function to generate this.
-#' @param snp_thresh A threshold for defining clusters.
-#' @param hclust_method A string indicating the method to use for hierarchical clustering.
-#'                     See [stats::hclust()] for more details. Default is "complete".
-#' @param tree An optional phylogenetic tree of class `phylo` covering the same isolates. When
-#'             supplied, clusters are forced to be monophyletic with respect to this tree (e.g. an
-#'             NJ or maximum-parsimony tree from [get_phylo_tree()]); otherwise monophyly is
-#'             enforced on the dendrogram implied by the SNP distances themselves. Default is `NULL`.
-#' @param monophyly_method How to make a non-monophyletic cluster monophyletic. `"expand"` (the
-#'             default) grows the cluster to the smallest clade of the tree that contains all of its
-#'             members, absorbing any intervening isolates. `"break_down"` instead splits the
-#'             cluster into the largest monophyletic clades it already contains, without pulling in
-#'             foreign isolates.
+#' @param snp_dist A matrix of SNP distances between isolates. See [get_snp_dist_matrix()].
+#' @param snp_thresh SNP distance at which to cut the hierarchical clustering into clusters.
+#' @param hclust_method Linkage method for hierarchical clustering, passed to [stats::hclust()].
+#' @param tree An optional phylogenetic tree of class `phylo` over the same isolates (e.g. from
+#'             [get_phylo_tree()]). When supplied, clusters are forced to be monophyletic with
+#'             respect to it; otherwise monophyly is enforced on the dendrogram implied by the SNP
+#'             distances.
+#' @param monophyly_method How a non-monophyletic cluster is reconciled with the tree. `"expand"`
+#'             grows the cluster to the smallest clade containing all its members,
+#'             absorbing any intervening isolates; `"break_down"` splits it into the largest
+#'             monophyletic clades it already contains, pulling in no foreign isolates.
 #'
-#' @return A numeric vector indicating the cluster that each isolate belongs to.
+#' @return A numeric vector giving the cluster each isolate belongs to.
 #'
 #' @importFrom stats hclust as.dist cutree
 #' @importFrom ape as.phylo
@@ -27,9 +26,9 @@
 get_tn_clusters_snp_thresh <- function(
     snp_dist,
     snp_thresh,
-    hclust_method = "complete",
+    hclust_method = "single",
     tree = NULL,
-    monophyly_method = c("expand", "break_down")
+    monophyly_method = c("break_down", "expand")
 ) {
     monophyly_method <- match.arg(monophyly_method)
 
@@ -51,7 +50,7 @@ get_tn_clusters_snp_thresh <- function(
     enforce_monophyly(clusters, tree, monophyly_method)
 }
 
-#' Identify transmission clusters based on the number of shared variants.
+#' Identify transmission clusters based on the number of shared variants
 #'
 #' @description
 #' Clustering is performed to identify the maximal clusters containing a single intake-positive patient that occurs
@@ -60,24 +59,18 @@ get_tn_clusters_snp_thresh <- function(
 #' patients occur after converts. This clustering also requires that clusters be defined by at least one shared variant
 #' that other isolates don't have.
 #'
-#' @param dna_aln A DNA alignment object of class `DNAbin`.
-#' @param snp_dist A matrix of SNP distances between isolates constructed using a model of DNA evolution.
-#'                 See [get_snp_dist_matrix()] for a useful function to generate this.
-#' @param adm_seqs A vector of sequence IDs which correspond to admission positive patient sequences.
-#' @param adm_pos_pt_seqs A vector of all sequence IDs which correspond to admission-positive patients, either at
-#'                        intake or collected later. This will be a superset of `adm_seqs` by definition.
+#' @param dna_aln A DNA alignment object of class `DNAbin`. Its first sequence is taken as the
+#'                outgroup.
+#' @param snp_dist A matrix of SNP distances between isolates. See [get_snp_dist_matrix()].
+#' @param adm_seqs A vector of sequence IDs for sequences from patients positive at intake.
+#' @param adm_pos_pt_seqs A vector of all sequence IDs from admission-positive patients, whether
+#'                        collected at intake or later; a superset of `adm_seqs`.
 #' @param seq2pt A named vector mapping sequence IDs to patient IDs.
-#' @param dates A vector of isolate dates named by sequence IDs.
-#' @param tree A phylogenetic tree object of class `phylo` constructed from the DNA alignment. This can be constructed
-#'             using the [get_phylo_tree()] or can be any other tree object constructed from the same isolates.
-#' @param monophyly_method How to make a non-monophyletic cluster monophyletic. The cluster
-#'             assignment can leave a cluster non-monophyletic when a higher-scoring nested clade
-#'             claims some of its isolates. `"expand"` (the default) grows the cluster to the
-#'             smallest clade of the tree that contains all of its members, absorbing any intervening
-#'             isolates. `"break_down"` instead splits the cluster into the largest monophyletic
-#'             clades it already contains, without pulling in foreign isolates.
+#' @param dates A named vector of isolate dates, named by sequence ID.
+#' @param tree A phylogenetic tree of class `phylo` over the same isolates, e.g. from
+#'             [get_phylo_tree()]. Its first tip is taken as the outgroup, matching `dna_aln`.
 #'
-#' @return A numeric vector indicating the cluster that each isolate belongs to.
+#' @return A numeric vector giving the cluster each isolate belongs to.
 #'
 #' @references Hawken, S. E., Yelin, R. D., Lolans, K., Pirani, A., Weinstein, R. A., Lin, M. Y., Hayden, M. K., &
 #'             Snitkin, E. S. (2022). Threshold-free genomic cluster detection to track transmission pathways in
@@ -93,10 +86,8 @@ get_tn_clusters_sv_index <- function(
     adm_pos_pt_seqs,
     seq2pt,
     dates,
-    tree,
-    monophyly_method = c("expand", "break_down")
+    tree
 ) {
-    monophyly_method <- match.arg(monophyly_method)
     ####################################################################################
     # 1. Compute the shared variant matrix #####
     # For each pair of isolates, we compute the number of positions where:
@@ -274,9 +265,9 @@ get_tn_clusters_sv_index <- function(
     # log completion of phase to standard output
     message("Phase 4 complete: Cluster assignment.")
 
-    # The cluster assignment can leave a cluster non-monophyletic when a higher-scoring nested clade
-    # claims some of its isolates. Reconcile any such clusters with the tree (the out-group has
-    # already been dropped above), leaving the unclustered isolates (value 0) untouched. This also
-    # renumbers the resulting clusters sequentially starting from 1.
-    enforce_monophyly(clusters, tree, monophyly_method, special_val = 0)
+    # Renumber the clusters sequentially starting from 1, leaving the unclustered isolates (value 0)
+    # untouched -- each one is given its own id rather than being grouped. Renumbering is decoupled
+    # from monophyly enforcement here: the threshold-free method builds its clusters from clades of
+    # the tree, so monophyly is not imposed on the result (unlike the SNP-threshold baseline).
+    remap_cluster_values(clusters, special_val = 0)
 }

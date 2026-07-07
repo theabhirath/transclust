@@ -2,7 +2,7 @@
 % Please edit documentation in R/cluster_compare.R
 \name{ari_from_contingency}
 \alias{ari_from_contingency}
-\title{Adjusted Rand Index from Contingency Table}
+\title{Compute the adjusted Rand index from a contingency table}
 \usage{
 ari_from_contingency(cont_table)
 }

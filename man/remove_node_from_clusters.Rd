@@ -2,19 +2,19 @@
 % Please edit documentation in R/cluster_utils.R
 \name{remove_node_from_clusters}
 \alias{remove_node_from_clusters}
-\title{Remove a node from a vector of cluster assignments.}
+\title{Remove a node from a vector of cluster assignments}
 \usage{
 remove_node_from_clusters(clusters, node)
 }
 \arguments{
 \item{clusters}{A numeric vector of cluster assignments.}
 
-\item{node}{The node to remove.}
+\item{node}{The node (isolate name) to remove.}
 }
 \value{
 A numeric vector of cluster assignments with the node removed.
 }
 \description{
-This function removes a node from a vector of cluster assignments.
+Remove a node from a vector of cluster assignments
 }
 \keyword{internal}

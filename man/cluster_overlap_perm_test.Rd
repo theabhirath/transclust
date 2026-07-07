@@ -40,9 +40,9 @@ cluster_overlap_perm_test(
 
 \item{room_trace}{A matrix with room-level trace data (same structure as \code{facility_trace}).}
 
-\item{nperm}{Number of permutations to perform. Default 1000.}
+\item{nperm}{Number of permutations to perform.}
 
-\item{num_cores}{Number of cores for parallel processing. Default is \code{detectCores() - 1}.}
+\item{num_cores}{Number of cores for parallel processing.}
 }
 \value{
 A list containing:

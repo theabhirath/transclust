@@ -2,40 +2,39 @@
 % Please edit documentation in R/cluster_algorithms.R
 \name{get_tn_clusters_snp_thresh}
 \alias{get_tn_clusters_snp_thresh}
-\title{Perform clustering of isolates using a hard SNP distance cutoff.}
+\title{Cluster isolates using a hard SNP distance cutoff}
 \usage{
 get_tn_clusters_snp_thresh(
   snp_dist,
   snp_thresh,
-  hclust_method = "complete",
+  hclust_method = "single",
   tree = NULL,
-  monophyly_method = c("expand", "break_down")
+  monophyly_method = c("break_down", "expand")
 )
 }
 \arguments{
-\item{snp_dist}{A matrix of SNP distances between isolates constructed using a model of DNA evolution.
-See \code{\link[=get_snp_dist_matrix]{get_snp_dist_matrix()}} for a useful function to generate this.}
+\item{snp_dist}{A matrix of SNP distances between isolates. See \code{\link[=get_snp_dist_matrix]{get_snp_dist_matrix()}}.}
 
-\item{snp_thresh}{A threshold for defining clusters.}
+\item{snp_thresh}{SNP distance at which to cut the hierarchical clustering into clusters.}
 
-\item{hclust_method}{A string indicating the method to use for hierarchical clustering.
-See \code{\link[stats:hclust]{stats::hclust()}} for more details. Default is "complete".}
+\item{hclust_method}{Linkage method for hierarchical clustering, passed to \code{\link[stats:hclust]{stats::hclust()}}.}
 
-\item{tree}{An optional phylogenetic tree of class \code{phylo} covering the same isolates. When
-supplied, clusters are forced to be monophyletic with respect to this tree (e.g. an
-NJ or maximum-parsimony tree from \code{\link[=get_phylo_tree]{get_phylo_tree()}}); otherwise monophyly is
-enforced on the dendrogram implied by the SNP distances themselves. Default is \code{NULL}.}
+\item{tree}{An optional phylogenetic tree of class \code{phylo} over the same isolates (e.g. from
+\code{\link[=get_phylo_tree]{get_phylo_tree()}}). When supplied, clusters are forced to be monophyletic with
+respect to it; otherwise monophyly is enforced on the dendrogram implied by the SNP
+distances.}
 
-\item{monophyly_method}{How to make a non-monophyletic cluster monophyletic. \code{"expand"} (the
-default) grows the cluster to the smallest clade of the tree that contains all of its
-members, absorbing any intervening isolates. \code{"break_down"} instead splits the
-cluster into the largest monophyletic clades it already contains, without pulling in
-foreign isolates.}
+\item{monophyly_method}{How a non-monophyletic cluster is reconciled with the tree. \code{"expand"}
+grows the cluster to the smallest clade containing all its members,
+absorbing any intervening isolates; \code{"break_down"} splits it into the largest
+monophyletic clades it already contains, pulling in no foreign isolates.}
 }
 \value{
-A numeric vector indicating the cluster that each isolate belongs to.
+A numeric vector giving the cluster each isolate belongs to.
 }
 \description{
-This function uses a hard SNP distance cutoff to define clusters naïvely, without using
-the phylogenetic tree.
+Defines clusters with a hard SNP distance cutoff, via hierarchical clustering of the distance
+matrix cut at \code{snp_thresh}. This is the naive baseline to the threshold-free
+\code{\link[=get_tn_clusters_sv_index]{get_tn_clusters_sv_index()}}. The resulting clusters are then reconciled with a phylogenetic
+tree so that each is monophyletic.
 }

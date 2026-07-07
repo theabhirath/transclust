@@ -2,7 +2,7 @@
 % Please edit documentation in R/cluster_stats.R
 \name{cluster_inter_distances}
 \alias{cluster_inter_distances}
-\title{Compute per-cluster nearest-neighbour SNP distances}
+\title{Compute per-cluster nearest-neighbor SNP distances}
 \usage{
 cluster_inter_distances(clusters, snp_dist)
 }

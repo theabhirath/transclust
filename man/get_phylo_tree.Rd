@@ -2,23 +2,23 @@
 % Please edit documentation in R/utils.R
 \name{get_phylo_tree}
 \alias{get_phylo_tree}
-\title{Get phylogenetic tree using neighbor-joining or maximum parsimony method.}
+\title{Build a phylogenetic tree by neighbor-joining or maximum parsimony}
 \usage{
 get_phylo_tree(dna_aln, snp_dist, method = c("nj", "pars"))
 }
 \arguments{
 \item{dna_aln}{A DNA alignment object of class \code{DNAbin}.}
 
-\item{snp_dist}{A numeric matrix representing the SNP distance between sequences.
-See \code{\link[=get_snp_dist_matrix]{get_snp_dist_matrix()}} for a useful function to generate this.}
+\item{snp_dist}{A numeric matrix of SNP distances between sequences. See \code{\link[=get_snp_dist_matrix]{get_snp_dist_matrix()}}.}
 
-\item{method}{A string indicating the method to use for tree construction. Options are
-"nj" (neighbor-joining) or "pars" (maximum parsimony).}
+\item{method}{Tree-construction method: \code{"nj"} (neighbor-joining) or \code{"pars"} (maximum
+parsimony).}
 }
 \value{
 An object of class \code{phylo} representing the phylogenetic tree.
 }
 \description{
-This function constructs a neighbor-joining or maximum parsimony phylogenetic
-tree from a DNA alignment object and a SNP distance matrix.
+Builds a tree from a DNA alignment and its SNP distance matrix. A neighbor-joining tree is
+computed first and rooted on the most divergent isolate (the one with the largest mean SNP
+distance); with \code{method = "pars"} this is then refined into a maximum-parsimony tree.
 }

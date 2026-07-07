@@ -2,7 +2,7 @@
 % Please edit documentation in R/cluster_compare.R
 \name{ami_from_contingency}
 \alias{ami_from_contingency}
-\title{Adjusted Mutual Information from Contingency Table}
+\title{Compute the adjusted mutual information from a contingency table}
 \usage{
 ami_from_contingency(cont_table)
 }

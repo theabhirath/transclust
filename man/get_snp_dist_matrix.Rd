@@ -2,19 +2,21 @@
 % Please edit documentation in R/utils.R
 \name{get_snp_dist_matrix}
 \alias{get_snp_dist_matrix}
-\title{Get SNP distance matrix from DNA alignment constructed using a model of DNA evolution.}
+\title{Compute a pairwise SNP distance matrix from a DNA alignment}
 \usage{
 get_snp_dist_matrix(dna_aln, core = TRUE)
 }
 \arguments{
 \item{dna_aln}{A DNA alignment object of class \code{DNAbin}.}
 
-\item{core}{Logical: if \code{TRUE}, return the core SNP distance matrix, otherwise
-return the full SNP distance matrix.}
+\item{core}{Logical; if \code{TRUE}, sites with missing data in any sequence are
+dropped before counting, giving a core-genome distance. If \code{FALSE}, missing data
+are handled per pair of sequences (pairwise deletion).}
 }
 \value{
-A numeric matrix representing the SNP distance between sequences.
+A numeric matrix of pairwise SNP distances between sequences.
 }
 \description{
-Get SNP distance matrix from DNA alignment constructed using a model of DNA evolution.
+Counts the number of nucleotide differences between every pair of sequences, via
+\code{\link[ape:dist.dna]{ape::dist.dna()}} with model \code{"N"}.
 }

@@ -7,22 +7,22 @@
 categorize_cluster_overlap(isolate_lookup, cluster_overlap_df, surv_df)
 }
 \arguments{
-\item{isolate_lookup}{A lookup table for isolates and their clusters assignments which has
-other relevant epidemiological information. For more information, see
-\code{\link[=get_isolate_lookup]{get_isolate_lookup()}}.}
+\item{isolate_lookup}{A lookup table for isolates and their cluster assignments with other
+relevant epidemiological information. See \code{\link[=get_isolate_lookup]{get_isolate_lookup()}}.}
 
-\item{cluster_overlap_df}{A data frame with overlap information for isolate pairs. For more information, see
+\item{cluster_overlap_df}{A data frame of per-isolate cluster overlap, from
 \code{\link[=cluster_isolate_overlap]{cluster_isolate_overlap()}}.}
 
-\item{surv_df}{A data frame with surveillance information for isolates.}
+\item{surv_df}{A data frame of surveillance cultures, with columns \code{patient_id}, \code{genome_id},
+\code{surv_date} and \code{result}.}
 }
 \value{
-A vector with the categorization of the overlap for each cluster.
+A named character vector giving the overlap category of each cluster.
 }
 \description{
-This function categorizes the overlap of isolates in a cluster, based on the earliest collected isolate
-from all patients deemed to be in the cluster (hereafter referred to as the "index isolate"), and overlap
-explanations for other isolates in the cluster. The categories are:
+Labels each cluster by its likely transmission route, from the earliest collected isolate among
+all patients in the cluster (the "index isolate") and whether the cluster's other isolates have
+an overlap explanation. The categories are:
 \itemize{
 \item "patient-to-patient": if the index isolate is admission-positive and there is overlap explanation for
 all other converts in the cluster.

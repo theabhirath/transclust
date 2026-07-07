@@ -7,12 +7,11 @@
 fraction_convert_events_with_overlap(cluster_overlap_df, isolate_lookup)
 }
 \arguments{
-\item{cluster_overlap_df}{A data frame with overlap information for isolate pairs. For more
-information, see \code{\link[=cluster_isolate_overlap]{cluster_isolate_overlap()}}.}
+\item{cluster_overlap_df}{A data frame of per-isolate cluster overlap, from
+\code{\link[=cluster_isolate_overlap]{cluster_isolate_overlap()}}.}
 
-\item{isolate_lookup}{A lookup table for isolates and their clusters assignments which has
-other relevant epidemiological information. For more information, see
-\code{\link[=get_isolate_lookup]{get_isolate_lookup()}}.}
+\item{isolate_lookup}{A lookup table for isolates and their cluster assignments with other
+relevant epidemiological information. See \code{\link[=get_isolate_lookup]{get_isolate_lookup()}}.}
 }
 \value{
 A named numeric vector with the fraction of convert events with overlap for each
@@ -20,7 +19,8 @@ cluster (\code{NA} for clusters with no convert events), carrying the per-cluste
 and \code{n_converts} counts as attributes.
 }
 \description{
-This function calculates the fraction of convert events with overlap for each cluster.
+Reduces the cluster-level overlaps to, for each cluster, the fraction of convert events that have
+an overlap explanation.
 
 A convert event is an isolate where (1) the patient has no admission-positive
 isolates, and (2) the patient had a prior negative surveillance before this

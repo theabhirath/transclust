@@ -1,9 +1,9 @@
 #' Categorize cluster overlap
 #'
 #' @description
-#' This function categorizes the overlap of isolates in a cluster, based on the earliest collected isolate
-#' from all patients deemed to be in the cluster (hereafter referred to as the "index isolate"), and overlap
-#' explanations for other isolates in the cluster. The categories are:
+#' Labels each cluster by its likely transmission route, from the earliest collected isolate among
+#' all patients in the cluster (the "index isolate") and whether the cluster's other isolates have
+#' an overlap explanation. The categories are:
 #' \itemize{
 #'   \item "patient-to-patient": if the index isolate is admission-positive and there is overlap explanation for
 #'     all other converts in the cluster.
@@ -25,14 +25,14 @@
 #'     index and overlap explanations are not enough to explain these clusters.
 #' }
 #'
-#' @param isolate_lookup A lookup table for isolates and their clusters assignments which has
-#'                       other relevant epidemiological information. For more information, see
-#'                       [get_isolate_lookup()].
-#' @param cluster_overlap_df A data frame with overlap information for isolate pairs. For more information, see
+#' @param isolate_lookup A lookup table for isolates and their cluster assignments with other
+#'                       relevant epidemiological information. See [get_isolate_lookup()].
+#' @param cluster_overlap_df A data frame of per-isolate cluster overlap, from
 #'                   [cluster_isolate_overlap()].
-#' @param surv_df A data frame with surveillance information for isolates.
+#' @param surv_df A data frame of surveillance cultures, with columns `patient_id`, `genome_id`,
+#'                `surv_date` and `result`.
 #'
-#' @return A vector with the categorization of the overlap for each cluster.
+#' @return A named character vector giving the overlap category of each cluster.
 #'
 #' @importFrom stats setNames
 #' @export
@@ -134,11 +134,13 @@ categorize_cluster_overlap <- function(isolate_lookup, cluster_overlap_df, surv_
 #' \itemize{
 #'   \item index: admission positive, earliest isolate, isolate in cluster
 #'   \item multiply-colonized-index: admission positive, earliest isolate, isolate not in cluster
-#'   \item weak-index-patient-to-patient: not admission positive, but first surveillance is positive and in cluster
+#'   \item weak-index: not admission positive, but first surveillance is positive and in cluster
 #'   \item convert: had surveillance before first positive
 #'   \item adm-pos: first positive is in cluster and is first surveillance
 #'   \item adm-pos-convert: first positive is not in cluster but is first surveillance
 #'   \item secondary-convert: first positive is not in cluster and had prior surveillance
+#'   \item ambiguous-adm-pos: first positive is culture-only (strain unknown) and is first surveillance
+#'   \item ambiguous-convert: first positive is culture-only (strain unknown) and had prior surveillance
 #' }
 #'
 #' @param isolate_lookup A lookup table from [get_isolate_lookup()].
@@ -226,7 +228,7 @@ categorize_index_patient <- function(index_row, cluster_id) {
     if (index_row$adm_pos) {
         if (is_in_cluster) "index" else "multiply-colonized-index"
     } else if (is_first_surv && is_in_cluster) {
-        "weak-index-patient-to-patient"
+        "weak-index"
     } else {
         "convert"
     }
@@ -260,6 +262,15 @@ categorize_non_index_patient <- function(patient, cluster_id, isolate_lookup, su
     # If still multiple, use lowest genome_id
     if (nrow(first_pos) > 1) {
         first_pos <- first_pos[which.min(first_pos$genome_id), ][1, ]
+    }
+
+    # If the earliest positive carries no sequenced isolate (a culture-confirmed
+    # positive), its strain is unknown: we cannot tell whether it was this cluster's
+    # strain (-> convert / adm-pos) or a different one (-> secondary-convert). Categorize
+    # as ambiguous based on whether the patient was previously screened or not
+    if (is.na(first_pos$genome_id)) {
+        had_prior_surv <- any(surv_patient$surv_date < min_date, na.rm = TRUE)
+        return(if (had_prior_surv) "ambiguous-convert" else "ambiguous-adm-pos")
     }
 
     # Look up the isolate from that surveillance
