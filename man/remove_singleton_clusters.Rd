@@ -2,7 +2,7 @@
 % Please edit documentation in R/cluster_utils.R
 \name{remove_singleton_clusters}
 \alias{remove_singleton_clusters}
-\title{Remove singleton clusters from a vector of cluster assignments.}
+\title{Remove singleton clusters from a vector of cluster assignments}
 \usage{
 remove_singleton_clusters(clusters)
 }
@@ -10,8 +10,10 @@ remove_singleton_clusters(clusters)
 \item{clusters}{A numeric vector of cluster assignments.}
 }
 \value{
-A numeric vector of cluster assignments with the singleton clusters removed.
+The input vector with the singleton-cluster entries removed.
 }
 \description{
-This function removes clusters with only one sequence from a vector of cluster assignments.
+Drops clusters made up of a single sequence, preserving the original cluster values and isolate
+names of the rest. Note that a singleton is counted by sequence here, unlike
+\code{\link[=get_non_single_patient_clusters]{get_non_single_patient_clusters()}}, which counts distinct patients.
 }

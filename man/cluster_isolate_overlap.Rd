@@ -2,22 +2,22 @@
 % Please edit documentation in R/cluster_overlap.R
 \name{cluster_isolate_overlap}
 \alias{cluster_isolate_overlap}
-\title{Calculate isolate-isolate overlap for clusters}
+\title{Summarize isolate overlap within each cluster}
 \usage{
 cluster_isolate_overlap(isolate_lookup, iso_overlap_df)
 }
 \arguments{
-\item{isolate_lookup}{A lookup table for isolates and their clusters assignments which has
-other relevant epidemiological information. For more information, see
-\code{\link[=get_isolate_lookup]{get_isolate_lookup()}}.}
+\item{isolate_lookup}{A lookup table for isolates and their cluster assignments with other
+relevant epidemiological information. See \code{\link[=get_isolate_lookup]{get_isolate_lookup()}}.}
 
-\item{iso_overlap_df}{A data frame with overlap information for isolate pairs. For more information, see
-\code{\link[=isolate_isolate_overlap]{isolate_isolate_overlap()}}.}
+\item{iso_overlap_df}{A data frame of isolate-pair overlaps, from \code{\link[=isolate_isolate_overlap]{isolate_isolate_overlap()}}.}
 }
 \value{
-A data frame with columns: cluster, isolate_id, overlap.
+A data frame with columns \code{cluster}, \code{isolate_id} and \code{overlap}.
 }
 \description{
-This function considers every isolate in a cluster as a recipient, and returns if there is
-any overlap when other isolates in the cluster are the donors.
+For each isolate in a cluster (treated as a recipient), reports whether any other isolate in the
+same cluster (as a donor) overlaps with it, using the isolate-pair overlaps from
+\code{\link[=isolate_isolate_overlap]{isolate_isolate_overlap()}} or \code{\link[=isolate_isolate_sequential_overlap]{isolate_isolate_sequential_overlap()}}. Admission-positive
+isolates are reported as \code{NA}, since they were not acquired in the facility.
 }

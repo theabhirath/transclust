@@ -2,7 +2,7 @@
 % Please edit documentation in R/cluster_utils.R
 \name{get_isolate_lookup}
 \alias{get_isolate_lookup}
-\title{Create a lookup table for isolates along with their cluster assignments.}
+\title{Create a lookup table for isolates along with their cluster assignments}
 \usage{
 get_isolate_lookup(clusters, dna_aln, seq2pt, adm_seqs, dates, surv_df)
 }
@@ -24,7 +24,8 @@ A data frame with columns: isolate_id, patient_id, date, cluster, adm_pos, prev_
 prev_surv_neg.
 }
 \description{
-This function creates a lookup table for isolates. The columns are:
+Builds the per-isolate table that most other functions in the package consume. Each row is one
+isolate, with columns:
 \itemize{
 \item cluster: the cluster assignment for the isolate.
 \item isolate_id: the isolate ID.

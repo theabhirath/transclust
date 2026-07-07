@@ -1,7 +1,8 @@
-#' Create a lookup table for isolates along with their cluster assignments.
+#' Create a lookup table for isolates along with their cluster assignments
 #'
 #' @description
-#' This function creates a lookup table for isolates. The columns are:
+#' Builds the per-isolate table that most other functions in the package consume. Each row is one
+#' isolate, with columns:
 #' \itemize{
 #'   \item cluster: the cluster assignment for the isolate.
 #'   \item isolate_id: the isolate ID.
@@ -89,16 +90,12 @@ get_isolate_lookup <- function(clusters, dna_aln, seq2pt, adm_seqs, dates, surv_
     lookup
 }
 
-#' Get non-single patient clusters from a vector of cluster assignments.
+#' Get clusters containing more than one patient
 #'
-#' @description
-#' This function gets non-single patient clusters from a vector of cluster assignments.
+#' @param isolate_lookup A lookup table for isolates and their cluster assignments with other
+#'                       relevant epidemiological information. See [get_isolate_lookup()].
 #'
-#' @param isolate_lookup A lookup table for isolates and their clusters assignments which has
-#'                       other relevant epidemiological information. For more information, see
-#'                       [get_isolate_lookup()].
-#'
-#' @returns A numeric vector of cluster assignments with the non-single patient clusters.
+#' @returns A numeric vector of cluster IDs that contain isolates from more than one patient.
 #'
 #' @export
 get_non_single_patient_clusters <- function(isolate_lookup) {
@@ -111,14 +108,16 @@ get_non_single_patient_clusters <- function(isolate_lookup) {
     unique_clusters[cluster_size > 1]
 }
 
-#' Remove singleton clusters from a vector of cluster assignments.
+#' Remove singleton clusters from a vector of cluster assignments
 #'
 #' @description
-#' This function removes clusters with only one sequence from a vector of cluster assignments.
+#' Drops clusters made up of a single sequence, preserving the original cluster values and isolate
+#' names of the rest. Note that a singleton is counted by sequence here, unlike
+#' [get_non_single_patient_clusters()], which counts distinct patients.
 #'
 #' @param clusters A numeric vector of cluster assignments.
 #'
-#' @returns A numeric vector of cluster assignments with the singleton clusters removed.
+#' @returns The input vector with the singleton-cluster entries removed.
 #'
 #' @export
 remove_singleton_clusters <- function(clusters) {
@@ -131,17 +130,16 @@ remove_singleton_clusters <- function(clusters) {
     clusters[!(as.character(clusters) %in% singleton_labels)]
 }
 
-#' Remap cluster values: each unique value (including each special value) gets its own number
-#' in order of appearance.
+#' Remap cluster values to sequential IDs in order of appearance
 #'
 #' @description
-#' This function remaps cluster values so that each unique value (including each special value)
-#' gets its own number in order of appearance.
+#' Renumbers cluster values so that each distinct value becomes a sequential ID, assigned in order
+#' of first appearance. Each occurrence of `special_val` is given its own separate ID rather than
+#' being grouped, which is useful for values that stand for many independent isolates (e.g.
+#' unclustered isolates) rather than a single cluster.
 #'
 #' @param x A numeric vector of cluster assignments.
-#' @param special_val A value to treat as special i.e. it will get its own number in order of appearance.
-#'                    This is useful for values that are not part of the cluster assignment, such as
-#'                    singleton clusters.
+#' @param special_val A value whose every occurrence gets its own ID instead of being grouped.
 #'
 #' @returns A numeric vector of remapped cluster assignments.
 #'
@@ -171,7 +169,7 @@ remap_cluster_values <- function(x, special_val = 0) {
     out
 }
 
-#' Force cluster assignments to be monophyletic with respect to a tree.
+#' Force cluster assignments to be monophyletic with respect to a tree
 #'
 #' @description
 #' Checks each multi-isolate cluster for monophyly on `tree` and reconciles those that are not
@@ -188,7 +186,7 @@ remap_cluster_values <- function(x, special_val = 0) {
 #'                 the largest monophyletic clades it already contains, without pulling in foreign
 #'                 isolates.
 #' @param special_val An optional cluster value to leave untouched, e.g. `0` for unclustered isolates
-#'                 that should not be treated as a single cluster. Default is `NULL`.
+#'                 that should not be treated as a single cluster.
 #'
 #' @returns A numeric vector of cluster assignments that are monophyletic with respect to the tree,
 #'          renumbered sequentially.
@@ -336,13 +334,10 @@ enforce_monophyly <- function(
     clusters
 }
 
-#' Remove a node from a vector of cluster assignments.
-#'
-#' @description
-#' This function removes a node from a vector of cluster assignments.
+#' Remove a node from a vector of cluster assignments
 #'
 #' @param clusters A numeric vector of cluster assignments.
-#' @param node The node to remove.
+#' @param node The node (isolate name) to remove.
 #'
 #' @returns A numeric vector of cluster assignments with the node removed.
 #'

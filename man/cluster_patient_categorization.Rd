@@ -20,10 +20,12 @@ Categorizes each patient in a cluster based on their role in transmission:
 \itemize{
 \item index: admission positive, earliest isolate, isolate in cluster
 \item multiply-colonized-index: admission positive, earliest isolate, isolate not in cluster
-\item weak-index-patient-to-patient: not admission positive, but first surveillance is positive and in cluster
+\item weak-index: not admission positive, but first surveillance is positive and in cluster
 \item convert: had surveillance before first positive
 \item adm-pos: first positive is in cluster and is first surveillance
 \item adm-pos-convert: first positive is not in cluster but is first surveillance
 \item secondary-convert: first positive is not in cluster and had prior surveillance
+\item ambiguous-adm-pos: first positive is culture-only (strain unknown) and is first surveillance
+\item ambiguous-convert: first positive is culture-only (strain unknown) and had prior surveillance
 }
 }

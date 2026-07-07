@@ -2,12 +2,12 @@
 % Please edit documentation in R/cluster_stats.R
 \name{compute_duration_metrics_by_cluster}
 \alias{compute_duration_metrics_by_cluster}
-\title{Compute Duration Metrics by Cluster}
+\title{Compute duration metrics by cluster}
 \usage{
 compute_duration_metrics_by_cluster(isolate_lookup)
 }
 \arguments{
-\item{isolate_lookup}{Data frame with isolate lookup information.}
+\item{isolate_lookup}{An isolate lookup table from \code{\link[=get_isolate_lookup]{get_isolate_lookup()}}.}
 }
 \value{
 Data frame with duration metrics by cluster

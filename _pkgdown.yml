@@ -9,11 +9,26 @@ template:
 
 navbar:
   structure:
-    left: [intro, reference, articles, tutorials, news, visualization]
+    left: [intro, indataformat, articles, reference, tutorials, news, visualization]
   components:
+    indataformat:
+      text: Input data format
+      href: articles/input_data.html
     visualization:
       text: Visualization
       href: https://theabhirath.github.io/hospitraceRVisualize
+
+articles:
+  - title: Articles
+    navbar: ~
+    contents:
+      - articles/cluster_comparison
+      - articles/overlap_analysis
+      - articles/trace_phylogeny
+
+  - title: Input data format
+    contents:
+      - articles/input_data
 
 reference:
   - title: Transmission cluster detection algorithms

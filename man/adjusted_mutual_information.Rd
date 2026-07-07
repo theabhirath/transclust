@@ -2,7 +2,7 @@
 % Please edit documentation in R/cluster_compare.R
 \name{adjusted_mutual_information}
 \alias{adjusted_mutual_information}
-\title{Adjusted Mutual Information from Cluster Assignments}
+\title{Compute the adjusted mutual information from cluster assignments}
 \usage{
 adjusted_mutual_information(clusters1, clusters2)
 }

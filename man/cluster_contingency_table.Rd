@@ -2,7 +2,7 @@
 % Please edit documentation in R/cluster_compare.R
 \name{cluster_contingency_table}
 \alias{cluster_contingency_table}
-\title{Create Contingency Table from Two Cluster Assignments}
+\title{Create a contingency table from two cluster assignments}
 \usage{
 cluster_contingency_table(clusters1, clusters2)
 }

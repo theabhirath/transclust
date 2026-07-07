@@ -1,10 +1,10 @@
 #' Compute intra-cluster SNP-distance summaries
 #'
 #' @description
-#' The single source of truth for intra-cluster genetic-distance summaries. Returns the mean,
-#' median and max pairwise SNP distance within a single cluster (the upper triangle of the
-#' cluster's own submatrix, excluding the diagonal). Inter-cluster / inter-isolate context is
-#' computed separately, over all clusters at once, by [cluster_inter_distances()].
+#' Returns the mean, median and maximum pairwise SNP distance within a single cluster, taken from
+#' the upper triangle of the cluster's own submatrix (excluding the diagonal). Inter-cluster and
+#' inter-isolate distances are computed separately, over all clusters at once, by
+#' [cluster_inter_distances()].
 #'
 #' @param cluster_seqs Vector of sequence IDs in the cluster.
 #' @param snp_dist Matrix of SNP distances between isolates.
@@ -26,7 +26,7 @@ cluster_pairwise_distances <- function(cluster_seqs, snp_dist) {
     )
 }
 
-#' Compute per-cluster nearest-neighbour SNP distances
+#' Compute per-cluster nearest-neighbor SNP distances
 #'
 #' @description
 #' For every non-singleton cluster, the minimum SNP distance to an isolate in another cluster
@@ -82,8 +82,7 @@ cluster_inter_distances <- function(clusters, snp_dist) {
 # Stack a per-cluster reduction over every multi-patient cluster in an isolate
 # lookup. `metric_fn` receives the lookup rows for one cluster and returns a
 # named numeric vector; the results become a data frame with a trailing
-# `cluster` column. Single-patient clusters are excluded throughout, since these
-# metrics describe transmission rather than within-host variation.
+# `cluster` column. Single-patient clusters are excluded throughout.
 # @keyword internal
 per_cluster_metric_df <- function(isolate_lookup, metric_fn) {
     cluster_ids <- get_non_single_patient_clusters(isolate_lookup)
@@ -101,7 +100,7 @@ per_cluster_metric_df <- function(isolate_lookup, metric_fn) {
 #' Summarize intra-cluster SNP distances (mean/median/max) for every multi-patient
 #' cluster in an isolate lookup, via [cluster_pairwise_distances()].
 #'
-#' @param isolate_lookup Data frame with isolate lookup information.
+#' @param isolate_lookup An isolate lookup table from [get_isolate_lookup()].
 #' @param snp_dist Matrix of SNP distances between isolates.
 #'
 #' @return Data frame with `mean_genetic_distance`, `median_genetic_distance`,
@@ -156,12 +155,12 @@ intra_cluster_duration_metrics <- function(seqs, seq2pt, dates) {
     )
 }
 
-#' Compute Duration Metrics by Cluster
+#' Compute duration metrics by cluster
 #'
 #' @description
 #' Calculate temporal metrics for cluster spread for a set of cluster assignments.
 #'
-#' @param isolate_lookup Data frame with isolate lookup information.
+#' @param isolate_lookup An isolate lookup table from [get_isolate_lookup()].
 #'
 #' @return Data frame with duration metrics by cluster
 #'

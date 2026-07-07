@@ -1,13 +1,15 @@
-#' Get SNP distance matrix from DNA alignment constructed using a model of DNA evolution.
+#' Compute a pairwise SNP distance matrix from a DNA alignment
 #'
 #' @description
-#' Get SNP distance matrix from DNA alignment constructed using a model of DNA evolution.
+#' Counts the number of nucleotide differences between every pair of sequences, via
+#' [ape::dist.dna()] with model `"N"`.
 #'
 #' @param dna_aln A DNA alignment object of class `DNAbin`.
-#' @param core Logical: if `TRUE`, return the core SNP distance matrix, otherwise
-#'             return the full SNP distance matrix.
+#' @param core Logical; if `TRUE`, sites with missing data in any sequence are
+#'             dropped before counting, giving a core-genome distance. If `FALSE`, missing data
+#'             are handled per pair of sequences (pairwise deletion).
 #'
-#' @returns A numeric matrix representing the SNP distance between sequences.
+#' @returns A numeric matrix of pairwise SNP distances between sequences.
 #'
 #' @importFrom ape dist.dna
 #' @export
@@ -15,17 +17,17 @@ get_snp_dist_matrix <- function(dna_aln, core = TRUE) {
     dist.dna(dna_aln, model = "N", pairwise.deletion = !core, as.matrix = TRUE)
 }
 
-#' Get phylogenetic tree using neighbor-joining or maximum parsimony method.
+#' Build a phylogenetic tree by neighbor-joining or maximum parsimony
 #'
 #' @description
-#' This function constructs a neighbor-joining or maximum parsimony phylogenetic
-#' tree from a DNA alignment object and a SNP distance matrix.
+#' Builds a tree from a DNA alignment and its SNP distance matrix. A neighbor-joining tree is
+#' computed first and rooted on the most divergent isolate (the one with the largest mean SNP
+#' distance); with `method = "pars"` this is then refined into a maximum-parsimony tree.
 #'
 #' @param dna_aln A DNA alignment object of class `DNAbin`.
-#' @param snp_dist A numeric matrix representing the SNP distance between sequences.
-#'                 See [get_snp_dist_matrix()] for a useful function to generate this.
-#' @param method A string indicating the method to use for tree construction. Options are
-#'               "nj" (neighbor-joining) or "pars" (maximum parsimony).
+#' @param snp_dist A numeric matrix of SNP distances between sequences. See [get_snp_dist_matrix()].
+#' @param method Tree-construction method: `"nj"` (neighbor-joining) or `"pars"` (maximum
+#'               parsimony).
 #'
 #' @returns An object of class `phylo` representing the phylogenetic tree.
 #'

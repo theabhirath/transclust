@@ -2,7 +2,7 @@
 % Please edit documentation in R/cluster_compare.R
 \name{adjusted_rand_index}
 \alias{adjusted_rand_index}
-\title{Adjusted Rand Index from Cluster Assignments}
+\title{Compute the adjusted Rand index from cluster assignments}
 \usage{
 adjusted_rand_index(clusters1, clusters2)
 }

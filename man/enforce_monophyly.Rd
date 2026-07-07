@@ -2,7 +2,7 @@
 % Please edit documentation in R/cluster_utils.R
 \name{enforce_monophyly}
 \alias{enforce_monophyly}
-\title{Force cluster assignments to be monophyletic with respect to a tree.}
+\title{Force cluster assignments to be monophyletic with respect to a tree}
 \usage{
 enforce_monophyly(
   clusters,
@@ -24,7 +24,7 @@ the largest monophyletic clades it already contains, without pulling in foreign
 isolates.}
 
 \item{special_val}{An optional cluster value to leave untouched, e.g. \code{0} for unclustered isolates
-that should not be treated as a single cluster. Default is \code{NULL}.}
+that should not be treated as a single cluster.}
 }
 \value{
 A numeric vector of cluster assignments that are monophyletic with respect to the tree,

@@ -2,7 +2,7 @@
 % Please edit documentation in R/cluster_compare.R
 \name{fraction_convert_same_source}
 \alias{fraction_convert_same_source}
-\title{Fraction of Converts with Same Source Across Cluster Assignments}
+\title{Compute the fraction of converts with the same source across cluster assignments}
 \usage{
 fraction_convert_same_source(
   clusters1,
@@ -33,19 +33,20 @@ IDs and values are cluster numbers.}
 \item{surv_df}{A data frame with surveillance data containing columns:
 patient_id, genome_id, surv_date, result.}
 
-\item{converts_without_assigned_source}{A logical value (default: FALSE) indicating
-whether to include patients that are converts but have no assigned source in the lookup.}
+\item{converts_without_assigned_source}{A logical value indicating
+whether to include singleton converts -- patients counted as converts that have no assigned
+source in the lookup -- in the comparison, recording them with no source.}
 }
 \value{
 A numeric value between 0 and 1 representing the fraction of convert
-patients whose source (index or weak-index) is the same in both cluster
-assignments. Returns NA if there are no common converts.
+patients whose source (index, weak index, or multiply-colonized index) is the
+same in both cluster assignments. Returns NA if there are no common converts.
 }
 \description{
 Compares two cluster assignments by examining patients categorized as "convert".
 For each patient who is a convert in both assignments, checks whether the
-source patient (categorized as "index" or "weak-index") in their respective
-clusters is the same across both assignments.
+source patient (the cluster's index, weak index, or multiply-colonized index) is
+the same across both assignments.
 }
 \details{
 The function:
@@ -53,8 +54,8 @@ The function:
 \item Creates isolate lookups for both cluster assignments
 \item Categorizes patients in both using \code{\link[=cluster_patient_categorization]{cluster_patient_categorization()}}
 \item Identifies patients categorized as "convert" in both assignments
-\item For each such convert, finds the "index" or "weak-index" patient in their
-cluster for each assignment
+\item For each such convert, finds the source patient (index, weak index, or
+multiply-colonized index) in their cluster for each assignment
 \item Returns the fraction where the source patient matches
 }
 }

@@ -1,0 +1,161 @@
+---
+title: "Input data format"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+    collapse = TRUE,
+    comment = "#>"
+)
+```
+
+`hospitraceR` works by fusing two kinds of evidence: the genomes of the isolates and the
+epidemiological record of the patients they came from. Rather than one large object, the package
+takes each piece as a separate, lightweight R object, and different functions ask for the pieces
+they need. This article catalogs every input, the exact form it should take, and which functions
+consume it. An example dataset is used throughout as a concrete reference.
+
+```{r load}
+library(hospitraceR)
+library(ape)
+
+# An example dataset of isolates and their patient epidemiological metadata.
+extdata_dir <- file.path("..", "..", "inst", "extdata")
+load(file.path(extdata_dir, "example.RData"))
+dna_aln <- read.dna(file.path(extdata_dir, "example.fasta"), format = "fasta")
+```
+
+Two identifiers run through everything and are worth fixing up front:
+
+- a **sequence ID** (also called an isolate ID) names a single sequenced isolate — one row of the
+  alignment;
+- a **patient ID** names a patient, who may have contributed several isolates.
+
+Most per-sequence inputs are **named vectors** whose *names* are sequence IDs. The mapping from
+sequence to patient is what ties the genomic and epidemiological sides together.
+
+# The sequence alignment
+
+The genomic input is a multiple sequence alignment of class `DNAbin` (as produced by
+`ape::read.dna()`), with one row per isolate and the sequence IDs as row labels.
+
+```{r aln}
+dna_aln
+head(labels(dna_aln))
+```
+
+By convention the **first sequence is an outgroup** — in the example, the `KPNIH1` reference genome.
+`get_tn_clusters_sv_index()` and the tree it consumes both treat the first alignment sequence (and
+the first tip of the tree) as that outgroup, so it should stay in position one. From the alignment,
+you can derive the SNP distance matrix with `get_snp_dist_matrix()` and a phylogenetic tree with
+`get_phylo_tree()`. Any other sources for SNP distances or trees should also be fine, as long as 
+the sequence IDs match up.
+
+Both clustering methods then work from variable sites only (see the
+[introductory article](hospitraceR.html)).
+
+# Per-sequence epidemiological vectors
+
+## Sequence-to-patient map
+
+A named integer (or character) vector mapping each sequence ID (the names) to its patient ID (the
+values). Functions take it as the `seq2pt` argument; in the example dataset it is `dna_pt_labels`.
+
+```{r seq2pt}
+head(dna_pt_labels)
+```
+
+Here sequence IDs `1`, `2` and `3` all belong to patient `6` — three isolates from one patient.
+
+## Collection dates
+
+A named numeric vector of collection dates, one per sequence, named by sequence ID. Dates are
+expressed as integer day numbers on a common timeline (day `0` is the start of the study window),
+*not* as `Date` objects, because the location traces below are indexed by the same day numbers.
+
+```{r dates}
+head(dates)
+```
+
+## Admission status
+
+Two vectors of sequence IDs encode who was already carrying the organism at admission:
+
+- `adm_seqs` — sequences from patients who were **positive at intake** (admission-positive at the
+  time of their first screen);
+- `adm_pos_pt_seqs` — **all** sequences from admission-positive patients, whether collected at
+  intake or later. This is a superset of `adm_seqs`: it adds the later isolates of those same
+  patients.
+
+```{r adm}
+length(adm_seqs)
+length(adm_pos_pt_seqs)
+all(adm_seqs %in% adm_pos_pt_seqs)
+```
+
+The distinction matters for clustering: a patient positive at intake cannot have acquired the
+organism in the facility, so admission-positive sequences anchor clusters as potential sources
+rather than converts.
+
+# Surveillance cultures
+
+`surv_df` is a data frame of surveillance results, one row per culture, with four columns:
+
+| Column | Meaning |
+|--------|---------|
+| `patient_id` | the patient screened |
+| `genome_id` | the sequence ID, if the culture was sequenced |
+| `surv_date` | the screen date, on the same day-number timeline as `dates` |
+| `result` | `1` for a positive culture, `0` for a negative one |
+
+```{r surv}
+head(surv_df)
+```
+
+This is what lets the package tell a genuine conversion (a previous-negative patient who later turns
+positive) from a patient who was already colonized: `get_isolate_lookup()` reads `surv_df` to derive
+each isolate's `prev_surv` and `prev_surv_neg` flags (see the
+[overlap analysis article](overlap_analysis.html)).
+
+# Location traces
+
+The patients' movements are given as **trace matrices**: patients in rows, days in columns. A cell
+records where a patient was on a given day, as an integer location code, with `0` meaning the
+patient was not present (e.g. discharged). The column names are the day numbers, on the same
+timeline as `dates` and `surv_date`.
+
+The package uses three traces at increasing spatial resolution, all the same shape:
+
+- `facility_trace` — A `0`/`1` matrix, present or not;
+- `floor_trace` — which floor;
+- `room_trace` — which room.
+
+```{r trace}
+dim(floor_trace)
+floor_trace[1:5, 1:8]
+sort(unique(as.vector(floor_trace))) # 0 = absent; 1-6 = floors
+```
+
+Two patients "overlap" on a day when their trace cells hold the same positive code (the same floor,
+say). The overlap and permutation-test functions
+(`isolate_isolate_overlap()`, `cluster_overlap_perm_test()`, ...) take whichever trace matrix
+matches the resolution you want to test at.
+
+# Which function needs what
+
+Putting it together, the inputs flow into the package as follows:
+
+| Input (example object) | Form | Used by |
+|------------------------|------|---------|
+| Alignment (`dna_aln`) | `DNAbin`, first row = outgroup | `get_snp_dist_matrix()`, `get_phylo_tree()`, `get_tn_clusters_sv_index()` |
+| SNP distances | numeric matrix | `get_tn_clusters_snp_thresh()`, `get_tn_clusters_sv_index()`, distance metrics |
+| Tree | `phylo`, first tip = outgroup | `get_tn_clusters_sv_index()`, `plot_trace_phylo_tree()` |
+| Sequence-to-patient (`dna_pt_labels`) | named vector, seq ID -> patient ID | clustering, `get_isolate_lookup()`, permutation test |
+| Dates (`dates`) | named numeric, seq ID -> day | clustering, `get_isolate_lookup()` |
+| Admission status (`adm_seqs`, `adm_pos_pt_seqs`) | sequence-ID vectors | `get_tn_clusters_sv_index()`, `get_isolate_lookup()`, permutation test |
+| Surveillance (`surv_df`) | data frame (4 columns above) | `get_isolate_lookup()`, categorization, permutation test |
+| Traces (`facility_trace`, ...) | patient-by-day matrices | overlap functions, permutation test |
+
+Most analyses begin by passing the clustering inputs to `get_tn_clusters_sv_index()`, then feeding
+the resulting clusters and the remaining inputs to `get_isolate_lookup()`, whose lookup table the
+downstream overlap, categorization, and statistics functions all consume.

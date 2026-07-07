@@ -2,23 +2,22 @@
 % Please edit documentation in R/cluster_utils.R
 \name{remap_cluster_values}
 \alias{remap_cluster_values}
-\title{Remap cluster values: each unique value (including each special value) gets its own number
-in order of appearance.}
+\title{Remap cluster values to sequential IDs in order of appearance}
 \usage{
 remap_cluster_values(x, special_val = 0)
 }
 \arguments{
 \item{x}{A numeric vector of cluster assignments.}
 
-\item{special_val}{A value to treat as special i.e. it will get its own number in order of appearance.
-This is useful for values that are not part of the cluster assignment, such as
-singleton clusters.}
+\item{special_val}{A value whose every occurrence gets its own ID instead of being grouped.}
 }
 \value{
 A numeric vector of remapped cluster assignments.
 }
 \description{
-This function remaps cluster values so that each unique value (including each special value)
-gets its own number in order of appearance.
+Renumbers cluster values so that each distinct value becomes a sequential ID, assigned in order
+of first appearance. Each occurrence of \code{special_val} is given its own separate ID rather than
+being grouped, which is useful for values that stand for many independent isolates (e.g.
+unclustered isolates) rather than a single cluster.
 }
 \keyword{internal}
